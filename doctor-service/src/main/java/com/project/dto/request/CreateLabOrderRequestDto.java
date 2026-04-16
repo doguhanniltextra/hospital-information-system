@@ -13,6 +13,8 @@ public class CreateLabOrderRequestDto {
     private List<LabTestRequest> tests;
     @NotNull
     private LocalDateTime requestedAt;
+    @NotNull
+    private String priority;
 
     public UUID getPatientId() { return patientId; }
     public void setPatientId(UUID patientId) { this.patientId = patientId; }
@@ -20,6 +22,8 @@ public class CreateLabOrderRequestDto {
     public void setTests(List<LabTestRequest> tests) { this.tests = tests; }
     public LocalDateTime getRequestedAt() { return requestedAt; }
     public void setRequestedAt(LocalDateTime requestedAt) { this.requestedAt = requestedAt; }
+    public String getPriority() { return priority; }
+    public void setPriority(String priority) { this.priority = priority; }
 
     public static class LabTestRequest {
         public String testCode;

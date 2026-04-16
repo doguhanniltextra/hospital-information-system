@@ -1,0 +1,12 @@
+spring:
+  kafka:
+    bootstrap-servers: kafka1:9092,kafka2:9092,kafka3:9092
+    producer:
+      acks: all
+      properties:
+        enable.idempotence: true
+
+kafka:
+  topic:
+    replication-factor: 3
+    partitions: 3

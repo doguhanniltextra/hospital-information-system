@@ -12,8 +12,15 @@ import org.springframework.kafka.listener.DefaultErrorHandler;
 import org.springframework.util.backoff.FixedBackOff;
 import com.project.lab_service.constants.KafkaTopics;
 
+import org.springframework.beans.factory.annotation.Value;
 @Configuration
 public class KafkaErrorHandlerConfig {
+    @Value("${kafka.topic.partitions:1}")
+    private int partitions;
+
+    @Value("${kafka.topic.replication-factor:1}")
+    private int replicas;
+
     private static final Logger log = LoggerFactory.getLogger(KafkaErrorHandlerConfig.class);
 
     @Bean
@@ -37,8 +44,8 @@ public class KafkaErrorHandlerConfig {
     @Bean
     public NewTopic labOrderPlacedDlq() {
         return TopicBuilder.name(KafkaTopics.LAB_ORDER_PLACED + ".DLQ")
-                .partitions(1)
-                .replicas(1)
+                .partitions(partitions)
+                .replicas(replicas)
                 .build();
     }
 }

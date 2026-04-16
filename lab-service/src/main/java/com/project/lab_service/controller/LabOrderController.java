@@ -38,15 +38,15 @@ public class LabOrderController {
     @PreAuthorize("hasAnyRole('DOCTOR','RECEPTIONIST','ADMIN','PATIENT')")
     public List<LabOrder> listOrders(@RequestParam(required = false) UUID patientId, @RequestParam(required = false) LabOrderStatus status) {
         if (patientId != null && status != null) {
-            return labOrderRepository.findByPatientIdAndStatus(patientId, status);
+            return labOrderRepository.findByPatientIdAndStatusOrderByPriorityDescRequestedAtAsc(patientId, status);
         }
         if (patientId != null) {
-            return labOrderRepository.findByPatientId(patientId);
+            return labOrderRepository.findByPatientIdOrderByPriorityDescRequestedAtAsc(patientId);
         }
         if (status != null) {
-            return labOrderRepository.findByStatus(status);
+            return labOrderRepository.findByStatusOrderByPriorityDescRequestedAtAsc(status);
         }
-        return labOrderRepository.findAll();
+        return labOrderRepository.findAllByOrderByPriorityDescRequestedAtAsc();
     }
 
     @PutMapping("/{orderId}/start")

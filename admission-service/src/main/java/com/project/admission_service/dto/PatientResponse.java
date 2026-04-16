@@ -6,6 +6,7 @@ public class PatientResponse {
     private UUID id;
     private String name;
     private String email;
+    private String phoneNumber;
 
     public UUID getId() {
         return id;
@@ -29,5 +30,13 @@ public class PatientResponse {
 
     public void setEmail(String email) {
         this.email = email;
+    }
+
+    public String getPhoneNumber() {
+        return phoneNumber;
+    }
+
+    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
     }
 }

@@ -46,7 +46,11 @@ public class LabWorkflowService {
         order.setPatientPhone(event.patientPhone);
         order.setRequestedAt(event.occurredAt != null ? event.occurredAt : Instant.now());
         order.setStatus(LabOrderStatus.QUEUED);
-        order.setPriority("NORMAL");
+        try {
+            order.setPriority(com.project.lab_service.model.PriorityLevel.valueOf(event.priority));
+        } catch (IllegalArgumentException | NullPointerException e) {
+            throw new IllegalArgumentException("Invalid or missing priority: " + event.priority);
+        }
         order.setTotalAmount(event.orderTotal);
         labOrderRepository.save(order);
     }

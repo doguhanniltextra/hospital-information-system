@@ -40,6 +40,7 @@ public class UserValidator {
         patient.setName(patientRequestDTO.getName());
         patient.setAddress(patientRequestDTO.getAddress());
         patient.setEmail(patientRequestDTO.getEmail());
+        patient.setPhoneNumber(patientRequestDTO.getPhoneNumber());
         patient.setDateOfBirth(parseDateForCreatePatient(patientRequestDTO.getDateOfBirth()));
         patient.setRegisteredDate(parseDateForCreatePatient(patientRequestDTO.getRegisteredDate()));
         patient.setInsuranceInfo(toInsuranceInfo(patientRequestDTO.getInsuranceInfo()));
@@ -87,6 +88,7 @@ public class UserValidator {
         event.put("patientId", kafkaPatientRequestDto.getId().toString());
         event.put("name", kafkaPatientRequestDto.getName());
         event.put("email", kafkaPatientRequestDto.getEmail());
+        event.put("phoneNumber", kafkaPatientRequestDto.getPhoneNumber());
         event.put("eventType", "PATIENT_CREATED");
         return event;
     }

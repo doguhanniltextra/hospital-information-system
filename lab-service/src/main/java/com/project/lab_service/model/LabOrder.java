@@ -18,7 +18,8 @@ public class LabOrder {
     private UUID doctorId;
     @Enumerated(EnumType.STRING)
     private LabOrderStatus status;
-    private String priority;
+    @Enumerated(EnumType.ORDINAL)
+    private PriorityLevel priority;
     private Instant requestedAt;
     private Instant startedAt;
     private Instant completedAt;
@@ -36,8 +37,8 @@ public class LabOrder {
     public void setDoctorId(UUID doctorId) { this.doctorId = doctorId; }
     public LabOrderStatus getStatus() { return status; }
     public void setStatus(LabOrderStatus status) { this.status = status; }
-    public String getPriority() { return priority; }
-    public void setPriority(String priority) { this.priority = priority; }
+    public PriorityLevel getPriority() { return priority; }
+    public void setPriority(PriorityLevel priority) { this.priority = priority; }
     public Instant getRequestedAt() { return requestedAt; }
     public void setRequestedAt(Instant requestedAt) { this.requestedAt = requestedAt; }
     public Instant getStartedAt() { return startedAt; }

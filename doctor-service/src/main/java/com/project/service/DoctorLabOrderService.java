@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.project.dto.request.CreateLabOrderRequestDto;
 import com.project.dto.response.CreateLabOrderResponseDto;
 import com.project.model.DoctorLabOrder;
+import com.project.model.PriorityLevel;
 import com.project.model.DoctorOutboxEvent;
 import com.project.repository.DoctorLabOrderRepository;
 import com.project.repository.DoctorOutboxEventRepository;
@@ -44,6 +45,7 @@ public class DoctorLabOrderService {
         order.setDoctorId(doctorId);
         order.setPatientId(request.getPatientId());
         order.setStatus("PLACED");
+        order.setPriority(PriorityLevel.valueOf(request.getPriority()));
         order.setRequestedAt(request.getRequestedAt().toInstant(ZoneOffset.UTC));
         order.setOrderTotal(total);
         labOrderRepository.save(order);
@@ -58,6 +60,7 @@ public class DoctorLabOrderService {
             payload.put("doctorId", doctorId);
             payload.put("tests", request.getTests());
             payload.put("orderTotal", total);
+            payload.put("priority", request.getPriority());
             payload.put("correlationId", orderId.toString());
 
             DoctorOutboxEvent outbox = new DoctorOutboxEvent();

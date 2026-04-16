@@ -16,6 +16,7 @@ public class LabOrderPlacedEvent {
     public UUID doctorId;
     public List<TestItem> tests;
     public BigDecimal orderTotal;
+    public String priority;
     public String correlationId;
 
     public static class TestItem {

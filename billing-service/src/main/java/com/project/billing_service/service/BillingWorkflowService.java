@@ -192,8 +192,9 @@ public class BillingWorkflowService {
         UUID invoiceId = UUID.randomUUID();
         String invoiceNumber = "IP-" + admissionId.toString().substring(0, 8);
         
-        // For simplicity, we'll assume NO_INSURANCE or default for now
-        // This could be improved by fetching patient insurance data.
+        // [BACKLOG NOTE - ID 7]: Patient Insurance Enrichment Required at Discharge
+        // Currently assuming NO_INSURANCE. When patient-service integration is added to
+        // billing-service, fetch patient's default insurance here instead of BigDecimal.ZERO.
         String invoicePdfPath = invoiceService.generateInvoice(
                 "Hospital Facility",
                 "Patient " + patientId,
@@ -203,10 +204,11 @@ public class BillingWorkflowService {
 
         Invoice invoice = new Invoice();
         invoice.setInvoiceId(invoiceId);
-        invoice.setDoctorId(doctorId); // Use actual doctorId from admission
+        invoice.setDoctorId(doctorId); 
         invoice.setPatientId(patientId);
         invoice.setTotalAmount(totalAmount);
-        invoice.setPatientOwes(totalAmount); // Assuming no insurance discount for MVP
+        
+        invoice.setPatientOwes(totalAmount); 
         invoice.setInsuranceOwes(BigDecimal.ZERO);
         invoice.setInvoicePdfUrl(invoicePdfPath);
         invoiceRepository.save(invoice);

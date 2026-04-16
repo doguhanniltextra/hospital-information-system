@@ -13,8 +13,15 @@ import org.springframework.util.backoff.FixedBackOff;
 import org.springframework.kafka.support.TopicPartitionOffset;
 import com.project.billing_service.constants.KafkaTopics;
 
+import org.springframework.beans.factory.annotation.Value;
 @Configuration
 public class KafkaErrorHandlerConfig {
+    @Value("${kafka.topic.partitions:1}")
+    private int partitions;
+
+    @Value("${kafka.topic.replication-factor:1}")
+    private int replicas;
+
     private static final Logger log = LoggerFactory.getLogger(KafkaErrorHandlerConfig.class);
 
     @Bean
@@ -44,40 +51,40 @@ public class KafkaErrorHandlerConfig {
     @Bean
     public NewTopic appointmentPaymentDlq() {
         return TopicBuilder.name(KafkaTopics.APPOINTMENT_PAYMENT_UPDATED + ".DLQ")
-                .partitions(1)
-                .replicas(1)
+                .partitions(partitions)
+                .replicas(replicas)
                 .build();
     }
 
     @Bean
     public NewTopic labOrderPlacedDlq() {
         return TopicBuilder.name(KafkaTopics.LAB_ORDER_PLACED + ".DLQ")
-                .partitions(1)
-                .replicas(1)
+                .partitions(partitions)
+                .replicas(replicas)
                 .build();
     }
 
     @Bean
     public NewTopic inventoryItemConsumedDlq() {
         return TopicBuilder.name(KafkaTopics.INVENTORY_ITEM_CONSUMED + ".DLQ")
-                .partitions(1)
-                .replicas(1)
+                .partitions(partitions)
+                .replicas(replicas)
                 .build();
     }
 
     @Bean
     public NewTopic admissionBedChargeDlq() {
         return TopicBuilder.name(KafkaTopics.ADMISSION_BED_CHARGE + ".DLQ")
-                .partitions(1)
-                .replicas(1)
+                .partitions(partitions)
+                .replicas(replicas)
                 .build();
     }
 
     @Bean
     public NewTopic admissionDischargedDlq() {
         return TopicBuilder.name(KafkaTopics.ADMISSION_DISCHARGED + ".DLQ")
-                .partitions(1)
-                .replicas(1)
+                .partitions(partitions)
+                .replicas(replicas)
                 .build();
     }
 }

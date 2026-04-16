@@ -10,10 +10,17 @@ import org.springframework.kafka.core.KafkaOperations;
 import org.springframework.kafka.listener.DeadLetterPublishingRecoverer;
 import org.springframework.kafka.listener.DefaultErrorHandler;
 import org.springframework.util.backoff.FixedBackOff;
+import org.springframework.beans.factory.annotation.Value;
 import com.project.patient_service.kafka.KafkaTopics;
 
 @Configuration
 public class KafkaErrorHandlerConfig {
+    @Value("${kafka.topic.partitions:1}")
+    private int partitions;
+
+    @Value("${kafka.topic.replication-factor:1}")
+    private int replicas;
+
     private static final Logger log = LoggerFactory.getLogger(KafkaErrorHandlerConfig.class);
 
     @Bean
@@ -37,8 +44,8 @@ public class KafkaErrorHandlerConfig {
     @Bean
     public NewTopic labResultCompletedDlq() {
         return TopicBuilder.name(KafkaTopics.LAB_RESULT_COMPLETED + ".DLQ")
-                .partitions(1)
-                .replicas(1)
+                .partitions(partitions)
+                .replicas(replicas)
                 .build();
     }
 }

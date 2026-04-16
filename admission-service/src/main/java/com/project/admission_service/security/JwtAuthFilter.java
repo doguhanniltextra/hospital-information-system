@@ -43,9 +43,9 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                         .parseClaimsJws(token)
                         .getBody();
 
-                String username = claims.getSubject();
-                String userId = claims.get("userId", String.class);
-                if (username != null && userId != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                String userId = claims.getSubject();
+                String username = claims.get("preferred_username", String.class);
+                if (userId != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                     List<?> rolesRaw = claims.get("roles", List.class);
                     List<SimpleGrantedAuthority> authorities = rolesRaw != null ? 
                             rolesRaw.stream()

@@ -22,6 +22,7 @@ public class UserMapper {
         createPatientServiceResponseDto.setId(String.valueOf(patient.getId()));
         createPatientServiceResponseDto.setName(patient.getName());
         createPatientServiceResponseDto.setEmail(patient.getEmail());
+        createPatientServiceResponseDto.setPhoneNumber(patient.getPhoneNumber());
         createPatientServiceResponseDto.setAddress(patient.getAddress());
         createPatientServiceResponseDto.setDateOfBirth(patient.getDateOfBirth());
         createPatientServiceResponseDto.setInsuranceInfo(toInsuranceInfoDto(patient.getInsuranceInfo()));
@@ -31,6 +32,7 @@ public class UserMapper {
         KafkaPatientRequestDto kafkaPatientRequestDto = new KafkaPatientRequestDto();
         kafkaPatientRequestDto.setId(newPatient.getId());
         kafkaPatientRequestDto.setEmail(newPatient.getEmail());
+        kafkaPatientRequestDto.setPhoneNumber(newPatient.getPhoneNumber());
         kafkaPatientRequestDto.setName(newPatient.getName());
         return kafkaPatientRequestDto;
     }
@@ -40,6 +42,7 @@ public class UserMapper {
         updatePatientServiceResponseDto.setAddress(updatedPatient.getAddress());
         updatePatientServiceResponseDto.setDateOfBirth(updatedPatient.getDateOfBirth());
         updatePatientServiceResponseDto.setEmail(updatedPatient.getEmail());
+        updatePatientServiceResponseDto.setPhoneNumber(updatedPatient.getPhoneNumber());
         updatePatientServiceResponseDto.setInsuranceInfo(toInsuranceInfoDto(updatedPatient.getInsuranceInfo()));
         return updatePatientServiceResponseDto;
     }
@@ -47,6 +50,7 @@ public class UserMapper {
         patient.setName(updatePatientServiceRequestDto.getName());
         patient.setAddress(updatePatientServiceRequestDto.getAddress());
         patient.setEmail(updatePatientServiceRequestDto.getEmail());
+        patient.setPhoneNumber(updatePatientServiceRequestDto.getPhoneNumber());
         patient.setDateOfBirth(LocalDate.parse(updatePatientServiceRequestDto.getDateOfBirth()));
         patient.setInsuranceInfo(toInsuranceInfo(updatePatientServiceRequestDto.getInsuranceInfo()));
     }
@@ -55,6 +59,7 @@ public class UserMapper {
         GetPatientServiceResponseDto dto = new GetPatientServiceResponseDto();
         dto.setId(patient.getId());
         dto.setEmail(patient.getEmail());
+        dto.setPhoneNumber(patient.getPhoneNumber());
         dto.setAddress(patient.getAddress());
         dto.setDateOfBirth(patient.getDateOfBirth());
         dto.setName(patient.getName());
@@ -69,6 +74,7 @@ public class UserMapper {
         dto.setId(String.valueOf(patient.getId()));
         dto.setName(patient.getName());
         dto.setEmail(patient.getEmail());
+        dto.setPhoneNumber(patient.getPhoneNumber());
         dto.setDateOfBirth(patient.getDateOfBirth());
         dto.setInsuranceInfo(patient.getInsuranceInfo());
         return dto;
@@ -84,6 +90,7 @@ public class UserMapper {
         CreatePatientServiceRequestDto createPatientServiceRequestDto = new CreatePatientServiceRequestDto();
         createPatientServiceRequestDto.setAddress(createPatientControllerRequestDto.getAddress());
         createPatientServiceRequestDto.setEmail(createPatientControllerRequestDto.getEmail());
+        createPatientServiceRequestDto.setPhoneNumber(createPatientControllerRequestDto.getPhoneNumber());
         createPatientServiceRequestDto.setName(createPatientControllerRequestDto.getName());
         createPatientServiceRequestDto.setRegisteredDate(createPatientControllerRequestDto.getRegisteredDate());
         createPatientServiceRequestDto.setDateOfBirth(createPatientControllerRequestDto.getDateOfBirth());
@@ -99,6 +106,7 @@ public class UserMapper {
                     getPatientControllerResponseDto1.setId(String.valueOf(patient.getId()));
                     getPatientControllerResponseDto1.setName(patient.getName());
                     getPatientControllerResponseDto1.setEmail(patient.getEmail());
+                    getPatientControllerResponseDto1.setPhoneNumber(patient.getPhoneNumber());
                     getPatientControllerResponseDto1.setDateOfBirth(patient.getDateOfBirth());
                     getPatientControllerResponseDto1.setInsuranceInfo(patient.getInsuranceInfo());
                     log.info("PATIENT: Get Patients Controller -MAPPING- is done");
@@ -113,6 +121,7 @@ public class UserMapper {
         updatePatientControllerResponseDto.setAddress(updatePatient.getAddress());
         updatePatientControllerResponseDto.setDateOfBirth(updatePatient.getDateOfBirth());
         updatePatientControllerResponseDto.setEmail(updatePatient.getEmail());
+        updatePatientControllerResponseDto.setPhoneNumber(updatePatient.getPhoneNumber());
         updatePatientControllerResponseDto.setInsuranceInfo(updatePatient.getInsuranceInfo());
         return updatePatientControllerResponseDto;
     }
@@ -123,6 +132,7 @@ public class UserMapper {
         updatePatientServiceRequestDto.setAddress(updatePatientControllerRequestDto.getAddress());
         updatePatientServiceRequestDto.setDateOfBirth(updatePatientControllerRequestDto.getDateOfBirth());
         updatePatientServiceRequestDto.setEmail(updatePatientControllerRequestDto.getEmail());
+        updatePatientServiceRequestDto.setPhoneNumber(updatePatientControllerRequestDto.getPhoneNumber());
         updatePatientServiceRequestDto.setInsuranceInfo(updatePatientControllerRequestDto.getInsuranceInfo());
         return updatePatientServiceRequestDto;
     }

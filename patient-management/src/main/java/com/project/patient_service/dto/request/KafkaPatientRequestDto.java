@@ -6,7 +6,8 @@ public class KafkaPatientRequestDto {
     UUID Id;
 
     String name;
-    String email;
+    private String email;
+    private String phoneNumber;
     String eventType;
 
 
@@ -34,6 +35,14 @@ public class KafkaPatientRequestDto {
 
     public void setEmail(String email) {
         this.email = email;
+    }
+
+    public String getPhoneNumber() {
+        return phoneNumber;
+    }
+
+    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
     }
 
     public String getEventType() {

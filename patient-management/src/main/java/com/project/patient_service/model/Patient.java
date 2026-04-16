@@ -23,6 +23,9 @@ public class Patient {
     private String email;
 
     @NotNull
+    private String phoneNumber;
+
+    @NotNull
     private String address;
 
     @NotNull
@@ -57,6 +60,14 @@ public class Patient {
 
     public void setEmail(@NotNull @Email String email) {
         this.email = email;
+    }
+
+    public @NotNull String getPhoneNumber() {
+        return phoneNumber;
+    }
+
+    public void setPhoneNumber(@NotNull String phoneNumber) {
+        this.phoneNumber = phoneNumber;
     }
 
     public @NotNull String getAddress() {

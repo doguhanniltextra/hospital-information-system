@@ -1,0 +1,41 @@
+package com.project.appointment_service.service;
+
+import com.project.appointment_service.repository.AppointmentRepository;
+import jakarta.transaction.Transactional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
+@Service
+public class AppointmentCleanupService {
+
+    private static final Logger log = LoggerFactory.getLogger(AppointmentCleanupService.class);
+
+    private final AppointmentRepository appointmentRepository;
+    private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+
+    public AppointmentCleanupService(AppointmentRepository appointmentRepository) {
+        this.appointmentRepository = appointmentRepository;
+    }
+
+    // Runs every day at 06:00 AM
+    @Scheduled(cron = "0 0 6 * * ?")
+    @Transactional
+    public void cleanOutDatedAppointments() {
+        String cutoff = LocalDateTime.now().format(formatter);
+
+        // Single DB query: DELETE WHERE paymentStatus=true AND serviceDateEnd < now
+        // No records loaded into Java memory
+        int deletedCount = appointmentRepository.deleteExpiredPaidAppointments(cutoff);
+
+        if (deletedCount > 0) {
+            log.info("Deleted {} outdated (paid) appointments before {}", deletedCount, cutoff);
+        } else {
+            log.debug("No outdated appointments to clean up at {}", cutoff);
+        }
+    }
+}

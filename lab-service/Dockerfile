@@ -6,6 +6,10 @@ WORKDIR /app
 COPY patient-management-bom ./patient-management-bom
 RUN mvn install -f patient-management-bom/pom.xml -B
 
+# Copy and install the aggregator (parent) POM
+COPY pom.xml ./pom.xml
+RUN mvn install -N -B
+
 # Copy the service project
 COPY lab-service ./lab-service
 

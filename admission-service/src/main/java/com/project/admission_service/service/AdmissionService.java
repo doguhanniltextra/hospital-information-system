@@ -118,7 +118,7 @@ public class AdmissionService {
             event.setPatientId(admission.getPatientId());
             event.setDoctorId(admission.getDoctorId());
             event.setPatientEmail(patientResponse != null ? patientResponse.getEmail() : "patient-" + admission.getPatientId() + "@example.com");
-            event.setPatientPhone("555-0100"); // Patient phone remains placeholder as it's not in the current Patient model
+            event.setPatientPhone(patientResponse != null && patientResponse.getPhoneNumber() != null ? patientResponse.getPhoneNumber() : "555-0100"); 
             event.setAdmissionId(admission.getId());
 
             AdmissionOutboxEvent outboxEvent = new AdmissionOutboxEvent();

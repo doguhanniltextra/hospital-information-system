@@ -11,6 +11,7 @@ public class GetPatientServiceResponseDto {
     private String address;
     private LocalDate dateOfBirth;
     private String email;
+    private String phoneNumber;
     private InsuranceInfoDto insuranceInfo;
 
     public String getEmail() {
@@ -19,6 +20,14 @@ public class GetPatientServiceResponseDto {
 
     public void setEmail(String email) {
         this.email = email;
+    }
+
+    public String getPhoneNumber() {
+        return phoneNumber;
+    }
+
+    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
     }
 
     public UUID getId() {
