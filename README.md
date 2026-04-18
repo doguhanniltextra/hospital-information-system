@@ -1,40 +1,75 @@
-# Hospital Information System (HIS) - Microservices Architecture
+# Hospital Information System (HIS) — Microservices Architecture
 
-This project is a production-grade backend system designed for the digital transformation of hospital operations. The architecture is built on a distributed, event-driven model to manage patients, medical staff, clinical workflows, and administrative logistics with high fault tolerance and security.
+This project is a backend system designed for the digital transformation of hospital operations. Built with a distributed, event-driven model, it manages patients, medical staff, clinical workflows, and administrative logistics with a focus on fault tolerance and modularity.
 
-## Technical Architecture
+## 🏗️ Architecture
 
-The system is composed of the following microservices, containerized with Docker:
+The system consists of independent microservices that communicate via **REST/gRPC** for synchronous operations and **Apache Kafka** for asynchronous event choreography.
 
-| Service | Responsibility | Port |
-| :--- | :--- | :--- |
-| **API Gateway** | Entry point, routing, and centralized authentication | 4004 |
-| **Auth Service** | Authentication and RBAC (Role-Based Access Control) | 8089 |
-| **Patient Service** | Patient records, medical history, and clinical results | 8080 |
-| **Doctor Service** | Doctor profiles, clinical ordering, and outbox relay | 8083 |
-| **Lab Service** | LIMS workflow, test processing, and result completion | 8087 |
-| **Appointment Service** | Scheduling, rostering, and availability management | 8084 |
-| **Billing Service** | Invoicing, insurance splitting, and payment tracking | 8081 |
-| **Inventory Service** | Medical supplies tracking and stock alerts | 8088 |
-| **Admission Service** | Bed management and inpatient ward logistics | 8086 |
+```mermaid
+graph TD
+    Client((Edge Client)) --> Gateway[API Gateway :4004]
 
-## Security and Hardening
+    Gateway -->|Auth-Filter Off| Auth[Auth-Service :8089]
+    Gateway -->|Auth-Filter On| Patient[Patient-Service :8080]
+    Gateway -->|Auth-Filter On| Doctor[Doctor-Service :8083]
+    Gateway -->|Auth-Filter On| Appt[Appointment-Service :8084]
+    Gateway -->|Auth-Filter On| Lab[Lab-Service :8087]
+    Gateway -->|Auth-Filter On| Admin[Admission-Service :8086]
+    Gateway -->|Auth-Filter On| Inv[Inventory-Service :8082]
 
-The system implements the following technical hardening standards:
+    %% Event-Driven Communications
+    Appt -- Kafka: AppointmentScheduled --> Lab
+    Doctor -- Kafka: LabOrderPlaced --> Lab
+    Lab -- Kafka: LabResultCompleted --> Patient
 
-* **User-Level Database Isolation**: Each service connects to PostgreSQL using dedicated users with permissions limited to their specific schema.
-* **Outbox Pattern**: Reliable event delivery from the Doctor and Lab services using a persistent outbox to prevent data loss during Kafka outages.
-* **Transactional Consumption**: Atomic processing of Kafka events and database updates to prevent duplicate data or inconsistent states.
-* **Standardized Serialization**: Consistent Java 8 Time serialization using Spring-managed ObjectMappers across all distributed nodes.
+    subgraph Messaging
+    Kafka{{Kafka KRaft}}
+    end
 
-## Development and Testing
+    subgraph Persistence
+    PG[(PostgreSQL)]
+    end
 
-The system includes a comprehensive End-to-End (E2E) API testing suite that validates the full clinical lifecycle, from administrative user registration through to the propagation of lab results into patient records.
-
-To run the full validation suite:
-```bash
-cd scripts/tests
-mvn test
+    Appt -.- Kafka
+    Lab -.- Kafka
+    Patient -.- PG
+    Doctor -.- PG
 ```
 
-> For detailed descriptions of each microservice, data models, and validation flows, refer to the [release link](https://doguhanniltextra.github.io/patient-management/).
+## 🛠️ Technology Stack
+
+- **Backend:** Java 17+, Spring Boot 3.x, Spring Cloud Gateway
+- **Communication:** REST, gRPC (Protobuf), Apache Kafka (Event-Driven)
+- **Data Persistence:** PostgreSQL (Shared cluster / Isolated schemas), MongoDB (Audit logs)
+- **Observability:** Prometheus & Grafana
+- **Security:** Stateless JWT Authentication (HMAC-SHA256)
+
+## 🚀 Quick Start
+
+The fastest way to get the entire ecosystem running is via the included `Makefile`.
+
+### Prerequisites
+
+- Docker & Docker Compose
+- Java 17+ (for building from source)
+- Maven (optional, handled by containers)
+
+### Deployment
+
+```bash
+# Clone the repository
+git clone https://github.com/doguhanniltextra/patient-management.git
+cd patient-management
+
+# Start all services and infrastructure
+make dev-up
+```
+
+Once started:
+
+- **API Gateway:** [http://localhost:4004](http://localhost:4004)
+- **Grafana Dashboards:** [http://localhost:3000](http://localhost:3000) (Admin / Admin)
+- **Prometheus:** [http://localhost:9090](http://localhost:9090)
+
+_This project is a continuous effort to model complex clinical workflows in a scalable way. Feedback and contributions are always welcome._
