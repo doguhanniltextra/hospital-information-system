@@ -1,11 +1,7 @@
 package com.project.billing_service.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-
+import jakarta.persistence.*;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -15,6 +11,7 @@ public class Claim {
     @Id
     private UUID claimId;
     private UUID invoiceId;
+    private BigDecimal amount;
     private String providerName;
     @Enumerated(EnumType.STRING)
     private ClaimStatus status;
@@ -34,6 +31,14 @@ public class Claim {
 
     public void setInvoiceId(UUID invoiceId) {
         this.invoiceId = invoiceId;
+    }
+
+    public BigDecimal getAmount() {
+        return amount;
+    }
+
+    public void setAmount(BigDecimal amount) {
+        this.amount = amount;
     }
 
     public String getProviderName() {

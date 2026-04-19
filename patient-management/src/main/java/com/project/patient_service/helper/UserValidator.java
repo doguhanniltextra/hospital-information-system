@@ -9,8 +9,8 @@ import com.project.patient_service.exception.PatientNotFoundException;
 import com.project.patient_service.model.InsuranceInfo;
 import com.project.patient_service.model.InsuranceProviderType;
 import com.project.patient_service.model.Patient;
+import com.project.patient_service.query.PatientQueryService;
 import com.project.patient_service.repository.PatientRepository;
-import com.project.patient_service.service.PatientService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -27,7 +27,7 @@ import java.util.UUID;
 @Component
 public class UserValidator {
 
-    private static final Logger log = LoggerFactory.getLogger(PatientService.class);
+    private static final Logger log = LoggerFactory.getLogger(UserValidator.class);
 
     public void CheckEmailIsExistsOrNotForCreatePatient(CreatePatientServiceRequestDto patientRequestDTO, PatientRepository patientRepository) {
         if( patientRepository.existsByEmail(patientRequestDTO.getEmail())){
@@ -79,8 +79,8 @@ public class UserValidator {
             return ResponseEntity.notFound().build();
         }
     }
-    public boolean isPatientByEmail(String email, PatientService patientService) {
-        boolean patientByEmail = patientService.findPatientByEmail(email);
+    public boolean isPatientByEmail(String email, PatientQueryService patientQueryService) {
+        boolean patientByEmail = patientQueryService.findPatientByEmail(email);
         return patientByEmail;
     }
     public  Map<String, Object> getStringObjectMap(KafkaPatientRequestDto kafkaPatientRequestDto) {
@@ -88,7 +88,6 @@ public class UserValidator {
         event.put("patientId", kafkaPatientRequestDto.getId().toString());
         event.put("name", kafkaPatientRequestDto.getName());
         event.put("email", kafkaPatientRequestDto.getEmail());
-        event.put("phoneNumber", kafkaPatientRequestDto.getPhoneNumber());
         event.put("eventType", "PATIENT_CREATED");
         return event;
     }

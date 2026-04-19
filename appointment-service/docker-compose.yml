@@ -1,0 +1,97 @@
+version: "3.8"
+
+services:
+  appointment-write-db:
+    image: postgres:15-alpine
+    container_name: appointment-write-db
+    restart: unless-stopped
+    ports:
+      - "5436:5432"
+    environment:
+      POSTGRES_DB: appointment_db
+      POSTGRES_USER: appointment_user
+      POSTGRES_PASSWORD: appointment_pass_123
+    volumes:
+      - appointment-write-data:/var/lib/postgresql/data
+      - ./init/write-schema.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - patient-global-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U appointment_user -d appointment_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  appointment-read-db:
+    image: postgres:15-alpine
+    container_name: appointment-read-db
+    restart: unless-stopped
+    ports:
+      - "5437:5432"
+    environment:
+      POSTGRES_DB: appointment_db
+      POSTGRES_USER: appointment_user
+      POSTGRES_PASSWORD: appointment_pass_123
+    volumes:
+      - appointment-read-data:/var/lib/postgresql/data
+      - ./init/read-schema.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - patient-global-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U appointment_user -d appointment_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  appointment-service:
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+        reservations:
+          cpus: "0.25"
+          memory: 256M
+    build:
+      context: ../
+      dockerfile: appointment-service/Dockerfile
+    container_name: appointment-service
+    restart: unless-stopped
+    ports:
+      - "8084:8084"
+    depends_on:
+      appointment-write-db:
+        condition: service_healthy
+      appointment-read-db:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      SERVER_PORT: 8084
+      SPRING_DATASOURCE_WRITE_JDBC_URL: jdbc:postgresql://appointment-write-db:5432/appointment_db?currentSchema=appointment_schema&reWriteBatchedInserts=true
+      SPRING_DATASOURCE_READ_JDBC_URL: jdbc:postgresql://appointment-read-db:5432/appointment_db?currentSchema=appointment_schema&reWriteBatchedInserts=true
+      SPRING_DATASOURCE_WRITE_USERNAME: appointment_user
+      SPRING_DATASOURCE_WRITE_PASSWORD: appointment_pass_123
+      SPRING_DATASOURCE_READ_USERNAME: appointment_user
+      SPRING_DATASOURCE_READ_PASSWORD: appointment_pass_123
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      APP_SECRET: A7f9K2mN8pQ3sT6vY1zB4cD7gH0jL3nP6qR9uW2xE5yI8oU1aS4dF7hK0mP3sV6z
+    volumes:
+      - ./src:/app/src
+    networks:
+      - patient-global-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8084/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  appointment-write-data:
+    driver: local
+  appointment-read-data:
+    driver: local
+
+networks:
+  patient-global-network:
+    external: true

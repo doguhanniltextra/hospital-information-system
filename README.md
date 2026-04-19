@@ -1,75 +1,88 @@
-# Hospital Information System (HIS) — Microservices Architecture
+# Hospital Information System (HIS)
 
-This project is a backend system designed for the digital transformation of hospital operations. Built with a distributed, event-driven model, it manages patients, medical staff, clinical workflows, and administrative logistics with a focus on fault tolerance and modularity.
+A Hospital Information System (HIS) designed to coordinate clinical and administrative operations across a distributed environment. The project focuses on managing the lifecycle of patient data, medical appointments, and inpatient admissions, ensuring each department has access to the information it needs to deliver care.
 
-## 🏗️ Architecture
+## Mission and Objectives
 
-The system consists of independent microservices that communicate via **REST/gRPC** for synchronous operations and **Apache Kafka** for asynchronous event choreography.
+The aim of this project is to model a resilient healthcare platform that handles complex workflows such as:
+
+- **Patient Management**: Centralizing clinical records and provider data.
+- **Workflow Orchestration**: Coordinating appointments and hospital admissions.
+- **Automated Side-Effects**: Managing financial invoicing and patient notifications as a result of clinical actions.
+- **Data Integrity**: Ensuring that data remains consistent and available across different specialized services.
+
+## High-Level Topology
 
 ```mermaid
 graph TD
-    Client((Edge Client)) --> Gateway[API Gateway :4004]
-
-    Gateway -->|Auth-Filter Off| Auth[Auth-Service :8089]
-    Gateway -->|Auth-Filter On| Patient[Patient-Service :8080]
-    Gateway -->|Auth-Filter On| Doctor[Doctor-Service :8083]
-    Gateway -->|Auth-Filter On| Appt[Appointment-Service :8084]
-    Gateway -->|Auth-Filter On| Lab[Lab-Service :8087]
-    Gateway -->|Auth-Filter On| Admin[Admission-Service :8086]
-    Gateway -->|Auth-Filter On| Inv[Inventory-Service :8082]
-
-    %% Event-Driven Communications
-    Appt -- Kafka: AppointmentScheduled --> Lab
-    Doctor -- Kafka: LabOrderPlaced --> Lab
-    Lab -- Kafka: LabResultCompleted --> Patient
-
-    subgraph Messaging
-    Kafka{{Kafka KRaft}}
+    subgraph Edge
+        LB[Load Balancer] --> GW[API Gateway]
+        GW --> Auth[Auth Service]
     end
 
-    subgraph Persistence
-    PG[(PostgreSQL)]
+    subgraph Operations
+        GW --> AS[Appointment Service]
+        GW --> AD[Admission Service]
+        GW --> PS[Patient Service]
+        GW --> DS[Doctor Service]
     end
 
-    Appt -.- Kafka
-    Lab -.- Kafka
-    Patient -.- PG
-    Doctor -.- PG
+    subgraph Communications
+        AS --> Kafka((Kafka))
+        AD --> Kafka
+        SS[Support Service] --> Kafka
+        Kafka --> BI[Billing Service]
+        Kafka --> NO[Notification Service]
+    end
+
+    subgraph Infrastructure
+        AS -.-> PS
+        AS -.-> DS
+        AD -.-> PS
+        SS --- Redis[(Redis)]
+        AD --- Redis
+        NO --- Redis
+    end
 ```
 
-## 🛠️ Technology Stack
+## Tech Stack
 
-- **Backend:** Java 17+, Spring Boot 3.x, Spring Cloud Gateway
-- **Communication:** REST, gRPC (Protobuf), Apache Kafka (Event-Driven)
-- **Data Persistence:** PostgreSQL (Shared cluster / Isolated schemas), MongoDB (Audit logs)
-- **Observability:** Prometheus & Grafana
-- **Security:** Stateless JWT Authentication (HMAC-SHA256)
+- **Core**: Java 22, Spring Boot 3.4
+- **Communication**: REST, gRPC, and Apache Kafka
+- **Persistence**: PostgreSQL and MongoDB
+- **Caching**: Redis
+- **Security**: JWT-based stateless authentication
+- **Observability**: Prometheus, Grafana, and Micrometer
 
-## 🚀 Quick Start
+## Detailed Documentation
 
-The fastest way to get the entire ecosystem running is via the included `Makefile`.
+For a deep dive into the system design, microservice patterns, and technical specifications, please refer to the official documentation portal:
 
-### Prerequisites
+**[https://doguhanniltextra.github.io/hospital-information-system/](https://doguhanniltextra.github.io/hospital-information-system/)**
 
-- Docker & Docker Compose
-- Java 17+ (for building from source)
-- Maven (optional, handled by containers)
+## How to Run
 
-### Deployment
+The project uses Docker for local orchestration. Ensure you have Docker and Docker Compose installed.
 
 ```bash
 # Clone the repository
 git clone https://github.com/doguhanniltextra/patient-management.git
 cd patient-management
 
-# Start all services and infrastructure
+# Start services
 make dev-up
 ```
 
-Once started:
+### Access Points
 
-- **API Gateway:** [http://localhost:4004](http://localhost:4004)
-- **Grafana Dashboards:** [http://localhost:3000](http://localhost:3000) (Admin / Admin)
-- **Prometheus:** [http://localhost:9090](http://localhost:9090)
+- **API Gateway**: `http://localhost:4004`
+- **Swagger Documentation**: `http://localhost:4004/swagger-ui.html`
+- **Dashboards**: `http://localhost:3000` (Grafana)
 
-_This project is a continuous effort to model complex clinical workflows in a scalable way. Feedback and contributions are always welcome._
+## Feedback and Errors
+
+If you encounter any issues or have suggestions for improvement:
+
+1. Check the **Observability Stack** (Grafana/Prometheus) to identify failing components.
+2. Review the **Logs** via the Docker console or the centralized logging platform.
+3. Open an issue with the relevant context and any **traceId** associated with the failure.

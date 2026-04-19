@@ -1,0 +1,99 @@
+version: "3.8"
+
+services:
+  # Isolated Write Database
+  billing-write-db:
+    image: postgres:15-alpine
+    container_name: billing-write-db
+    restart: unless-stopped
+    ports:
+      - "5439:5432"
+    environment:
+      POSTGRES_DB: billing_db
+      POSTGRES_USER: billing_user
+      POSTGRES_PASSWORD: billing_pass_123
+    volumes:
+      - billing-write-data:/var/lib/postgresql/data
+      - ./init/write-schema.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - patient-global-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U billing_user -d billing_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Isolated Read Database (CQRS Preparation)
+  billing-read-db:
+    image: postgres:15-alpine
+    container_name: billing-read-db
+    restart: unless-stopped
+    ports:
+      - "5440:5432"
+    environment:
+      POSTGRES_DB: billing_db
+      POSTGRES_USER: billing_user
+      POSTGRES_PASSWORD: billing_pass_123
+    volumes:
+      - billing-read-data:/var/lib/postgresql/data
+      - ./init/read-schema.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - patient-global-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U billing_user -d billing_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  billing-service:
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+        reservations:
+          cpus: "0.25"
+          memory: 256M
+    build:
+      context: ../
+      dockerfile: billing-service/Dockerfile
+    container_name: billing-service
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    depends_on:
+      billing-write-db:
+        condition: service_healthy
+      billing-read-db:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      SERVER_PORT: 8081
+      SPRING_DATASOURCE_WRITE_URL: jdbc:postgresql://billing-write-db:5432/billing_db?currentSchema=billing_schema&reWriteBatchedInserts=true
+      SPRING_DATASOURCE_READ_URL: jdbc:postgresql://billing-read-db:5432/billing_db?currentSchema=billing_schema&reWriteBatchedInserts=true
+      SPRING_DATASOURCE_USERNAME: billing_user
+      SPRING_DATASOURCE_PASSWORD: billing_pass_123
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      KAFKA_TOPIC_LAB_ORDER_PLACED: lab-order-placed.v1
+      KAFKA_GROUP_BILLING_LAB_ORDER: billing-lab-order-group
+      INVOICE_API_KEY: placeholder-api-key
+      INVOICE_API_URL: https://invoice-generator.com/api/v1/invoices
+    volumes:
+      - ./src:/app/src
+    networks:
+      - patient-global-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  billing-write-data:
+    driver: local
+  billing-read-data:
+    driver: local
+
+networks:
+  patient-global-network:
+    external: true

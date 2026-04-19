@@ -1,0 +1,67 @@
+version: "3.8"
+
+services:
+  admission-db:
+    image: postgres:15-alpine
+    container_name: admission-db
+    restart: unless-stopped
+    ports:
+      - "5442:5432"
+    environment:
+      POSTGRES_DB: admission_db
+      POSTGRES_USER: admission_user
+      POSTGRES_PASSWORD: admission_pass_123
+    volumes:
+      - admission-db-data:/var/lib/postgresql/data
+      - ./init/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - patient-global-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admission_user -d admission_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  admission-service:
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+        reservations:
+          cpus: "0.25"
+          memory: 256M
+    build:
+      context: ../
+      dockerfile: admission-service/Dockerfile
+    container_name: admission-service
+    restart: unless-stopped
+    ports:
+      - "8086:8086"
+    depends_on:
+      admission-db:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      SERVER_PORT: 8086
+      SPRING_DATASOURCE_URL: jdbc:postgresql://admission-db:5432/admission_db?currentSchema=admission_schema&reWriteBatchedInserts=true
+      SPRING_DATASOURCE_USERNAME: admission_user
+      SPRING_DATASOURCE_PASSWORD: admission_pass_123
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    volumes:
+      - ./src:/app/src
+    networks:
+      - patient-global-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8086/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  admission-db-data:
+    driver: local
+
+networks:
+  patient-global-network:
+    external: true

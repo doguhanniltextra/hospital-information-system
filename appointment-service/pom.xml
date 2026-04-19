@@ -23,6 +23,8 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <protobuf.version>3.25.0</protobuf.version>
         <protoc.version>3.25.0</protoc.version>
+        <logback-kafka-appender.version>0.2.0-RC2</logback-kafka-appender.version>
+        <logstash-logback-encoder.version>7.4</logstash-logback-encoder.version>
     </properties>
 
 	<dependencyManagement>
@@ -99,6 +101,24 @@
             <artifactId>protobuf-java</artifactId>
         </dependency>
 
+        <!-- gRPC Client Dependencies -->
+        <dependency>
+            <groupId>io.grpc</groupId>
+            <artifactId>grpc-netty-shaded</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.grpc</groupId>
+            <artifactId>grpc-protobuf</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.grpc</groupId>
+            <artifactId>grpc-stub</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>net.devh</groupId>
+            <artifactId>grpc-spring-boot-starter</artifactId>
+        </dependency>
+
         <!-- Resilience4j -->
         <dependency>
             <groupId>io.github.resilience4j</groupId>
@@ -119,6 +139,28 @@
             <artifactId>micrometer-registry-prometheus</artifactId>
         </dependency>
 
+<!-- logback-kafka-appender -->
+<dependency>
+    <groupId>com.github.danielwegener</groupId>
+    <artifactId>logback-kafka-appender</artifactId>
+    <version>0.2.0-RC2</version>
+</dependency>
+
+<!-- logstash-logback-encoder -->
+<dependency>
+    <groupId>net.logstash.logback</groupId>
+    <artifactId>logstash-logback-encoder</artifactId>
+    <version>7.4</version>
+</dependency>
+
+<!-- jsoup -->
+<dependency>
+    <groupId>org.jsoup</groupId>
+    <artifactId>jsoup</artifactId>
+    <version>1.17.2</version>
+</dependency>
+
+
         <!-- Tracing & Logging -->
         <dependency>
             <groupId>io.micrometer</groupId>
@@ -127,10 +169,12 @@
         <dependency>
             <groupId>com.github.danielwegener</groupId>
             <artifactId>logback-kafka-appender</artifactId>
+            <version>${logback-kafka-appender.version}</version>
         </dependency>
         <dependency>
             <groupId>net.logstash.logback</groupId>
             <artifactId>logstash-logback-encoder</artifactId>
+            <version>${logstash-logback-encoder.version}</version>
         </dependency>
 
         <dependency>
@@ -142,6 +186,12 @@
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
+        
+<dependency>
+    <groupId>org.apache.tomcat</groupId>
+    <artifactId>annotations-api</artifactId>
+    <scope>provided</scope>
+</dependency>
     </dependencies>
 
     <build>

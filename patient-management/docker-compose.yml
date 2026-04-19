@@ -1,0 +1,92 @@
+version: "3.8"
+
+services:
+  # Isolated Write Database
+  patient-write-db:
+    image: postgres:15-alpine
+    container_name: patient-write-db
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: patient_db
+      POSTGRES_USER: patient_user
+      POSTGRES_PASSWORD: patient_pass_123
+    volumes:
+      - patient-write-data:/var/lib/postgresql/data
+      - ./init/write-schema.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - patient-global-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U patient_user -d patient_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Isolated Read Database (CQRS Preparation)
+  patient-read-db:
+    image: postgres:15-alpine
+    container_name: patient-read-db
+    restart: unless-stopped
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_DB: patient_db
+      POSTGRES_USER: patient_user
+      POSTGRES_PASSWORD: patient_pass_123
+    volumes:
+      - patient-read-data:/var/lib/postgresql/data
+      - ./init/read-schema.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - patient-global-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U patient_user -d patient_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Patient Microservice
+  patient-management:
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+        reservations:
+          cpus: "0.25"
+          memory: 256M
+    build:
+      context: ../
+      dockerfile: patient-management/Dockerfile
+    container_name: patient-management
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    depends_on:
+      patient-write-db:
+        condition: service_healthy
+      patient-read-db:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      SERVER_PORT: 8080
+      SPRING_APPLICATION_JSON: '{"spring":{"datasource":{"write":{"jdbc-url":"jdbc:postgresql://patient-write-db:5432/patient_db?currentSchema=patient_schema","username":"patient_user","password":"patient_pass_123","driver-class-name":"org.postgresql.Driver"},"read":{"jdbc-url":"jdbc:postgresql://patient-read-db:5432/patient_db?currentSchema=patient_schema","username":"patient_user","password":"patient_pass_123","driver-class-name":"org.postgresql.Driver"}},"jpa":{"hibernate":{"ddl-auto":"update"}}}}'
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      KAFKA_TOPIC_LAB_RESULT_COMPLETED: lab-result-completed.v1
+      KAFKA_GROUP_PATIENT_LAB_RESULT: patient-lab-result-group
+      APP_SECRET: A7f9K2mN8pQ3sT6vY1zB4cD7gH0jL3nP6qR9uW2xE5yI8oU1aS4dF7hK0mP3sV6z
+    volumes:
+      - ./src:/app/src
+    networks:
+      - patient-global-network
+
+
+volumes:
+  patient-write-data:
+    driver: local
+  patient-read-data:
+    driver: local
+
+networks:
+  patient-global-network:
+    external: true

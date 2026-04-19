@@ -18,6 +18,7 @@ public class AppointmentMapper {
         appointmentServiceResponseDto.setPaymentStatus(createAppointmentServiceRequestDto.isPaymentStatus());
         appointmentServiceResponseDto.setServiceDateEnd(createAppointmentServiceRequestDto.getServiceDateEnd());
         appointmentServiceResponseDto.setPaymentType(createAppointmentServiceRequestDto.getPaymentType());
+        // Note: status is usually set by the caller (Saga) or we can default it here
         return appointmentServiceResponseDto;
     }
 

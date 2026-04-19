@@ -5,8 +5,9 @@ import com.project.patient_service.dto.request.*;
 import com.project.patient_service.dto.response.*;
 import com.project.patient_service.model.InsuranceInfo;
 import com.project.patient_service.model.Patient;
-import com.project.patient_service.service.PatientService;
+import com.project.patient_service.readmodel.PatientSummary;
 import org.slf4j.Logger;
+
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
@@ -15,7 +16,8 @@ import java.util.List;
 
 @Component
 public class UserMapper {
-    private static final Logger log = LoggerFactory.getLogger(PatientService.class);
+    private static final Logger log = LoggerFactory.getLogger(UserMapper.class);
+
 
     public CreatePatientServiceResponseDto getCreatePatientServiceResponseDto(Patient patient) {
         CreatePatientServiceResponseDto createPatientServiceResponseDto = new CreatePatientServiceResponseDto();
@@ -67,6 +69,22 @@ public class UserMapper {
         return dto;
     }
 
+    public GetPatientServiceResponseDto toServiceResponseDtoFromSummary(PatientSummary summary) {
+        if (summary == null) return null;
+        GetPatientServiceResponseDto dto = new GetPatientServiceResponseDto();
+        dto.setId(summary.getId());
+        dto.setEmail(summary.getEmail());
+        dto.setPhoneNumber(summary.getPhoneNumber());
+        dto.setName(summary.getName());
+        
+        InsuranceInfoDto insurance = new InsuranceInfoDto();
+        insurance.setProviderName(summary.getInsuranceProviderName());
+        insurance.setPolicyNumber(summary.getInsurancePolicyNumber());
+        dto.setInsuranceInfo(insurance);
+        
+        return dto;
+    }
+
     // Single-object mapper for Page.map() — used by paginated endpoints
     public GetPatientControllerResponseDto toControllerResponseDto(GetPatientServiceResponseDto patient) {
         GetPatientControllerResponseDto dto = new GetPatientControllerResponseDto();
@@ -109,7 +127,6 @@ public class UserMapper {
                     getPatientControllerResponseDto1.setPhoneNumber(patient.getPhoneNumber());
                     getPatientControllerResponseDto1.setDateOfBirth(patient.getDateOfBirth());
                     getPatientControllerResponseDto1.setInsuranceInfo(patient.getInsuranceInfo());
-                    log.info("PATIENT: Get Patients Controller -MAPPING- is done");
                     return getPatientControllerResponseDto1;
                 }).toList();
         return result;

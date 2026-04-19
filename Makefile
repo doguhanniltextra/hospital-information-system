@@ -8,10 +8,24 @@ SHELL := /bin/bash
 DOCKER := docker
 
 # Detect 'docker compose' vs 'docker-compose'
-# Prioritize the modern plugin version which handles WSL credentials better
 DOCKER_COMPOSE := $(shell docker compose version >/dev/null 2>&1 && echo "docker compose" || echo "docker-compose")
 
-SERVICES := api-gateway patient-management auth-service doctor-service appointment-service billing-service
+# Multi-compose Configuration
+# We aggregate all bounded contexts to maintain the global orchestration capability of the Makefile
+COMPOSE_INFRA  := -f infrastructure/docker-compose.yml
+COMPOSE_DOMAIN := -f patient-management/docker-compose.yml \
+                  -f auth-service/docker-compose.yml \
+                  -f doctor-service/docker-compose.yml \
+                  -f appointment-service/docker-compose.yml \
+                  -f billing-service/docker-compose.yml \
+                  -f lab-service/docker-compose.yml \
+                  -f inventory-service/docker-compose.yml \
+                  -f admission-service/docker-compose.yml \
+                  -f notification-service/docker-compose.yml
+
+COMPOSE_ALL := $(COMPOSE_INFRA) $(COMPOSE_DOMAIN)
+
+SERVICES := api-gateway patient-management auth-service doctor-service appointment-service billing-service lab-service inventory-service admission-service notification-service
 
 .PHONY: help
 help:
@@ -42,7 +56,7 @@ help:
 .PHONY: dev-up
 dev-up:
 	@echo "Starting all services with Docker Compose..."
-	$(DOCKER_COMPOSE) -f docker-compose.yml up -d
+	$(DOCKER_COMPOSE) $(COMPOSE_ALL) up -d
 	@echo "Services started!"
 	@echo "Services available at:"
 	@echo "   API Gateway:       http://localhost:4004"
@@ -51,12 +65,12 @@ dev-up:
 .PHONY: dev-down
 dev-down:
 	@echo "Stopping all services..."
-	$(DOCKER_COMPOSE) -f docker-compose.yml down
+	$(DOCKER_COMPOSE) $(COMPOSE_ALL) down
 	@echo "Services stopped!"
 
 .PHONY: dev-logs
 dev-logs:
-	$(DOCKER_COMPOSE) -f docker-compose.yml logs -f
+	$(DOCKER_COMPOSE) $(COMPOSE_ALL) logs -f
 
 .PHONY: dev-logs-service
 dev-logs-service:
@@ -65,18 +79,18 @@ dev-logs-service:
 		echo "   Example: make dev-logs-service SVC=patient-management"; \
 		exit 1; \
 	fi
-	$(DOCKER_COMPOSE) -f docker-compose.yml logs -f $(SVC)
+	$(DOCKER_COMPOSE) $(COMPOSE_ALL) logs -f $(SVC)
 
 .PHONY: dev-build
 dev-build:
 	@echo "Building Docker images..."
-	$(DOCKER_COMPOSE) -f docker-compose.yml build
+	$(DOCKER_COMPOSE) $(COMPOSE_ALL) build
 	@echo "Build complete!"
 
 .PHONY: dev-rebuild
 dev-rebuild:
 	@echo "Rebuilding Docker images (no cache)..."
-	$(DOCKER_COMPOSE) -f docker-compose.yml build --no-cache
+	$(DOCKER_COMPOSE) $(COMPOSE_ALL) build --no-cache
 	@echo " Rebuild complete!"
 
 # ============================================================================
@@ -111,7 +125,7 @@ build-service:
 .PHONY: clean-local
 clean-local:
 	@echo "Cleaning up Docker resources..."
-	$(DOCKER_COMPOSE) -f docker-compose.yml down -v
+	$(DOCKER_COMPOSE) $(COMPOSE_ALL) down -v
 	$(DOCKER) system prune -f
 	@echo " Local cleanup complete!"
 

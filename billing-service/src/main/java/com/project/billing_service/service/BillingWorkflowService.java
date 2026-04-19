@@ -1,12 +1,12 @@
 package com.project.billing_service.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.project.billing_service.client.ClaimClient;
 import com.project.billing_service.dto.AppointmentDTO;
 import com.project.billing_service.dto.ClaimRequestDto;
-import com.project.billing_service.model.Claim;
-import com.project.billing_service.model.ClaimStatus;
-import com.project.billing_service.model.Invoice;
-import com.project.billing_service.model.UnbilledCharge;
+import com.project.billing_service.model.*;
+import com.project.billing_service.repository.BillingOutboxRepository;
 import com.project.billing_service.repository.ClaimRepository;
 import com.project.billing_service.repository.InvoiceRepository;
 import com.project.billing_service.repository.UnbilledChargeRepository;
@@ -21,7 +21,9 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -32,23 +34,29 @@ public class BillingWorkflowService {
     private final InvoiceRepository invoiceRepository;
     private final ClaimRepository claimRepository;
     private final UnbilledChargeRepository unbilledChargeRepository;
+    private final BillingOutboxRepository outboxRepository;
     private final InsuranceFactory insuranceFactory;
     private final ClaimClient claimClient;
+    private final ObjectMapper objectMapper;
 
     public BillingWorkflowService(
             InvoiceService invoiceService,
             InvoiceRepository invoiceRepository,
             ClaimRepository claimRepository,
             UnbilledChargeRepository unbilledChargeRepository,
+            BillingOutboxRepository outboxRepository,
             InsuranceFactory insuranceFactory,
-            ClaimClient claimClient
+            ClaimClient claimClient,
+            ObjectMapper objectMapper
     ) {
         this.invoiceService = invoiceService;
         this.invoiceRepository = invoiceRepository;
         this.claimRepository = claimRepository;
         this.unbilledChargeRepository = unbilledChargeRepository;
+        this.outboxRepository = outboxRepository;
         this.insuranceFactory = insuranceFactory;
         this.claimClient = claimClient;
+        this.objectMapper = objectMapper;
     }
 
     @Transactional
@@ -76,8 +84,68 @@ public class BillingWorkflowService {
         invoice.setInvoicePdfUrl(invoicePdfPath);
         invoiceRepository.save(invoice);
 
+        // Transactional Outbox
+        saveOutboxEvent(invoiceId, "INVOICE", "INVOICE_GENERATED", invoice);
+
         if (split.getInsuranceOwes().compareTo(BigDecimal.ZERO) > 0) {
             submitClaim(invoice, appointment.getProviderName(), split.getInsuranceOwes());
+        }
+    }
+
+    @Transactional
+    public void finalizeDischargeBilling(UUID patientId, UUID admissionId, UUID doctorId) {
+        List<UnbilledCharge> openCharges = unbilledChargeRepository.findByPatientIdAndStatus(patientId, "OPEN");
+        
+        if (openCharges.isEmpty()) {
+            log.info("No open charges found for patient {} at discharge.", patientId);
+            return;
+        }
+
+        BigDecimal totalAmount = openCharges.stream()
+                .map(UnbilledCharge::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        UUID invoiceId = UUID.randomUUID();
+        String invoiceNumber = "IP-" + admissionId.toString().substring(0, 8);
+        
+        String invoicePdfPath = invoiceService.generateInvoice(
+                "Hospital Facility",
+                "Patient " + patientId,
+                totalAmount,
+                invoiceNumber
+        ).toAbsolutePath().toString();
+
+        Invoice invoice = new Invoice();
+        invoice.setInvoiceId(invoiceId);
+        invoice.setDoctorId(doctorId); 
+        invoice.setPatientId(patientId);
+        invoice.setTotalAmount(totalAmount);
+        invoice.setPatientOwes(totalAmount); 
+        invoice.setInsuranceOwes(BigDecimal.ZERO);
+        invoice.setInvoicePdfUrl(invoicePdfPath);
+        invoiceRepository.save(invoice);
+
+        // Transactional Outbox
+        Map<String, Object> eventPayload = new HashMap<>();
+        eventPayload.put("invoice", invoice);
+        eventPayload.put("admissionId", admissionId);
+        saveOutboxEvent(invoiceId, "DISCHARGE_BILLING", "DISCHARGE_BILLING_FINALIZED", eventPayload);
+
+        for (UnbilledCharge charge : openCharges) {
+            charge.setStatus("BILLED");
+            unbilledChargeRepository.save(charge);
+        }
+
+        log.info("Final invoice {} generated for patient {} upon discharge.", invoiceNumber, patientId);
+    }
+
+    private void saveOutboxEvent(UUID aggregateId, String aggregateType, String eventType, Object payloadObj) {
+        try {
+            String payload = objectMapper.writeValueAsString(payloadObj);
+            BillingOutboxEvent event = new BillingOutboxEvent(aggregateId.toString(), aggregateType, eventType, payload);
+            outboxRepository.save(event);
+        } catch (JsonProcessingException e) {
+            log.error("Outbox serialization failure for {} event", eventType, e);
         }
     }
 
@@ -173,52 +241,5 @@ public class BillingWorkflowService {
         charge.setStatus("OPEN");
         charge.setCreatedAt(LocalDateTime.now().toInstant(java.time.ZoneOffset.UTC));
         unbilledChargeRepository.save(charge);
-    }
-
-    @Transactional
-    public void finalizeDischargeBilling(UUID patientId, UUID admissionId, UUID doctorId) {
-        List<UnbilledCharge> openCharges = unbilledChargeRepository.findByPatientIdAndStatus(patientId, "OPEN");
-        
-        if (openCharges.isEmpty()) {
-            log.info("No open charges found for patient {} at discharge.", patientId);
-            return;
-        }
-
-        BigDecimal totalAmount = openCharges.stream()
-                .map(UnbilledCharge::getAmount)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        // Generate final invoice for inpatient stay
-        UUID invoiceId = UUID.randomUUID();
-        String invoiceNumber = "IP-" + admissionId.toString().substring(0, 8);
-        
-        // [BACKLOG NOTE - ID 7]: Patient Insurance Enrichment Required at Discharge
-        // Currently assuming NO_INSURANCE. When patient-service integration is added to
-        // billing-service, fetch patient's default insurance here instead of BigDecimal.ZERO.
-        String invoicePdfPath = invoiceService.generateInvoice(
-                "Hospital Facility",
-                "Patient " + patientId,
-                totalAmount,
-                invoiceNumber
-        ).toAbsolutePath().toString();
-
-        Invoice invoice = new Invoice();
-        invoice.setInvoiceId(invoiceId);
-        invoice.setDoctorId(doctorId); 
-        invoice.setPatientId(patientId);
-        invoice.setTotalAmount(totalAmount);
-        
-        invoice.setPatientOwes(totalAmount); 
-        invoice.setInsuranceOwes(BigDecimal.ZERO);
-        invoice.setInvoicePdfUrl(invoicePdfPath);
-        invoiceRepository.save(invoice);
-
-        // Mark all charges as BILLED
-        for (UnbilledCharge charge : openCharges) {
-            charge.setStatus("BILLED");
-            unbilledChargeRepository.save(charge);
-        }
-
-        log.info("Final invoice {} generated for patient {} upon discharge.", invoiceNumber, patientId);
     }
 }

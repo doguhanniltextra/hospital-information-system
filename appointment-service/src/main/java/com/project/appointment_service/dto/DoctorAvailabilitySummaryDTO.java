@@ -1,17 +1,19 @@
 package com.project.appointment_service.dto;
 
+import java.util.UUID;
+
 public class DoctorAvailabilitySummaryDTO {
-    private String doctorId;
+    private UUID id;
     private String name;
     private String specialization;
     private boolean available;
 
-    public String getDoctorId() {
-        return doctorId;
+    public UUID getId() {
+        return id;
     }
 
-    public void setDoctorId(String doctorId) {
-        this.doctorId = doctorId;
+    public void setId(UUID id) {
+        this.id = id;
     }
 
     public String getName() {

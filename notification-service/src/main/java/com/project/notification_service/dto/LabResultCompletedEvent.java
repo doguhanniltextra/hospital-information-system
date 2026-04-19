@@ -7,7 +7,6 @@ import java.util.UUID;
 public class LabResultCompletedEvent {
     public String eventId;
     public UUID patientId;
-    public String patientEmail; // Enriched field
     public UUID doctorId;
     public List<ResultItem> results;
     public String reportPdfUrl;

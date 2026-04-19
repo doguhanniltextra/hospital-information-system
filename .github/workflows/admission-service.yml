@@ -7,6 +7,7 @@ on:
       - 'admission-service/**'
       - '.github/workflows/admission-service.yml'
       - 'patient-management-bom/**'
+      - '!**.md'
   workflow_dispatch:
 
 jobs:

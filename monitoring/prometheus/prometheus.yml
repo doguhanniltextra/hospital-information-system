@@ -33,3 +33,23 @@ scrape_configs:
     static_configs:
       - targets: ['billing-service:8081']
 
+  - job_name: "lab-service"
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ["lab-service:8087"]
+
+  - job_name: "inventory-service"
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ["inventory-service:8088"]
+
+  - job_name: "admission-service"
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ["admission-service:8086"]
+
+  - job_name: "notification-service"
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ["notification-service:8090"]
+

@@ -5,8 +5,10 @@ import com.project.appointment_service.dto.AppointmentResponseDTO;
 import com.project.appointment_service.dto.AppointmentUpdateDtoResponse;
 import com.project.appointment_service.dto.DoctorAvailabilityPageResponseDTO;
 import com.project.appointment_service.dto.request.CreateAppointmentServiceRequestDto;
+import com.project.appointment_service.dto.response.AppointmentSummaryDto;
 import com.project.appointment_service.dto.response.CreateAppointmentServiceResponseDto;
 import com.project.appointment_service.helper.AppointmentMapper;
+import com.project.appointment_service.helper.AppointmentSummaryMapper;
 import com.project.appointment_service.model.ServiceType;
 import com.project.appointment_service.utils.IdValidation;
 import org.springframework.data.domain.Page;
@@ -86,6 +88,20 @@ public class AppointmentController {
             return ResponseEntity.noContent().build();
         }
         return ResponseEntity.ok(appointments);
+    }
+
+    @GetMapping(Endpoints.GET_ALL_APPOINTMENT_SUMMARIES)
+    @org.springframework.security.access.prepost.PreAuthorize("hasAnyRole('ADMIN', 'RECEPTIONIST')")
+    public ResponseEntity<Page<AppointmentSummaryDto>> getAllAppointmentSummaries(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        int safeSize = Math.min(size, 100);
+        Pageable pageable = PageRequest.of(page, safeSize);
+        Page<AppointmentSummaryDto> summaries = appointmentService.getAllAppointmentSummaries(pageable);
+        if (summaries.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.ok(summaries);
     }
 
     @GetMapping(Endpoints.VALIDATE_IDS)

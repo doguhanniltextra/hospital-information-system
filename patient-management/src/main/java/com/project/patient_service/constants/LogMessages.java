@@ -16,4 +16,6 @@ public class LogMessages {
     public static final String SERVICE_DELETE_TRIGGERED = "PATIENT: SERVICE - DELETE - TRIGGERED";
     public static final String SERVICE_FIND_BY_ID_TRIGGERED = "PATIENT: SERVICE - FIND_BY_ID - TRIGGERED";
     public static final String SERVICE_FIND_BY_EMAIL_TRIGGERED = "PATIENT: SERVICE - FIND_BY_EMAIL - TRIGGERED";
+    public static final String SERVICE_FIND_BIR_LIST_TRIGGERED = "PATIENT: SERVICE - FIND_BIR_LIST - TRIGGERED";
 }
+

@@ -40,13 +40,13 @@ spring:
             - StripPrefix=1
             - SetRequestHeader=Content-Type, application/json
         - id: lab-service-route
-          uri: ${LAB_SERVICE_URL:http://lab-service:8087}
+          uri: ${SUPPORT_SERVICE_URL:http://support-service:8085}
           predicates:
             - Path=/api/labs/**
           filters:
             - StripPrefix=1
         - id: inventory-service-route
-          uri: ${INVENTORY_SERVICE_URL:http://inventory-service:8088}
+          uri: ${SUPPORT_SERVICE_URL:http://support-service:8085}
           predicates:
             - Path=/api/inventory/**
           filters:
@@ -63,6 +63,44 @@ spring:
             - Path=/api/notifications/**
           filters:
             - StripPrefix=1
+
+        # AGGREGATED OPENAPI ROUTES
+        - id: patient-docs
+          uri: http://patient-management:8080
+          predicates:
+            - Path=/aggregate/patient/v3/api-docs
+          filters:
+            - RewritePath=/aggregate/patient/v3/api-docs, /api-docs
+        - id: doctor-docs
+          uri: http://doctor-service:8083
+          predicates:
+            - Path=/aggregate/doctor/v3/api-docs
+          filters:
+            - RewritePath=/aggregate/doctor/v3/api-docs, /api-docs
+        - id: appointment-docs
+          uri: http://appointment-service:8084
+          predicates:
+            - Path=/aggregate/appointment/v3/api-docs
+          filters:
+            - RewritePath=/aggregate/appointment/v3/api-docs, /api-docs
+        - id: support-docs
+          uri: http://support-service:8085
+          predicates:
+            - Path=/aggregate/support/v3/api-docs
+          filters:
+            - RewritePath=/aggregate/support/v3/api-docs, /api-docs
+        - id: admission-docs
+          uri: http://admission-service:8086
+          predicates:
+            - Path=/aggregate/admission/v3/api-docs
+          filters:
+            - RewritePath=/aggregate/admission/v3/api-docs, /api-docs
+        - id: notification-docs
+          uri: http://notification-service:8090
+          predicates:
+            - Path=/aggregate/notification/v3/api-docs
+          filters:
+            - RewritePath=/aggregate/notification/v3/api-docs, /api-docs
 
 logging:
   level:

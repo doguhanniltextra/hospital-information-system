@@ -12,6 +12,7 @@ public class AppointmentResponseDTO {
         dto.setPaymentStatus(createAppointmentServiceResponseDto.isPaymentStatus());
         dto.setServiceDate(createAppointmentServiceResponseDto.getServiceDate());
         dto.setServiceType(createAppointmentServiceResponseDto.getServiceType());
+        dto.setStatus(createAppointmentServiceResponseDto.getStatus());
         return dto;
     }
 
@@ -21,6 +22,7 @@ public class AppointmentResponseDTO {
         dto.setPaymentStatus(updatedAppointment.isPaymentStatus());
         dto.setServiceDate(updatedAppointment.getServiceDate());
         dto.setServiceType(updatedAppointment.getServiceType());
+        dto.setStatus(updatedAppointment.getStatus() != null ? updatedAppointment.getStatus().name() : null);
         return dto;
     }
 }

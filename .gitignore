@@ -5,3 +5,4 @@ target/
 .to-do
 .env
 hack/
+agent/

@@ -1,0 +1,70 @@
+version: "3.8"
+
+services:
+  auth-db:
+    image: postgres:15-alpine
+    container_name: auth-db
+    restart: unless-stopped
+    ports:
+      - "5438:5432"
+    environment:
+      POSTGRES_DB: auth_db
+      POSTGRES_USER: auth_user
+      POSTGRES_PASSWORD: auth_pass_123
+    volumes:
+      - auth-db-data:/var/lib/postgresql/data
+      - ./init/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - patient-global-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U auth_user -d auth_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  auth-service:
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+        reservations:
+          cpus: "0.25"
+          memory: 256M
+    build:
+      context: ../
+      dockerfile: auth-service/Dockerfile
+    container_name: auth-service
+    restart: unless-stopped
+    ports:
+      - "8089:8089"
+    depends_on:
+      auth-db:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      SERVER_PORT: 8089
+      SPRING_DATASOURCE_URL: jdbc:postgresql://auth-db:5432/auth_db?currentSchema=auth_schema&reWriteBatchedInserts=true
+      SPRING_DATASOURCE_USERNAME: auth_user
+      SPRING_DATASOURCE_PASSWORD: auth_pass_123
+      JWT_SECRET: your-secret-jwt-key-change-in-production
+      APP_SECRET: A7f9K2mN8pQ3sT6vY1zB4cD7gH0jL3nP6qR9uW2xE5yI8oU1aS4dF7hK0mP3sV6z
+      API_KEY: your-api-key-change-in-production
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    volumes:
+      - ./src:/app/src
+    networks:
+      - patient-global-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8089/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  auth-db-data:
+    driver: local
+
+networks:
+  patient-global-network:
+    external: true

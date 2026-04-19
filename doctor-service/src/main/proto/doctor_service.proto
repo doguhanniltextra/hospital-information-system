@@ -1,0 +1,104 @@
+syntax = "proto3";
+
+package doctor.service;
+option java_multiple_files = true;
+option java_package = "com.project.grpc";
+
+enum Specialization {
+  CARDIOLOGIST = 0;
+  DERMATOLOGIST = 1;
+  NEUROLOGIST = 2;
+  UROLOGIST = 3;
+}
+
+enum ServiceType {
+  CONSULTATION = 0;
+  SURGERY = 1;
+  VACCINATION = 2;
+}
+
+// REQUEST: "Find doctor by ID"
+message FindDoctorRequest {
+  string doctor_id = 1;  // UUID as string
+}
+
+// RESPONSE: Doctor details
+message DoctorResponse {
+  string id = 1;
+  string name = 2;
+  string email = 3;
+  string number = 4;
+  Specialization specialization = 5;
+  string hospital_name = 6;
+  string department = 7;
+  int32 license_number = 8;
+  int32 years_of_experience = 9;
+  int32 patient_count = 10;
+  bool available = 11;
+}
+
+// REQUEST: "Can this doctor work between these hours?"
+message CheckAvailabilityRequest {
+  string doctor_id = 1;
+  string start_time = 2;  // ISO8601 format string
+  string end_time = 3;    // ISO8601 format string
+  ServiceType service_type = 4; 
+}
+
+// RESPONSE: Availability details
+message AvailabilityResponse {
+  bool available = 1;
+  string reason = 2;  // e.g., "Doctor on leave" or "Available"
+  repeated AvailableSlot slots = 3;  // Multiple available time slots
+}
+
+message AvailableSlot {
+  string start_time = 1;
+  string end_time = 2;
+}
+
+// RESPONSE: Simple boolean
+message ExistsResponse {
+  bool exists = 1;
+}
+
+// THE ACTUAL SERVICE INTERFACE
+service DoctorService {
+  // RPC 1: "Check if doctor exists"
+  rpc ExistsById(FindDoctorRequest) returns (ExistsResponse);
+
+  // RPC 2: "Get doctor details by ID"
+  rpc FindById(FindDoctorRequest) returns (DoctorResponse);
+  
+  // RPC 3: "Check if doctor is available in this time window"
+  rpc CheckAvailability(CheckAvailabilityRequest) returns (AvailabilityResponse);
+
+  // RPC 4: "Increase doctor's patient count"
+  // RPC 4: "Increase doctor's patient count"
+  rpc IncreasePatientCount(FindDoctorRequest) returns (ExistsResponse);
+
+  // RPC 5: "Get available doctors with paging"
+  rpc GetAvailableDoctors(GetAvailableDoctorsRequest) returns (AvailabilityPageResponse);
+}
+
+message GetAvailableDoctorsRequest {
+  string start_time = 1;
+  string end_time = 2;
+  ServiceType service_type = 3;
+  string specialization = 4;
+  int32 page = 5;
+  int32 size = 6;
+}
+
+message AvailabilityPageResponse {
+  repeated DoctorAvailabilitySummary doctors = 1;
+  int64 total_elements = 2;
+  int32 total_pages = 3;
+}
+
+message DoctorAvailabilitySummary {
+  string id = 1;
+  string name = 2;
+  string specialization = 3;
+  bool available = 4;
+}

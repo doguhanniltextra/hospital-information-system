@@ -1,4 +1,4 @@
-package com.project.appointment_service.service;
+package com.project.service;
 
 import com.project.appointment_service.dto.DoctorAvailabilityResponseDTO;
 import com.project.appointment_service.dto.request.CreateAppointmentServiceRequestDto;
@@ -10,6 +10,8 @@ import com.project.appointment_service.model.Appointment;
 import com.project.appointment_service.model.PaymentType;
 import com.project.appointment_service.model.ServiceType;
 import com.project.appointment_service.repository.AppointmentRepository;
+import com.project.appointment_service.service.AppointmentService;
+import com.project.appointment_service.service.AppointmentSummaryService;
 import com.project.appointment_service.utils.IdValidation;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -39,6 +41,8 @@ public class AppointmentServiceAvailabilityTest {
     private AppointmentMapper appointmentMapper;
     @Mock
     private AppointmentValidator appointmentValidator;
+    @Mock
+    private AppointmentSummaryService appointmentSummaryService;
 
     @InjectMocks
     private AppointmentService appointmentService;

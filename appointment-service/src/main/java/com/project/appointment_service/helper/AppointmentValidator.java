@@ -53,8 +53,6 @@ public class AppointmentValidator {
         AppointmentKafkaResponseDto appointmentDTO = new AppointmentKafkaResponseDto(
                 appointment.getDoctorId().toString(),
                 appointment.getPatientId().toString(),
-                patientInfo != null ? patientInfo.getEmail() : "unknown@example.com",
-                "NOT_PROVIDED", // PatientInfoDTO doesn't have phone, using placeholder
                 appointment.getAmount(),
                 status,
                 providerType,

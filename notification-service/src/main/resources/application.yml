@@ -6,10 +6,16 @@ spring:
     name: notification-service
   
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/patient_db?currentSchema=notification_schema}
-    username: ${SPRING_DATASOURCE_USERNAME:notification_user}
-    password: ${SPRING_DATASOURCE_PASSWORD:notification_pass_123}
-    driver-class-name: org.postgresql.Driver
+    write:
+      jdbc-url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://notification-db:5432/notification_db?currentSchema=notification_schema}
+      username: ${SPRING_DATASOURCE_USERNAME:notification_user}
+      password: ${SPRING_DATASOURCE_PASSWORD:notification_pass_123}
+      driver-class-name: org.postgresql.Driver
+    read:
+      jdbc-url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://notification-db:5432/notification_db?currentSchema=notification_schema}
+      username: ${SPRING_DATASOURCE_USERNAME:notification_user}
+      password: ${SPRING_DATASOURCE_PASSWORD:notification_pass_123}
+      driver-class-name: org.postgresql.Driver
 
   jpa:
     hibernate:
@@ -19,6 +25,16 @@ spring:
       hibernate:
         format_sql: true
         default_schema: notification_schema
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+  cache:
+    type: redis
+    redis:
+      time-to-live: 3600000 # 1 hour
+      cache-null-values: false
 
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
@@ -35,6 +51,12 @@ spring:
       observation-enabled: true
     listener:
       observation-enabled: true
+
+grpc:
+  client:
+    patient-service:
+      address: 'static://localhost:9090'
+      negotiation-type: plaintext
 
 management:
   tracing:

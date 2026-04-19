@@ -1,0 +1,19 @@
+name: CI - Support Service
+
+on:
+  push:
+    branches: [ "master" ]
+    paths:
+      - 'support-service/**'
+      - '.github/workflows/support-service.yml'
+      - 'patient-management-bom/**'
+      - '!**.md'
+  workflow_dispatch:
+
+jobs:
+  build:
+    uses: ./.github/workflows/_docker-build.yml
+    with:
+      service-name: support-service
+      context: ./support-service
+      dockerfile: ./support-service/Dockerfile

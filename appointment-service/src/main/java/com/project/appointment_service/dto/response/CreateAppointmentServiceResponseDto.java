@@ -33,6 +33,8 @@ public class CreateAppointmentServiceResponseDto {
     @NotNull
     private PaymentType paymentType;
 
+    private String status;
+
     public UUID getId() {
         return id;
     }
@@ -103,5 +105,13 @@ public class CreateAppointmentServiceResponseDto {
 
     public void setPaymentType(PaymentType paymentType) {
         this.paymentType = paymentType;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
     }
 }

@@ -12,6 +12,8 @@ public class AppointmentDTO {
     public float amount;
     public PaymentType paymentType;
     public boolean paymentStatus;
+    public String status;
+
 
 
     public String getServiceDate() {
@@ -43,6 +45,12 @@ public class AppointmentDTO {
     }
     public void setPaymentStatus(boolean paymentStatus) {
         this.paymentStatus = paymentStatus;
+    }
+    public String getStatus() {
+        return status;
+    }
+    public void setStatus(String status) {
+        this.status = status;
     }
 
     

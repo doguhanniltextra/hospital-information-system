@@ -34,6 +34,16 @@ public class Appointment {
     private boolean paymentStatus;
     @NotNull
     private PaymentType paymentType;
+    @NotNull
+    private AppointmentStatus status;
+
+    public AppointmentStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(AppointmentStatus status) {
+        this.status = status;
+    }
 
 
     public String getServiceDateEnd() {

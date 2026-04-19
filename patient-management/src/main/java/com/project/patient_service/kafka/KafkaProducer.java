@@ -34,7 +34,7 @@ public class KafkaProducer {
             Map<String, Object> event = userValidator.getStringObjectMap(kafkaPatientRequestDto);
             String json = objectMapper.writeValueAsString(event);
 
-            CompletableFuture<?> future = kafkaTemplate.send("patient", json);
+            CompletableFuture<?> future = kafkaTemplate.send("patient-updated.v1", json);
             future.whenComplete((result, ex) -> {
                 if (ex != null) {
                     log.error("KAFKA: Failed to send PATIENT_CREATED event for patientId={}",
@@ -59,7 +59,7 @@ public class KafkaProducer {
 
             String json = objectMapper.writeValueAsString(event);
 
-            CompletableFuture<?> future = kafkaTemplate.send("patient", json);
+            CompletableFuture<?> future = kafkaTemplate.send("patient-updated.v1", json);
             future.whenComplete((result, ex) -> {
                 if (ex != null) {
                     log.error("KAFKA: Failed to send PATIENT_DELETED event for patientId={}", patientId, ex);
@@ -79,5 +79,9 @@ public class KafkaProducer {
 
     public void sendDeleteEvent(UUID patientId) {
         sendDeleteEventAsync(patientId);
+    }
+
+    public void sendRawEvent(String topic, String json) {
+        kafkaTemplate.send(topic, json);
     }
 }

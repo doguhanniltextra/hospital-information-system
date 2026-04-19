@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+package patient.query;
+option java_multiple_files = true;
+option java_package = "com.project.patient_service.grpc";
+
+// REQUEST: Asking patient-management "Does this patient exist?"
+message FindPatientRequest {
+  string patient_id = 1;  // UUID as string
+}
+
+// RESPONSE: patient-management answers "Yes/No and here's the patient data"
+message PatientResponse {
+  string id = 1;
+  string name = 2;
+  string email = 3;
+  string phone_number = 4;
+  string address = 5;
+  string date_of_birth = 6; // ISO8601 string
+}
+
+// RESPONSE: Simple boolean for "exists" check
+message ExistsResponse {
+  bool exists = 1;
+}
+
+// THE ACTUAL INTERFACE (like a Java interface)
+service PatientQueryService {
+  // RPC 1: "Give me patient details by ID"
+  rpc FindById(FindPatientRequest) returns (PatientResponse);
+  
+  // RPC 2: "Tell me if this patient exists"
+  rpc ExistsById(FindPatientRequest) returns (ExistsResponse);
+}

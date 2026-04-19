@@ -31,5 +31,20 @@ public class KafkaProducer {
             log.error(LogMessages.KAFKA_SEND_EVENT_ERROR, e);
         }
     }
+
+    public void sendGenericEvent(String topic, Object payload) {
+        try {
+            String json = objectMapper.writeValueAsString(payload);
+            kafkaTemplate.send(topic, json);
+            log.info("KAFKA: Sent event to topic {}", topic);
+        } catch (JsonProcessingException e) {
+            log.error("KAFKA: Failed to serialize event for topic {}", topic, e);
+            throw new RuntimeException("Kafka serialization failure", e);
+        }
+    }
+
+    public void sendRawEvent(String topic, String json) {
+        kafkaTemplate.send(topic, json);
+    }
 }
 
