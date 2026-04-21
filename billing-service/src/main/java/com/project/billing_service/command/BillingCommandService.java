@@ -3,7 +3,6 @@ package com.project.billing_service.command;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.project.billing_service.client.ClaimClient;
-import com.project.billing_service.command.InvoiceService;
 import com.project.billing_service.dto.AppointmentDTO;
 import com.project.billing_service.dto.ClaimRequestDto;
 import com.project.billing_service.event.InvoiceGeneratedEvent;
@@ -23,7 +22,9 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -75,7 +76,7 @@ public class BillingCommandService {
         String invoicePdfPath = invoiceService.generateInvoice(
                 "Dr. " + appointment.getDoctorId(),
                 "Patient " + appointment.getPatientId(),
-                split.getPatientOwes(),
+                totalAmount,
                 invoiceNumber
         ).toAbsolutePath().toString();
 
@@ -114,13 +115,23 @@ public class BillingCommandService {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         UUID invoiceId = UUID.randomUUID();
+        String invoiceNumber = "IP-" + admissionId.toString().substring(0, 8);
+        
+        String invoicePdfPath = invoiceService.generateInvoice(
+                "Hospital Facility",
+                "Patient " + patientId,
+                totalCharges,
+                invoiceNumber
+        ).toAbsolutePath().toString();
+
         Invoice invoice = new Invoice();
         invoice.setInvoiceId(invoiceId);
         invoice.setPatientId(patientId);
         invoice.setDoctorId(doctorId);
         invoice.setTotalAmount(totalCharges);
-        invoice.setPatientOwes(totalCharges); // Assume full payment for simplicity
+        invoice.setPatientOwes(totalCharges); 
         invoice.setInsuranceOwes(BigDecimal.ZERO);
+        invoice.setInvoicePdfUrl(invoicePdfPath);
         invoiceRepository.save(invoice);
 
         eventPublisher.publishEvent(new InvoiceGeneratedEvent(invoice));
@@ -129,19 +140,24 @@ public class BillingCommandService {
         openCharges.forEach(charge -> charge.setStatus("BILLED"));
         unbilledChargeRepository.saveAll(openCharges);
 
-        saveOutboxEvent(invoiceId, "INVOICE", "DISCHARGE_INVOICE_GENERATED", invoice);
+        // Transactional Outbox
+        Map<String, Object> eventPayload = new HashMap<>();
+        eventPayload.put("invoice", invoice);
+        eventPayload.put("admissionId", admissionId);
+        saveOutboxEvent(invoiceId, "DISCHARGE_BILLING", "DISCHARGE_BILLING_FINALIZED", eventPayload);
     }
 
-    private void saveOutboxEvent(UUID aggregateId, String aggregateType, String eventType, Invoice invoice) {
+    private void saveOutboxEvent(UUID aggregateId, String aggregateType, String eventType, Object payloadObj) {
         try {
+            String payload = objectMapper.writeValueAsString(payloadObj);
             BillingOutboxEvent outboxEvent = new BillingOutboxEvent();
             outboxEvent.setAggregateId(aggregateId.toString());
             outboxEvent.setAggregateType(aggregateType);
             outboxEvent.setEventType(eventType);
-            outboxEvent.setPayload(objectMapper.writeValueAsString(invoice));
+            outboxEvent.setPayload(payload);
             outboxRepository.save(outboxEvent);
         } catch (JsonProcessingException e) {
-            log.error("Failed to serialize invoice for outbox", e);
+            log.error("Failed to serialize payload for outbox", e);
         }
     }
 
@@ -161,17 +177,25 @@ public class BillingCommandService {
             claimRepository.save(claim);
         } catch (Exception e) {
             log.error("Failed to submit claim for invoice {}", invoice.getInvoiceId(), e);
+            Claim claim = new Claim();
+            claim.setClaimId(UUID.randomUUID());
+            claim.setInvoiceId(invoice.getInvoiceId());
+            claim.setAmount(insuranceAmount);
+            claim.setStatus(ClaimStatus.FAILED);
+            claimRepository.save(claim);
         }
     }
 
-    @Scheduled(fixedDelayString = "${claims.retry.fixed-delay-ms}")
-    public void retryFailedClaims() {
-        List<Claim> failedClaims = claimRepository.findByStatus(ClaimStatus.FAILED);
-        for (Claim claim : failedClaims) {
+    @Scheduled(fixedDelayString = "${claims.retry.fixed-delay-ms:300000}")
+    public void retryFailedAndPendingClaims() {
+        log.info("Retrying failed and pending claims...");
+        List<Claim> retryableClaims = claimRepository.findByStatus(ClaimStatus.FAILED);
+        // Also include pending if needed, but let's stick to failed for now as per previous command service
+        for (Claim claim : retryableClaims) {
             try {
                 ClaimRequestDto claimRequest = new ClaimRequestDto();
                 claimRequest.setInvoiceId(claim.getInvoiceId());
-                claimRequest.setProviderName("unknown");
+                claimRequest.setProviderName("unknown"); // Note: provider name should ideally be stored in Claim model
                 claimRequest.setAmount(claim.getAmount());
 
                 claimClient.submitClaim(claimRequest);
@@ -195,7 +219,7 @@ public class BillingCommandService {
         charge.setAmount(amount);
         charge.setCurrency(currency);
         charge.setStatus("OPEN");
-        charge.setCreatedAt(LocalDateTime.now().toInstant(java.time.ZoneOffset.UTC));
+        charge.setCreatedAt(Instant.now());
         unbilledChargeRepository.save(charge);
     }
 
@@ -211,7 +235,7 @@ public class BillingCommandService {
         charge.setAmount(unitPrice.multiply(BigDecimal.valueOf(quantity)));
         charge.setCurrency(currency);
         charge.setStatus("OPEN");
-        charge.setCreatedAt(LocalDateTime.now().toInstant(java.time.ZoneOffset.UTC));
+        charge.setCreatedAt(Instant.now());
         unbilledChargeRepository.save(charge);
     }
 
@@ -227,7 +251,7 @@ public class BillingCommandService {
         charge.setAmount(amount);
         charge.setCurrency(currency);
         charge.setStatus("OPEN");
-        charge.setCreatedAt(LocalDateTime.now().toInstant(java.time.ZoneOffset.UTC));
+        charge.setCreatedAt(Instant.now());
         unbilledChargeRepository.save(charge);
     }
 }

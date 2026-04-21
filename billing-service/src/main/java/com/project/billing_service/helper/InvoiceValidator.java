@@ -1,7 +1,7 @@
 package com.project.billing_service.helper;
 
 import com.project.billing_service.constants.LogMessages;
-import com.project.billing_service.service.InvoiceService;
+import com.project.billing_service.command.InvoiceService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -17,12 +17,12 @@ import java.util.Map;
 
 @Component
 public class InvoiceValidator {
-    private static final Logger log = LoggerFactory.getLogger(InvoiceService.class);
+    private static final Logger log = LoggerFactory.getLogger(InvoiceValidator.class);
 
     public  void createFailedToSaveInvoicePDFError(Path invoicePath, ResponseEntity<byte[]> response) {
         try {
             Files.write(invoicePath, response.getBody());
-            log.info("PDF is crated");
+            log.info("PDF is created");
         } catch (IOException e) {
             throw new RuntimeException(LogMessages.FAILED_TO_SAVE_INVOICE_PDF, e);
         }
