@@ -38,12 +38,23 @@ public class Patient {
     private InsuranceInfo insuranceInfo;
 
 
+    @Column(name = "auth_user_id")
+    private UUID authUserId;
+
     public UUID getId() {
         return id;
     }
 
     public void setId(UUID id) {
         this.id = id;
+    }
+
+    public UUID getAuthUserId() {
+        return authUserId;
+    }
+
+    public void setAuthUserId(UUID authUserId) {
+        this.authUserId = authUserId;
     }
 
     public @NotNull String getName() {

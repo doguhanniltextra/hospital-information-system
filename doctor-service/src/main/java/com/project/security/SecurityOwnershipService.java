@@ -21,8 +21,10 @@ public class SecurityOwnershipService {
     public boolean isDoctorOwner(Authentication authentication, UUID doctorId) {
         if (authentication == null || !authentication.isAuthenticated()) return false;
         try {
-            UUID tokenUserId = UUID.fromString(authentication.getName()); 
-            return doctorId.equals(tokenUserId);
+            UUID tokenUserId = UUID.fromString(authentication.getName());
+            return doctorRepository.findById(doctorId)
+                    .map(doctor -> tokenUserId.equals(doctor.getAuthUserId()))
+                    .orElse(false);
         } catch (IllegalArgumentException e) {
             return false;
         }

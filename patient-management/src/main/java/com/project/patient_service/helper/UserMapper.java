@@ -113,6 +113,7 @@ public class UserMapper {
         createPatientServiceRequestDto.setRegisteredDate(createPatientControllerRequestDto.getRegisteredDate());
         createPatientServiceRequestDto.setDateOfBirth(createPatientControllerRequestDto.getDateOfBirth());
         createPatientServiceRequestDto.setInsuranceInfo(createPatientControllerRequestDto.getInsuranceInfo());
+        createPatientServiceRequestDto.setAuthUserId(createPatientControllerRequestDto.getAuthUserId());
         return createPatientServiceRequestDto;
     }
     public  List<GetPatientControllerResponseDto> getGetPatientControllerResponseDtos(List<GetPatientServiceResponseDto> patients) {

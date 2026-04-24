@@ -44,6 +44,7 @@ public class UserValidator {
         patient.setDateOfBirth(parseDateForCreatePatient(patientRequestDTO.getDateOfBirth()));
         patient.setRegisteredDate(parseDateForCreatePatient(patientRequestDTO.getRegisteredDate()));
         patient.setInsuranceInfo(toInsuranceInfo(patientRequestDTO.getInsuranceInfo()));
+        patient.setAuthUserId(patientRequestDTO.getAuthUserId());
         return patient;
     }
     private LocalDate parseDateForCreatePatient(String dateStr) {

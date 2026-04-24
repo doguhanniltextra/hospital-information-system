@@ -28,12 +28,23 @@ public class CreatePatientControllerRequestDto {
     private String registeredDate;
     private InsuranceInfoDto insuranceInfo;
 
+    @NotNull(message = "Auth User ID is required")
+    private java.util.UUID authUserId;
+
     public String getName() {
         return name;
     }
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public java.util.UUID getAuthUserId() {
+        return authUserId;
+    }
+
+    public void setAuthUserId(java.util.UUID authUserId) {
+        this.authUserId = authUserId;
     }
 
     public String getEmail() {

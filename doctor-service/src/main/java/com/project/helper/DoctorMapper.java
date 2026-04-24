@@ -42,6 +42,7 @@ public class DoctorMapper {
         doctor.setAvailable(createDoctorServiceRequestDto.isAvailable());
         doctor.setPatientCount(createDoctorServiceRequestDto.getPatientCount());
         doctor.setMaxPatientCount(createDoctorServiceRequestDto.getMaxPatientCount());
+        doctor.setAuthUserId(createDoctorServiceRequestDto.getAuthUserId());
         return doctor;
     }
 
@@ -113,6 +114,7 @@ public class DoctorMapper {
         createDoctorServiceRequestDto.setAvailable(createDoctorControllerRequestDto.isAvailable());
         createDoctorServiceRequestDto.setPatientCount(createDoctorControllerRequestDto.getPatientCount());
         createDoctorServiceRequestDto.setMaxPatientCount(createDoctorControllerRequestDto.getMaxPatientCount());
+        createDoctorServiceRequestDto.setAuthUserId(createDoctorControllerRequestDto.getAuthUserId());
         return createDoctorServiceRequestDto;
     }
 

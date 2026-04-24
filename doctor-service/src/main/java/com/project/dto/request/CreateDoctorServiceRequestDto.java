@@ -143,4 +143,14 @@ public class CreateDoctorServiceRequestDto {
     public void setMaxPatientCount(int maxPatientCount) {
         this.maxPatientCount = maxPatientCount;
     }
+
+    private UUID authUserId;
+
+    public UUID getAuthUserId() {
+        return authUserId;
+    }
+
+    public void setAuthUserId(UUID authUserId) {
+        this.authUserId = authUserId;
+    }
 }

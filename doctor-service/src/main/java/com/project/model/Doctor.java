@@ -158,4 +158,16 @@ public class Doctor {
     public void setMaxPatientCount(int maxPatientCount) {
         this.maxPatientCount = maxPatientCount;
     }
+
+    @NotNull
+    @Column(name = "auth_user_id")
+    private UUID authUserId;
+
+    public UUID getAuthUserId() {
+        return authUserId;
+    }
+
+    public void setAuthUserId(UUID authUserId) {
+        this.authUserId = authUserId;
+    }
 }
