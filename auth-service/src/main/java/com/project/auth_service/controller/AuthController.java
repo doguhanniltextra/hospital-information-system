@@ -35,7 +35,9 @@ public class AuthController {
     private final PasswordEncoder passwordEncoder;
     private final AuthValidator authValidator;
 
-    public AuthController(JwtService jwtService, UserRepository userRepository, RefreshTokenRepository refreshTokenRepository, PasswordEncoder passwordEncoder, AuthValidator authValidator) {
+    public AuthController(JwtService jwtService, UserRepository userRepository,
+            RefreshTokenRepository refreshTokenRepository, PasswordEncoder passwordEncoder,
+            AuthValidator authValidator) {
         this.jwtService = jwtService;
         this.userRepository = userRepository;
         this.refreshTokenRepository = refreshTokenRepository;
@@ -55,23 +57,25 @@ public class AuthController {
     public ResponseEntity<?> register(@Valid @RequestBody RegisterRequestDto registerRequestDto) {
 
         log.info(LogMessages.REGISTER_METHOD_TRIGGERED);
-        ResponseEntity<String> usernameCheckResult = authValidator.checkIfUsernameAlreadyExistsOrNotForRegisterMethod(registerRequestDto, userRepository);
-        if (usernameCheckResult != null) return usernameCheckResult;
+        ResponseEntity<String> usernameCheckResult = authValidator
+                .checkIfUsernameAlreadyExistsOrNotForRegisterMethod(registerRequestDto, userRepository);
+        if (usernameCheckResult != null)
+            return usernameCheckResult;
         log.info(LogMessages.REGISTER_USERNAME_EXISTS);
         User user = authValidator.registerRequestDtoToUserForRegisterMethod(registerRequestDto, passwordEncoder);
 
         userRepository.save(user);
         log.info(LogMessages.REGISTER_USER_SAVED);
-        
+
         String accessToken = jwtService.generateAccessToken(user.getName(), user.getId().toString(), user.getRoles());
         RefreshToken refreshTokenObj = createRefreshToken(user);
-        
+
         log.info(LogMessages.REGISTER_TOKEN_GENERATED);
         return ResponseEntity.ok()
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(new RegisterResponseDto("User registered successfully", accessToken, refreshTokenObj.getToken(), jwtService.getAccessTokenExpiration() / 1000));
+                .body(new RegisterResponseDto("User registered successfully", accessToken, refreshTokenObj.getToken(),
+                        jwtService.getAccessTokenExpiration() / 1000));
     }
-
 
     @PostMapping(path = Endpoints.LOGIN, produces = Endpoints.PRODUCES)
     public ResponseEntity<?> login(@RequestBody LoginRequestDto loginRequestDto) {
@@ -79,23 +83,28 @@ public class AuthController {
         User user = userRepository.findByName(loginRequestDto.getName())
                 .orElse(null);
 
-        ResponseEntity<String> checkUsernameOrPassword = authValidator.checkIfUsernameOrPasswordIsEmptyForLoginMethod(user);
-        if (checkUsernameOrPassword != null) return checkUsernameOrPassword;
+        ResponseEntity<String> checkUsernameOrPassword = authValidator
+                .checkIfUsernameOrPasswordIsEmptyForLoginMethod(user);
+        if (checkUsernameOrPassword != null)
+            return checkUsernameOrPassword;
         log.info(LogMessages.LOGIN_USERNAME_NOT_FOUND);
 
-        ResponseEntity<String> passwordCheckResult = authValidator.checkIfPasswordIsInvalidForLogin(loginRequestDto, user, passwordEncoder);
-        if (passwordCheckResult != null) return passwordCheckResult;
+        ResponseEntity<String> passwordCheckResult = authValidator.checkIfPasswordIsInvalidForLogin(loginRequestDto,
+                user, passwordEncoder);
+        if (passwordCheckResult != null)
+            return passwordCheckResult;
         log.info(LogMessages.LOGIN_INVALID_CREDENTIALS);
-        
+
         String accessToken = jwtService.generateAccessToken(user.getName(), user.getId().toString(), user.getRoles());
         RefreshToken refreshTokenObj = createRefreshToken(user);
-        
+
         log.info(LogMessages.LOGIN_TOKEN_GENERATED);
 
-        return ResponseEntity.ok(new LoginResponseDto(LogMessages.LOGIN_SUCCESS, accessToken, refreshTokenObj.getToken(), jwtService.getAccessTokenExpiration() / 1000));
+        return ResponseEntity.ok(new LoginResponseDto(LogMessages.LOGIN_SUCCESS, accessToken,
+                refreshTokenObj.getToken(), jwtService.getAccessTokenExpiration() / 1000));
     }
 
-    @PostMapping(path = "/refresh", produces = Endpoints.PRODUCES)
+    @PostMapping(path = Endpoints.REFRESH, produces = Endpoints.PRODUCES)
     public ResponseEntity<?> refresh(@RequestBody RefreshTokenRequestDto requestDto) {
         String requestToken = requestDto.getRefreshToken();
 
@@ -103,27 +112,31 @@ public class AuthController {
                 .map(token -> {
                     if (token.getExpiresAt().compareTo(Instant.now()) < 0) {
                         refreshTokenRepository.delete(token);
-                        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Refresh token was expired. Please make a new signin request");
+                        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                                .body("Refresh token was expired. Please make a new signin request");
                     }
                     if (token.isRevoked()) {
                         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Refresh token has been revoked.");
                     }
-                    
+
                     // Revoke old token
                     token.setRevoked(true);
                     refreshTokenRepository.save(token);
 
                     // Generate new access and refresh token
                     User user = token.getUser();
-                    String accessToken = jwtService.generateAccessToken(user.getName(), user.getId().toString(), user.getRoles());
+                    String accessToken = jwtService.generateAccessToken(user.getName(), user.getId().toString(),
+                            user.getRoles());
                     RefreshToken newRefreshToken = createRefreshToken(user);
-                    
-                    return ResponseEntity.ok(new LoginResponseDto("Token refreshed successfully", accessToken, newRefreshToken.getToken(), jwtService.getAccessTokenExpiration() / 1000));
+
+                    return ResponseEntity.ok(new LoginResponseDto("Token refreshed successfully", accessToken,
+                            newRefreshToken.getToken(), jwtService.getAccessTokenExpiration() / 1000));
                 })
-                .orElseGet(() -> ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Refresh token is not in database!"));
+                .orElseGet(
+                        () -> ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Refresh token is not in database!"));
     }
 
-    @PostMapping(path = "/logout", produces = Endpoints.PRODUCES)
+    @PostMapping(path = Endpoints.LOGOUT, produces = Endpoints.PRODUCES)
     public ResponseEntity<?> logout(@RequestBody LogoutRequestDto requestDto) {
         String requestToken = requestDto.getRefreshToken();
         refreshTokenRepository.findByToken(requestToken).ifPresent(token -> {

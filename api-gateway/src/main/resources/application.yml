@@ -57,12 +57,7 @@ spring:
             - Path=/api/admissions/**
           filters:
             - StripPrefix=1
-        - id: notification-service-route
-          uri: ${NOTIFICATION_SERVICE_URL:http://notification-service:8090}
-          predicates:
-            - Path=/api/notifications/**
-          filters:
-            - StripPrefix=1
+
 
         # AGGREGATED OPENAPI ROUTES
         - id: patient-docs
@@ -95,12 +90,7 @@ spring:
             - Path=/aggregate/admission/v3/api-docs
           filters:
             - RewritePath=/aggregate/admission/v3/api-docs, /api-docs
-        - id: notification-docs
-          uri: http://notification-service:8090
-          predicates:
-            - Path=/aggregate/notification/v3/api-docs
-          filters:
-            - RewritePath=/aggregate/notification/v3/api-docs, /api-docs
+
 
 logging:
   level:

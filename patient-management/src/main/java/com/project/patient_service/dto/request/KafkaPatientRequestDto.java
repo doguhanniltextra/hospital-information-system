@@ -9,6 +9,15 @@ public class KafkaPatientRequestDto {
     private String email;
     private String phoneNumber;
     String eventType;
+    private String authUserId;
+
+    public String getAuthUserId() {
+        return authUserId;
+    }
+
+    public void setAuthUserId(String authUserId) {
+        this.authUserId = authUserId;
+    }
 
 
     public UUID getId() {

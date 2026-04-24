@@ -40,7 +40,13 @@ public class LabQueryService {
     }
 
     public List<LabOrder> getOrdersByStatus(LabOrderStatus status) {
+        if (status == null) return labOrderRepository.findAllByOrderByPriorityDescRequestedAtAsc();
         return labOrderRepository.findByStatusOrderByPriorityDescRequestedAtAsc(status);
+    }
+
+    public List<LabOrder> getOrdersByPatientAndStatus(UUID patientId, LabOrderStatus status) {
+        if (status == null) return getOrdersByPatient(patientId);
+        return labOrderRepository.findByPatientIdAndStatusOrderByPriorityDescRequestedAtAsc(patientId, status);
     }
 
     public LabOrder getOrder(UUID orderId) {

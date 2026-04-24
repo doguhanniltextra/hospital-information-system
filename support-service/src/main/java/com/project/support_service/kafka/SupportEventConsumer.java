@@ -7,6 +7,9 @@ import com.project.support_service.dto.ItemConsumedEvent;
 import com.project.support_service.dto.LabOrderPlacedEvent;
 import com.project.support_service.model.outbox.SupportProcessedEvent;
 import com.project.support_service.repository.SupportProcessedEventRepository;
+import com.project.support_service.repository.PatientIdentityRepository;
+import com.project.support_service.model.PatientIdentity;
+import com.project.support_service.dto.PatientUpdatedEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -19,6 +22,7 @@ public class SupportEventConsumer {
     
     private final LabCommandService labCommandService;
     private final InventoryCommandService inventoryCommandService;
+    private final PatientIdentityRepository patientIdentityRepository;
     private final SupportProcessedEventRepository processedEventRepository;
     private final ObjectMapper objectMapper;
 
@@ -27,10 +31,12 @@ public class SupportEventConsumer {
     public SupportEventConsumer(LabCommandService labCommandService,
                                 InventoryCommandService inventoryCommandService,
                                 SupportProcessedEventRepository processedEventRepository,
+                                PatientIdentityRepository patientIdentityRepository,
                                 ObjectMapper objectMapper) {
         this.labCommandService = labCommandService;
         this.inventoryCommandService = inventoryCommandService;
         this.processedEventRepository = processedEventRepository;
+        this.patientIdentityRepository = patientIdentityRepository;
         this.objectMapper = objectMapper;
     }
 
@@ -58,6 +64,25 @@ public class SupportEventConsumer {
         inventoryCommandService.consumeItem(event.getItemId(), event.getQuantity(), java.util.UUID.fromString(event.getEventId()));
         markProcessed(event.eventId);
         log.info("Processed inventory consumption for item: {}", event.getItemId());
+    }
+    @Transactional
+    @KafkaListener(topics = "patient-updated.v1", groupId = CONSUMER_GROUP)
+    public void consumePatientUpdate(String message) throws Exception {
+        log.info("Received PatientUpdatedEvent: {}", message);
+        PatientUpdatedEvent event = objectMapper.readValue(message, PatientUpdatedEvent.class);
+        
+        if (isProcessed(event.eventId)) return;
+
+        if ("DELETED".equals(event.getEventType())) {
+            patientIdentityRepository.deleteById(event.getId());
+            log.info("Deleted patient identity for patient: {}", event.getId());
+        } else {
+            PatientIdentity identity = new PatientIdentity(event.getId(), event.getAuthUserId());
+            patientIdentityRepository.save(identity);
+            log.info("Saved patient identity for patient: {} with authUserId: {}", event.getId(), event.getAuthUserId());
+        }
+
+        markProcessed(event.eventId);
     }
 
     private boolean isProcessed(String eventId) {

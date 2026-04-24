@@ -13,15 +13,16 @@ import org.springframework.stereotype.Component;
 @Component
 public class AuthValidator {
 
-
-    public ResponseEntity<String> checkIfUsernameAlreadyExistsOrNotForRegisterMethod(RegisterRequestDto registerRequestDto, UserRepository userRepository) {
-        if(userRepository.existsByName(registerRequestDto.getName())) {
+    public ResponseEntity<String> checkIfUsernameAlreadyExistsOrNotForRegisterMethod(
+            RegisterRequestDto registerRequestDto, UserRepository userRepository) {
+        if (userRepository.existsByName(registerRequestDto.getName())) {
             return ResponseEntity.badRequest().body(LogMessages.USERNAME_ALREADY_EXISTS);
         }
         return null;
     }
 
-    public User registerRequestDtoToUserForRegisterMethod(RegisterRequestDto registerRequestDto, PasswordEncoder passwordEncoder) {
+    public User registerRequestDtoToUserForRegisterMethod(RegisterRequestDto registerRequestDto,
+            PasswordEncoder passwordEncoder) {
         User user = new User();
         user.setName(registerRequestDto.getName());
         user.setPassword(passwordEncoder.encode(registerRequestDto.getPassword()));
@@ -37,16 +38,19 @@ public class AuthValidator {
         return user;
     }
 
-    public ResponseEntity<String> checkIfPasswordIsInvalidForLogin(LoginRequestDto loginRequestDto, User user, PasswordEncoder passwordEncoder) {
+    public ResponseEntity<String> checkIfPasswordIsInvalidForLogin(LoginRequestDto loginRequestDto, User user,
+            PasswordEncoder passwordEncoder) {
         if (!passwordEncoder.matches(loginRequestDto.getPassword(), user.getPassword())) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(LogMessages.CHECK_IF_USERNAME_OR_PASSWORD_IS_INVALID);
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(LogMessages.CHECK_IF_USERNAME_OR_PASSWORD_IS_INVALID);
         }
         return null;
     }
 
     public ResponseEntity<String> checkIfUsernameOrPasswordIsEmptyForLoginMethod(User user) {
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(LogMessages.CHECK_IF_USERNAME_OR_PASSWORD_IS_EMPTY);
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(LogMessages.CHECK_IF_USERNAME_OR_PASSWORD_IS_EMPTY);
         }
         return null;
     }

@@ -1,6 +1,7 @@
 package com.project.support_service.controller;
 
 import com.project.support_service.command.InventoryCommandService;
+import com.project.support_service.constants.Endpoints;
 import com.project.support_service.model.inventory.Item;
 import com.project.support_service.model.inventory.Stock;
 import com.project.support_service.query.InventoryQueryService;
@@ -12,7 +13,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/inventory")
+@RequestMapping(Endpoints.INVENTORY_BASE)
 public class InventoryController {
     private final InventoryCommandService inventoryCommandService;
     private final InventoryQueryService inventoryQueryService;
@@ -23,25 +24,25 @@ public class InventoryController {
         this.inventoryQueryService = inventoryQueryService;
     }
 
-    @GetMapping("/items")
+    @GetMapping(Endpoints.INVENTORY_ITEMS)
     @PreAuthorize("hasAnyRole('DOCTOR','RECEPTIONIST','ADMIN','PATIENT')")
     public List<Item> getAllItems() {
         return inventoryQueryService.getAllItems();
     }
 
-    @GetMapping("/stocks")
+    @GetMapping(Endpoints.INVENTORY_STOCKS)
     @PreAuthorize("hasAnyRole('DOCTOR','RECEPTIONIST','ADMIN')")
     public List<Stock> getAllStocks() {
         return inventoryQueryService.getAllStocks();
     }
 
-    @GetMapping("/stocks/{itemId}")
+    @GetMapping(Endpoints.INVENTORY_STOCKS_ITEM_ID)
     @PreAuthorize("hasAnyRole('DOCTOR','RECEPTIONIST','ADMIN')")
     public List<Stock> getStocksByItem(@PathVariable UUID itemId) {
         return inventoryQueryService.getStocksByItem(itemId);
     }
 
-    @PostMapping("/stocks/restock")
+    @PostMapping(Endpoints.INVENTORY_STOCKS_RESTOCK)
     @PreAuthorize("hasRole('ADMIN')")
     public Stock restock(@RequestParam UUID itemId, @RequestParam String location, 
                         @RequestParam Integer quantity, @RequestParam(required = false) LocalDateTime expiryDate) {
