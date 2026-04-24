@@ -105,7 +105,7 @@ public class AppointmentController {
     }
 
     @GetMapping(Endpoints.VALIDATE_IDS)
-    @org.springframework.security.access.prepost.PreAuthorize("permitAll()")
+    @org.springframework.security.access.prepost.PreAuthorize("hasAnyRole('ADMIN', 'RECEPTIONIST')")
     public String validateIds(@PathVariable UUID patientId, @PathVariable UUID doctorId) {
         UUID patientIdResult = patientId;
         UUID doctorIdResult = doctorId;
