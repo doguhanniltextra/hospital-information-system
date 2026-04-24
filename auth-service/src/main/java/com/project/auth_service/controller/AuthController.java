@@ -22,6 +22,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.time.Instant;
 
+import jakarta.validation.Valid;
+
 @RestController
 @RequestMapping(Endpoints.AUTH_CONTROLLER_REQUEST)
 public class AuthController {
@@ -50,7 +52,7 @@ public class AuthController {
     }
 
     @PostMapping(path = Endpoints.REGISTER, produces = Endpoints.PRODUCES)
-    public ResponseEntity<?> register(@RequestBody RegisterRequestDto registerRequestDto) {
+    public ResponseEntity<?> register(@Valid @RequestBody RegisterRequestDto registerRequestDto) {
 
         log.info(LogMessages.REGISTER_METHOD_TRIGGERED);
         ResponseEntity<String> Username_already_exists = authValidator.checkIfUsernameAlreadyExistsOrNotForRegisterMethod(registerRequestDto, userRepository);
