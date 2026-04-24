@@ -1,21 +1,26 @@
 package com.project.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.project.appointment_service.dto.DoctorAvailabilityResponseDTO;
+import com.project.appointment_service.dto.DoctorInfoDTO;
+import com.project.appointment_service.dto.PatientInfoDTO;
 import com.project.appointment_service.dto.request.CreateAppointmentServiceRequestDto;
 import com.project.appointment_service.exception.CustomConflictException;
 import com.project.appointment_service.helper.AppointmentMapper;
 import com.project.appointment_service.helper.AppointmentValidator;
 import com.project.appointment_service.kafka.KafkaProducer;
-import com.project.appointment_service.model.Appointment;
 import com.project.appointment_service.model.PaymentType;
 import com.project.appointment_service.model.ServiceType;
+import com.project.appointment_service.repository.AppointmentOutboxRepository;
 import com.project.appointment_service.repository.AppointmentRepository;
+import com.project.appointment_service.saga.CreateAppointmentSaga;
+import com.project.appointment_service.service.AppointmentPersistenceService;
 import com.project.appointment_service.service.AppointmentService;
 import com.project.appointment_service.service.AppointmentSummaryService;
 import com.project.appointment_service.utils.IdValidation;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -24,7 +29,6 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -43,9 +47,33 @@ public class AppointmentServiceAvailabilityTest {
     private AppointmentValidator appointmentValidator;
     @Mock
     private AppointmentSummaryService appointmentSummaryService;
+    @Mock
+    private AppointmentPersistenceService appointmentPersistenceService;
+    @Mock
+    private AppointmentOutboxRepository outboxRepository;
+    @Mock
+    private ObjectMapper objectMapper;
 
-    @InjectMocks
     private AppointmentService appointmentService;
+
+    @BeforeEach
+    void setUp() {
+        CreateAppointmentSaga saga = new CreateAppointmentSaga(
+                idValidation,
+                appointmentRepository,
+                appointmentMapper,
+                appointmentPersistenceService);
+        appointmentService = new AppointmentService(
+                kafkaProducer,
+                appointmentRepository,
+                idValidation,
+                appointmentMapper,
+                appointmentValidator,
+                appointmentSummaryService,
+                saga,
+                outboxRepository,
+                objectMapper);
+    }
 
     @Test
     public void createAppointment_WhenDoctorUnavailable_ThrowsConflict() {
@@ -60,8 +88,8 @@ public class AppointmentServiceAvailabilityTest {
         dto.setPaymentType(PaymentType.DEBIT);
         dto.setPaymentStatus(false);
 
-        doNothing().when(appointmentValidator).checkPatientExistsOrNotForCreateAppointment(dto.getPatientId());
-        doNothing().when(appointmentValidator).checkDoctorExistsOrNotForCreateAppointment(dto.getDoctorId());
+        when(idValidation.fetchPatientInfo(dto.getPatientId())).thenReturn(new PatientInfoDTO());
+        when(idValidation.fetchDoctorInfo(dto.getDoctorId())).thenReturn(new DoctorInfoDTO());
 
         DoctorAvailabilityResponseDTO availabilityResponse = new DoctorAvailabilityResponseDTO();
         availabilityResponse.setAvailable(false);
@@ -70,8 +98,7 @@ public class AppointmentServiceAvailabilityTest {
                 eq(dto.getDoctorId()),
                 eq(dto.getServiceDate()),
                 eq(dto.getServiceDateEnd()),
-                eq(dto.getServiceType())
-        )).thenReturn(availabilityResponse);
+                eq(dto.getServiceType()))).thenReturn(availabilityResponse);
 
         assertThatThrownBy(() -> appointmentService.createAppointment(dto))
                 .isInstanceOf(CustomConflictException.class)

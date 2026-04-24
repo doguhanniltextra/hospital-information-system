@@ -90,7 +90,8 @@ public class DoctorCommandServiceTest {
     }
 
     @Test
-    public void increasePatientNumber_ShouldIncrementWhenBelowLimit() throws DoctorNotFoundException, PatientLimitException {
+    public void increasePatientNumber_ShouldIncrementWhenBelowLimit()
+            throws DoctorNotFoundException, PatientLimitException {
         UUID id = UUID.randomUUID();
         IncreasePatientNumberCommand command = new IncreasePatientNumberCommand(id);
         Doctor doctor = new Doctor();
