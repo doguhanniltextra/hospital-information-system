@@ -44,7 +44,7 @@ public class AuthValidator {
         return null;
     }
 
-    public static ResponseEntity<String> checkIfUsernameOrPasswordIsEmptyForLoginMethod(User user) {
+    public ResponseEntity<String> checkIfUsernameOrPasswordIsEmptyForLoginMethod(User user) {
         if (user == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(LogMessages.CHECK_IF_USERNAME_OR_PASSWORD_IS_EMPTY);
         }

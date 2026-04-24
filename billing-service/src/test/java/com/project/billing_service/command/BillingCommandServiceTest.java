@@ -1,12 +1,15 @@
-package com.project.billing_service.service;
+package com.project.billing_service.command;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.project.billing_service.client.ClaimClient;
 import com.project.billing_service.dto.AppointmentDTO;
 import com.project.billing_service.model.Claim;
 import com.project.billing_service.model.ClaimStatus;
 import com.project.billing_service.model.Invoice;
+import com.project.billing_service.repository.BillingOutboxRepository;
 import com.project.billing_service.repository.ClaimRepository;
 import com.project.billing_service.repository.InvoiceRepository;
+import com.project.billing_service.repository.UnbilledChargeRepository;
 import com.project.billing_service.strategy.InsuranceCalculationResult;
 import com.project.billing_service.strategy.InsuranceFactory;
 import com.project.billing_service.strategy.InsuranceStrategy;
@@ -16,11 +19,10 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.math.BigDecimal;
 import java.nio.file.Path;
-import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -30,90 +32,87 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class BillingWorkflowServiceTest {
+public class BillingCommandServiceTest {
 
     @Mock
     private InvoiceService invoiceService;
-
     @Mock
     private InvoiceRepository invoiceRepository;
-
     @Mock
     private ClaimRepository claimRepository;
-
+    @Mock
+    private UnbilledChargeRepository unbilledChargeRepository;
+    @Mock
+    private BillingOutboxRepository outboxRepository;
     @Mock
     private InsuranceFactory insuranceFactory;
-
     @Mock
     private ClaimClient claimClient;
-
     @Mock
-    private InsuranceStrategy insuranceStrategy;
+    private ObjectMapper objectMapper;
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
-    private BillingWorkflowService billingWorkflowService;
+    private BillingCommandService billingCommandService;
 
     @Test
     public void processPaymentUpdate_WhenInsuranceAmountIsZero_DoesNotCreateClaim() {
         AppointmentDTO appointmentDTO = getAppointmentDTO();
         InsuranceCalculationResult split = new InsuranceCalculationResult(new BigDecimal("100.00"), BigDecimal.ZERO);
 
-        when(insuranceFactory.getStrategy(anyString(), anyString())).thenReturn(insuranceStrategy);
-        when(insuranceStrategy.calculate(any(BigDecimal.class))).thenReturn(split);
+        when(insuranceFactory.getStrategy(anyString(), anyString())).thenReturn(mock(InsuranceStrategy.class));
+        when(insuranceFactory.getStrategy(anyString(), anyString()).calculate(any(BigDecimal.class))).thenReturn(split);
         when(invoiceService.generateInvoice(anyString(), anyString(), any(BigDecimal.class), anyString()))
                 .thenReturn(Path.of("invoices", "test.pdf"));
 
-        billingWorkflowService.processPaymentUpdate(appointmentDTO);
+        billingCommandService.processPaymentUpdate(appointmentDTO);
 
-        verify(invoiceRepository, times(1)).save(any(Invoice.class));
+        verify(invoiceRepository).save(any(Invoice.class));
         verify(claimRepository, never()).save(any(Claim.class));
         verify(claimClient, never()).submitClaim(any());
     }
 
     @Test
-    public void processPaymentUpdate_WhenInsuranceAmountExistsAndClaimFails_SavesPendingClaim() {
+    public void processPaymentUpdate_WhenInsuranceAmountExistsAndClaimSucceeds_SavesSubmittedClaim() {
         AppointmentDTO appointmentDTO = getAppointmentDTO();
         InsuranceCalculationResult split = new InsuranceCalculationResult(new BigDecimal("20.00"), new BigDecimal("80.00"));
 
-        when(insuranceFactory.getStrategy(anyString(), anyString())).thenReturn(insuranceStrategy);
-        when(insuranceStrategy.calculate(any(BigDecimal.class))).thenReturn(split);
+        InsuranceStrategy strategy = mock(InsuranceStrategy.class);
+        when(insuranceFactory.getStrategy(anyString(), anyString())).thenReturn(strategy);
+        when(strategy.calculate(any(BigDecimal.class))).thenReturn(split);
         when(invoiceService.generateInvoice(anyString(), anyString(), any(BigDecimal.class), anyString()))
                 .thenReturn(Path.of("invoices", "test.pdf"));
-        when(claimClient.submitClaim(any())).thenReturn(false);
 
-        billingWorkflowService.processPaymentUpdate(appointmentDTO);
+        billingCommandService.processPaymentUpdate(appointmentDTO);
 
         ArgumentCaptor<Claim> captor = ArgumentCaptor.forClass(Claim.class);
-        verify(claimRepository, times(1)).save(captor.capture());
+        verify(claimRepository).save(captor.capture());
 
         Claim savedClaim = captor.getValue();
-        assertThat(savedClaim.getStatus()).isEqualTo(ClaimStatus.PENDING);
-        assertThat(savedClaim.getProviderName()).isEqualTo("Allianz");
+        assertThat(savedClaim.getStatus()).isEqualTo(ClaimStatus.SUBMITTED);
     }
 
     @Test
-    public void retryPendingClaims_WhenClaimSucceeds_UpdatesClaimAsApproved() {
-        UUID invoiceId = UUID.randomUUID();
-        Claim pendingClaim = new Claim();
-        pendingClaim.setClaimId(UUID.randomUUID());
-        pendingClaim.setInvoiceId(invoiceId);
-        pendingClaim.setProviderName("SGK");
-        pendingClaim.setStatus(ClaimStatus.PENDING);
-        pendingClaim.setSubmittedAt(LocalDateTime.now().minusMinutes(10));
+    public void processPaymentUpdate_WhenClaimFails_SavesFailedClaim() {
+        AppointmentDTO appointmentDTO = getAppointmentDTO();
+        InsuranceCalculationResult split = new InsuranceCalculationResult(new BigDecimal("20.00"), new BigDecimal("80.00"));
 
-        Invoice invoice = new Invoice();
-        invoice.setInvoiceId(invoiceId);
-        invoice.setInsuranceOwes(new BigDecimal("250.00"));
+        InsuranceStrategy strategy = mock(InsuranceStrategy.class);
+        when(insuranceFactory.getStrategy(anyString(), anyString())).thenReturn(strategy);
+        when(strategy.calculate(any(BigDecimal.class))).thenReturn(split);
+        when(invoiceService.generateInvoice(anyString(), anyString(), any(BigDecimal.class), anyString()))
+                .thenReturn(Path.of("invoices", "test.pdf"));
+        
+        doThrow(new RuntimeException("API Down")).when(claimClient).submitClaim(any());
 
-        when(claimRepository.findByStatus(ClaimStatus.PENDING)).thenReturn(List.of(pendingClaim));
-        when(invoiceRepository.findById(invoiceId)).thenReturn(Optional.of(invoice));
-        when(claimClient.submitClaim(any())).thenReturn(true);
-
-        billingWorkflowService.retryPendingClaims();
+        billingCommandService.processPaymentUpdate(appointmentDTO);
 
         ArgumentCaptor<Claim> captor = ArgumentCaptor.forClass(Claim.class);
-        verify(claimRepository, times(1)).save(captor.capture());
-        assertThat(captor.getValue().getStatus()).isEqualTo(ClaimStatus.APPROVED);
+        verify(claimRepository).save(captor.capture());
+
+        Claim savedClaim = captor.getValue();
+        assertThat(savedClaim.getStatus()).isEqualTo(ClaimStatus.FAILED);
     }
 
     private static AppointmentDTO getAppointmentDTO() {

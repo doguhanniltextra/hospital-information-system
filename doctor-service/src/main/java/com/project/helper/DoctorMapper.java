@@ -27,14 +27,12 @@ import java.util.UUID;
 public class DoctorMapper {
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
-
-    public  Doctor toEntity(CreateDoctorServiceRequestDto createDoctorServiceRequestDto) {
+    public Doctor toEntity(CreateDoctorServiceRequestDto createDoctorServiceRequestDto) {
         Doctor doctor = new Doctor();
         doctor.setId(createDoctorServiceRequestDto.getId());
         doctor.setName(createDoctorServiceRequestDto.getName());
         doctor.setEmail(createDoctorServiceRequestDto.getEmail());
         doctor.setNumber(createDoctorServiceRequestDto.getNumber());
-
 
         doctor.setSpecialization(createDoctorServiceRequestDto.getSpecialization());
         doctor.setYearsOfExperience(createDoctorServiceRequestDto.getYearsOfExperience());
@@ -47,8 +45,7 @@ public class DoctorMapper {
         return doctor;
     }
 
-
-    public  CreateDoctorServiceResponseDto toCreateDoctorServiceResponseDto(Doctor result) {
+    public CreateDoctorServiceResponseDto toCreateDoctorServiceResponseDto(Doctor result) {
         CreateDoctorServiceResponseDto createDoctorServiceResponseDto = new CreateDoctorServiceResponseDto();
         createDoctorServiceResponseDto.setName(result.getName());
         createDoctorServiceResponseDto.setEmail(result.getEmail());
@@ -58,7 +55,7 @@ public class DoctorMapper {
         return createDoctorServiceResponseDto;
     }
 
-    public  UpdateDoctorServiceResponseDto getUpdateDoctorServiceResponseDto(Doctor existingDoctor) {
+    public UpdateDoctorServiceResponseDto getUpdateDoctorServiceResponseDto(Doctor existingDoctor) {
         UpdateDoctorServiceResponseDto updateDoctorServiceResponseDto = new UpdateDoctorServiceResponseDto();
         updateDoctorServiceResponseDto.setId(existingDoctor.getId());
         updateDoctorServiceResponseDto.setName(existingDoctor.getName());
@@ -76,7 +73,8 @@ public class DoctorMapper {
         return updateDoctorServiceResponseDto;
     }
 
-    public  Doctor getDoctorRequestDto(UpdateDoctorServiceRequestDto updateDoctorServiceRequestDto, Optional<Doctor> optionalDoctor) {
+    public Doctor getDoctorRequestDto(UpdateDoctorServiceRequestDto updateDoctorServiceRequestDto,
+            Optional<Doctor> optionalDoctor) {
         Doctor existingDoctor = optionalDoctor.get();
         existingDoctor.setName(updateDoctorServiceRequestDto.getName());
         existingDoctor.setSpecialization(updateDoctorServiceRequestDto.getSpecialization());
@@ -87,7 +85,8 @@ public class DoctorMapper {
         return existingDoctor;
     }
 
-    public static UpdateDoctorControllerResponseDto getDoctorControllerResponseDto(UpdateDoctorServiceResponseDto updateDoctorServiceResponseDto) {
+    public static UpdateDoctorControllerResponseDto getDoctorControllerResponseDto(
+            UpdateDoctorServiceResponseDto updateDoctorServiceResponseDto) {
         UpdateDoctorControllerResponseDto updateDoctorControllerResponseDto = new UpdateDoctorControllerResponseDto();
         updateDoctorControllerResponseDto.setId(updateDoctorServiceResponseDto.getId());
         updateDoctorControllerResponseDto.setName(updateDoctorServiceResponseDto.getName());
@@ -99,7 +98,8 @@ public class DoctorMapper {
         return updateDoctorControllerResponseDto;
     }
 
-    public  CreateDoctorServiceRequestDto getCreateDoctorServiceRequestDto(CreateDoctorControllerRequestDto createDoctorControllerRequestDto) {
+    public CreateDoctorServiceRequestDto getCreateDoctorServiceRequestDto(
+            CreateDoctorControllerRequestDto createDoctorControllerRequestDto) {
         CreateDoctorServiceRequestDto createDoctorServiceRequestDto = new CreateDoctorServiceRequestDto();
         createDoctorServiceRequestDto.setId(createDoctorControllerRequestDto.getId());
         createDoctorServiceRequestDto.setName(createDoctorControllerRequestDto.getName());
@@ -116,7 +116,8 @@ public class DoctorMapper {
         return createDoctorServiceRequestDto;
     }
 
-    public Shift toShift(UUID doctorId, CreateShiftRequestDto requestDto, java.time.LocalDate shiftDate, java.time.LocalTime startTime, java.time.LocalTime endTime) {
+    public Shift toShift(UUID doctorId, CreateShiftRequestDto requestDto, java.time.LocalDate shiftDate,
+            java.time.LocalTime startTime, java.time.LocalTime endTime) {
         Shift shift = new Shift();
         shift.setDoctorId(doctorId);
         shift.setShiftDate(shiftDate);
@@ -139,7 +140,8 @@ public class DoctorMapper {
         return dto;
     }
 
-    public LeaveAbsence toLeaveAbsence(UUID doctorId, CreateLeaveRequestDto requestDto, LocalDateTime startDateTime, LocalDateTime endDateTime) {
+    public LeaveAbsence toLeaveAbsence(UUID doctorId, CreateLeaveRequestDto requestDto, LocalDateTime startDateTime,
+            LocalDateTime endDateTime) {
         LeaveAbsence leaveAbsence = new LeaveAbsence();
         leaveAbsence.setDoctorId(doctorId);
         leaveAbsence.setLeaveType(requestDto.getLeaveType());

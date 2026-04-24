@@ -44,7 +44,6 @@ public class CreateDoctorServiceRequestDto {
 
     private int maxPatientCount;
 
-
     public UUID getId() {
         return id;
     }
