@@ -15,13 +15,17 @@ COPY patient-management ./patient-management
 
 # Build the service from its own directory
 WORKDIR /app/patient-management
-RUN mvn clean package -DskipTests
+RUN mvn clean package -Dmaven.test.skip=true
 
-FROM eclipse-temurin:21-jdk AS runner
+FROM eclipse-temurin:21-jre-alpine AS runner
+
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 
 WORKDIR /app
 
 COPY --from=builder /app/patient-management/target/patient-service-0.0.1-SNAPSHOT.jar ./app.jar
+
+USER appuser
 
 EXPOSE 8080
 

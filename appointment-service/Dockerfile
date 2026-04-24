@@ -15,13 +15,17 @@ COPY appointment-service ./appointment-service
 
 # Build the service from its own directory
 WORKDIR /app/appointment-service
-RUN mvn clean package -DskipTests
+RUN mvn clean package -Dmaven.test.skip=true
 
-FROM eclipse-temurin:21-jdk AS runner
+FROM eclipse-temurin:21-jre-alpine AS runner
+
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 
 WORKDIR /app
 
 COPY --from=builder /app/appointment-service/target/appointment-service-1.0-SNAPSHOT.jar ./app.jar
+
+USER appuser
 
 EXPOSE 8084
 

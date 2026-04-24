@@ -15,13 +15,17 @@ COPY billing-service ./billing-service
 
 # Build the service from its own directory
 WORKDIR /app/billing-service
-RUN mvn clean package -DskipTests
+RUN mvn clean package -Dmaven.test.skip=true
 
-FROM eclipse-temurin:21-jdk AS runner
+FROM eclipse-temurin:21-jre-alpine AS runner
+
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 
 WORKDIR /app
 
 COPY --from=builder /app/billing-service/target/billing-service-0.0.1-SNAPSHOT.jar ./app.jar
+
+USER appuser
 
 EXPOSE 8081
 EXPOSE 9001
