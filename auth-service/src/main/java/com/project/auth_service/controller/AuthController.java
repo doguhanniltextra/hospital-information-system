@@ -55,8 +55,8 @@ public class AuthController {
     public ResponseEntity<?> register(@Valid @RequestBody RegisterRequestDto registerRequestDto) {
 
         log.info(LogMessages.REGISTER_METHOD_TRIGGERED);
-        ResponseEntity<String> Username_already_exists = authValidator.checkIfUsernameAlreadyExistsOrNotForRegisterMethod(registerRequestDto, userRepository);
-        if (Username_already_exists != null) return Username_already_exists;
+        ResponseEntity<String> usernameCheckResult = authValidator.checkIfUsernameAlreadyExistsOrNotForRegisterMethod(registerRequestDto, userRepository);
+        if (usernameCheckResult != null) return usernameCheckResult;
         log.info(LogMessages.REGISTER_USERNAME_EXISTS);
         User user = authValidator.registerRequestDtoToUserForRegisterMethod(registerRequestDto, passwordEncoder);
 
@@ -83,8 +83,8 @@ public class AuthController {
         if (checkUsernameOrPassword != null) return checkUsernameOrPassword;
         log.info(LogMessages.LOGIN_USERNAME_NOT_FOUND);
 
-        ResponseEntity<String> CheckPasswordEncoder = authValidator.CheckIfUsernameOrPasswordIsInvalidForPasswordEncoderForLoginMethod(loginRequestDto, user, passwordEncoder);
-        if (CheckPasswordEncoder != null) return CheckPasswordEncoder;
+        ResponseEntity<String> passwordCheckResult = authValidator.checkIfPasswordIsInvalidForLogin(loginRequestDto, user, passwordEncoder);
+        if (passwordCheckResult != null) return passwordCheckResult;
         log.info(LogMessages.LOGIN_INVALID_CREDENTIALS);
         
         String accessToken = jwtService.generateAccessToken(user.getName(), user.getId().toString(), user.getRoles());

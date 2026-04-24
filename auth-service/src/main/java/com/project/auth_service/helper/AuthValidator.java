@@ -37,7 +37,7 @@ public class AuthValidator {
         return user;
     }
 
-    public ResponseEntity<String> CheckIfUsernameOrPasswordIsInvalidForPasswordEncoderForLoginMethod(LoginRequestDto loginRequestDto, User user, PasswordEncoder passwordEncoder) {
+    public ResponseEntity<String> checkIfPasswordIsInvalidForLogin(LoginRequestDto loginRequestDto, User user, PasswordEncoder passwordEncoder) {
         if (!passwordEncoder.matches(loginRequestDto.getPassword(), user.getPassword())) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(LogMessages.CHECK_IF_USERNAME_OR_PASSWORD_IS_INVALID);
         }
