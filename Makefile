@@ -118,6 +118,29 @@ build-service:
 	cd $(SVC) && mvn clean package -DskipTests
 	@echo " $(SVC) built!"
 
+.PHONY: test-all
+test-all:
+	@echo " Running all microservice tests from the Maven aggregator..."
+	./mvnw test
+	@echo " All microservice tests finished!"
+
+.PHONY: test-e2e
+test-e2e:
+	@echo " Running API/E2E tests from scripts/tests..."
+	cd scripts/tests && ../../mvnw test
+	@echo " API/E2E tests finished!"
+
+.PHONY: test-service
+test-service:
+	@if [ -z "$(SVC)" ]; then \
+		echo "Error: Please specify SVC=<service-directory>"; \
+		echo "   Example: make test-service SVC=auth-service"; \
+		exit 1; \
+	fi
+	@echo "Running tests for $(SVC)..."
+	cd $(SVC) && mvn test
+	@echo " $(SVC) tests finished!"
+
 # ============================================================================
 # CLEANUP
 # ============================================================================
