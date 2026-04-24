@@ -1,0 +1,22 @@
+@host = http://localhost:4004/api
+@authToken = {{login.response.body.accessToken}}
+
+### Get All Doctors
+GET {{host}}/doctors?page=0&size=10
+Authorization: Bearer {{authToken}}
+
+### Find Doctor by ID
+GET {{host}}/doctors/find/{{doctorId}}
+Authorization: Bearer {{authToken}}
+
+### Check Doctor Availability
+GET {{host}}/doctors/{{doctorId}}/availability?start=2024-01-01T09:00:00&end=2024-01-01T10:00:00&serviceType=CONSULTATION
+Authorization: Bearer {{authToken}}
+
+### Get Available Doctors (Search)
+GET {{host}}/doctors/availability?start=2024-01-01T09:00:00&end=2024-01-01T10:00:00&serviceType=CONSULTATION&specialization=CARDIOLOGY
+Authorization: Bearer {{authToken}}
+
+### List Doctor Shifts
+GET {{host}}/doctors/{{doctorId}}/shifts?fromDate=2024-01-01&toDate=2024-01-07
+Authorization: Bearer {{authToken}}

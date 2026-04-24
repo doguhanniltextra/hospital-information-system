@@ -1,0 +1,22 @@
+@host = http://localhost:4004/api
+@authToken = {{login.response.body.accessToken}}
+
+### Admit Patient
+POST {{host}}/admissions/admit
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+
+{
+  "patientId": "{{patientId}}",
+  "wardId": "{{wardId}}",
+  "admissionDate": "2024-01-01T12:00:00",
+  "reason": "Surgery recovery"
+}
+
+### Discharge Patient
+PUT {{host}}/admissions/discharge/{{admissionId}}
+Authorization: Bearer {{authToken}}
+
+### Get Active Admissions (CQRS Read Model)
+GET {{host}}/admissions/active
+Authorization: Bearer {{authToken}}

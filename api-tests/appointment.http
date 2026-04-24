@@ -1,0 +1,35 @@
+@host = http://localhost:4004/api
+@authToken = {{login.response.body.accessToken}}
+
+### Create Appointment
+POST {{host}}/appointments
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+
+{
+  "patientId": "{{patientId}}",
+  "doctorId": "{{doctorId}}",
+  "appointmentDate": "2024-01-01T10:00:00",
+  "serviceType": "CONSULTATION",
+  "notes": "Regular checkup"
+}
+
+### Get All Appointments
+GET {{host}}/appointments/get?page=0&size=10
+Authorization: Bearer {{authToken}}
+
+### Get Appointment Summaries (CQRS Read Model)
+GET {{host}}/appointments/summary?page=0&size=10
+Authorization: Bearer {{authToken}}
+
+### Update Appointment Status (Payment/Confirmation)
+PUT {{host}}/appointments/appointment-update/{{appointmentId}}/true
+Authorization: Bearer {{authToken}}
+
+### Delete Appointment
+DELETE {{host}}/appointments/{{appointmentId}}
+Authorization: Bearer {{authToken}}
+
+### Get Doctor Options (Availability Check)
+GET {{host}}/appointments/doctor-options?start=2024-01-01T09:00:00&end=2024-01-01T10:00:00&serviceType=CONSULTATION
+Authorization: Bearer {{authToken}}

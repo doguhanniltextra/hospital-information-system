@@ -1,0 +1,39 @@
+@host = http://localhost:4004/api
+@authService = http://localhost:8089
+
+### Register User
+POST {{host}}/auth/register
+Content-Type: application/json
+
+{
+  "name": "john_doe",
+  "email": "john@example.com",
+  "password": "Password123!",
+  "roles": ["PATIENT"]
+}
+
+### Login User
+# @name login
+POST {{host}}/auth/login
+Content-Type: application/json
+
+{
+  "name": "john_doe",
+  "password": "Password123!"
+}
+
+### Refresh Token
+POST {{host}}/auth/refresh
+Content-Type: application/json
+
+{
+  "refreshToken": "{{login.response.body.refreshToken}}"
+}
+
+### Logout
+POST {{host}}/auth/logout
+Content-Type: application/json
+
+{
+  "refreshToken": "{{login.response.body.refreshToken}}"
+}

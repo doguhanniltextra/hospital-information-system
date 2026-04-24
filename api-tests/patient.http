@@ -1,0 +1,37 @@
+@host = http://localhost:4004/api
+@authToken = {{login.response.body.accessToken}}
+
+### Get All Patients
+GET {{host}}/patients?page=0&size=10
+Authorization: Bearer {{authToken}}
+
+### Create Patient
+POST {{host}}/patients
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+
+{
+  "name": "Jane",
+  "surname": "Doe",
+  "email": "jane.doe@example.com",
+  "phone": "+1234567890",
+  "birthDate": "1990-01-01",
+  "gender": "FEMALE",
+  "address": "123 Main St"
+}
+
+### Find Patient by ID
+GET {{host}}/patients/find/{{patientId}}
+Authorization: Bearer {{authToken}}
+
+### Find Patient by Email
+GET {{host}}/patients/find/email/jane.doe@example.com
+Authorization: Bearer {{authToken}}
+
+### Get Medical Records
+GET {{host}}/patients/records/patient/{{patientId}}
+Authorization: Bearer {{authToken}}
+
+### Get Lab Results
+GET {{host}}/patients/{{patientId}}/lab-results
+Authorization: Bearer {{authToken}}

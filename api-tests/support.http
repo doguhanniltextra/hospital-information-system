@@ -1,0 +1,62 @@
+@host = http://localhost:4004/api
+@authToken = {{login.response.body.accessToken}}
+
+### --- Lab Service ---
+
+### Get Lab Catalog
+GET {{host}}/labs/catalog
+Authorization: Bearer {{authToken}}
+
+### Get All Lab Orders
+GET {{host}}/labs/orders
+Authorization: Bearer {{authToken}}
+
+### Get Lab Order by Patient
+GET {{host}}/labs/orders?patientId={{patientId}}
+Authorization: Bearer {{authToken}}
+
+### Start Lab Test
+PUT {{host}}/labs/orders/{{labOrderId}}/start
+Authorization: Bearer {{authToken}}
+
+### Complete Lab Test
+PUT {{host}}/labs/orders/{{labOrderId}}/complete
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+
+{
+  "results": [
+    {
+      "testName": "Blood Sugar",
+      "resultValue": "95",
+      "unit": "mg/dL",
+      "referenceRange": "70-100",
+      "status": "NORMAL"
+    }
+  ],
+  "reportPdfUrl": "http://storage.local/reports/123.pdf",
+  "correlationId": "corr-123"
+}
+
+### Get Test Results
+GET {{host}}/labs/orders/{{labOrderId}}/results
+Authorization: Bearer {{authToken}}
+
+
+### --- Inventory Service ---
+
+### Get All Inventory Items
+GET {{host}}/inventory/items
+Authorization: Bearer {{authToken}}
+
+### Get All Stocks
+GET {{host}}/inventory/stocks
+Authorization: Bearer {{authToken}}
+
+### Get Stock for Specific Item
+GET {{host}}/inventory/stocks/{{itemId}}
+Authorization: Bearer {{authToken}}
+
+### Restock Item
+POST {{host}}/inventory/stocks/restock?itemId={{itemId}}&location=MAIN_PHARMACY&quantity=100
+Authorization: Bearer {{authToken}}
