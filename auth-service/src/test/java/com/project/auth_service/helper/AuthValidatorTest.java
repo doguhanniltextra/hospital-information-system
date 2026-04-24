@@ -41,7 +41,8 @@ class AuthValidatorTest {
         dto.setName("existingUser");
         when(userRepository.existsByName("existingUser")).thenReturn(true);
 
-        ResponseEntity<String> response = authValidator.checkIfUsernameAlreadyExistsOrNotForRegisterMethod(dto, userRepository);
+        ResponseEntity<String> response = authValidator.checkIfUsernameAlreadyExistsOrNotForRegisterMethod(dto,
+                userRepository);
 
         assertNotNull(response);
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
@@ -54,7 +55,8 @@ class AuthValidatorTest {
         dto.setName("newUser");
         when(userRepository.existsByName("newUser")).thenReturn(false);
 
-        ResponseEntity<String> response = authValidator.checkIfUsernameAlreadyExistsOrNotForRegisterMethod(dto, userRepository);
+        ResponseEntity<String> response = authValidator.checkIfUsernameAlreadyExistsOrNotForRegisterMethod(dto,
+                userRepository);
 
         assertNull(response);
     }
@@ -65,7 +67,8 @@ class AuthValidatorTest {
         dto.setName("testuser");
         dto.setPassword("pass123");
         dto.setEmail("test@example.com");
-        dto.setRoles(java.util.Arrays.asList(Role.DOCTOR));
+        // dto.setRoles(java.util.Arrays.asList(Role.DOCTOR)); // Removed as
+        // RegisterRequestDto no longer has roles
 
         when(passwordEncoder.encode("pass123")).thenReturn("encodedPass");
 
@@ -74,7 +77,7 @@ class AuthValidatorTest {
         assertEquals("testuser", user.getName());
         assertEquals("encodedPass", user.getPassword());
         assertEquals("test@example.com", user.getEmail());
-        assertTrue(user.getRoles().contains(Role.DOCTOR));
+        assertTrue(user.getRoles().contains(Role.PATIENT)); // Should now default to PATIENT
     }
 
     @Test
