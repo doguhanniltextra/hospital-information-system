@@ -44,14 +44,14 @@ public class DoctorEventKafkaPublisher {
     public void handleDoctorDeleted(DoctorDeletedEvent event) {
         try {
             Map<String, Object> payload = new HashMap<>();
-            payload.put("doctorId", event.id().toString());
+            payload.put("doctorId", event.doctorId().toString());
             payload.put("eventType", "DOCTOR_DELETED");
 
             String json = objectMapper.writeValueAsString(payload);
-            kafkaTemplate.send(KafkaTopics.DOCTOR_UPDATED, event.id().toString(), json);
-            log.info("Published DOCTOR_DELETED event for doctor {}", event.id());
+            kafkaTemplate.send(KafkaTopics.DOCTOR_UPDATED, event.doctorId().toString(), json);
+            log.info("Published DOCTOR_DELETED event for doctor {}", event.doctorId());
         } catch (Exception e) {
-            log.error("Failed to publish DOCTOR_DELETED event for doctor {}", event.id(), e);
+            log.error("Failed to publish DOCTOR_DELETED event for doctor {}", event.doctorId(), e);
         }
     }
 
