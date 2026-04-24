@@ -85,7 +85,7 @@ public class DoctorCommandService {
         UUID id = command.id();
         Doctor doctor = doctorRepository.findById(id)
                 .orElseThrow(() -> new DoctorNotFoundException("Doctor not found: " + id));
-        if (doctor.getPatientCount() >= 5) throw new PatientLimitException("Patient limit is full");
+        if (doctor.getPatientCount() >= doctor.getMaxPatientCount()) throw new PatientLimitException("Patient limit is full: " + doctor.getPatientCount() + "/" + doctor.getMaxPatientCount());
         doctor.setPatientCount(doctor.getPatientCount() + 1);
         doctorRepository.save(doctor);
 

@@ -21,6 +21,7 @@ public class UpdateDoctorServiceResponseDto {
     private boolean available;
     private int patientCount;
     private boolean getMaximumPatient;
+    private int maxPatientCount;
     private int version;
 
     public UUID getId() {
@@ -117,5 +118,13 @@ public class UpdateDoctorServiceResponseDto {
 
     public void setGetMaximumPatient(boolean getMaximumPatient) {
         this.getMaximumPatient = getMaximumPatient;
+    }
+
+    public int getMaxPatientCount() {
+        return maxPatientCount;
+    }
+
+    public void setMaxPatientCount(int maxPatientCount) {
+        this.maxPatientCount = maxPatientCount;
     }
 }

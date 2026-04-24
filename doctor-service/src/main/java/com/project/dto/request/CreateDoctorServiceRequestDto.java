@@ -42,6 +42,8 @@ public class CreateDoctorServiceRequestDto {
     @NotNull
     private int patientCount;
 
+    private int maxPatientCount;
+
 
     public UUID getId() {
         return id;
@@ -135,6 +137,11 @@ public class CreateDoctorServiceRequestDto {
         this.patientCount = patientCount;
     }
 
+    public int getMaxPatientCount() {
+        return maxPatientCount;
+    }
 
-
+    public void setMaxPatientCount(int maxPatientCount) {
+        this.maxPatientCount = maxPatientCount;
+    }
 }

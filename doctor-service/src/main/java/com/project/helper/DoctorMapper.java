@@ -34,6 +34,8 @@ public class DoctorMapper {
         doctor.setName(createDoctorServiceRequestDto.getName());
         doctor.setEmail(createDoctorServiceRequestDto.getEmail());
         doctor.setNumber(createDoctorServiceRequestDto.getNumber());
+
+
         doctor.setSpecialization(createDoctorServiceRequestDto.getSpecialization());
         doctor.setYearsOfExperience(createDoctorServiceRequestDto.getYearsOfExperience());
         doctor.setHospitalName(createDoctorServiceRequestDto.getHospitalName());
@@ -41,6 +43,7 @@ public class DoctorMapper {
         doctor.setLicenseNumber(createDoctorServiceRequestDto.getLicenseNumber());
         doctor.setAvailable(createDoctorServiceRequestDto.isAvailable());
         doctor.setPatientCount(createDoctorServiceRequestDto.getPatientCount());
+        doctor.setMaxPatientCount(createDoctorServiceRequestDto.getMaxPatientCount());
         return doctor;
     }
 
@@ -69,6 +72,7 @@ public class DoctorMapper {
         updateDoctorServiceResponseDto.setAvailable(existingDoctor.isAvailable());
         updateDoctorServiceResponseDto.setPatientCount(existingDoctor.getPatientCount());
         updateDoctorServiceResponseDto.setGetMaximumPatient(existingDoctor.isGetMaximumPatient());
+        updateDoctorServiceResponseDto.setMaxPatientCount(existingDoctor.getMaxPatientCount());
         return updateDoctorServiceResponseDto;
     }
 
@@ -79,6 +83,7 @@ public class DoctorMapper {
         existingDoctor.setEmail(updateDoctorServiceRequestDto.getEmail());
         existingDoctor.setHospitalName(updateDoctorServiceRequestDto.getHospitalName());
         existingDoctor.setLicenseNumber(updateDoctorServiceRequestDto.getLicenseNumber());
+        existingDoctor.setMaxPatientCount(updateDoctorServiceRequestDto.getMaxPatientCount());
         return existingDoctor;
     }
 
@@ -90,6 +95,7 @@ public class DoctorMapper {
         updateDoctorControllerResponseDto.setEmail(updateDoctorServiceResponseDto.getEmail());
         updateDoctorControllerResponseDto.setSpecialization(updateDoctorServiceResponseDto.getSpecialization());
         updateDoctorControllerResponseDto.setYearsOfExperience(updateDoctorServiceResponseDto.getYearsOfExperience());
+        updateDoctorControllerResponseDto.setMaxPatientCount(updateDoctorServiceResponseDto.getMaxPatientCount());
         return updateDoctorControllerResponseDto;
     }
 
@@ -99,7 +105,6 @@ public class DoctorMapper {
         createDoctorServiceRequestDto.setName(createDoctorControllerRequestDto.getName());
         createDoctorServiceRequestDto.setEmail(createDoctorControllerRequestDto.getEmail());
         createDoctorServiceRequestDto.setNumber(createDoctorControllerRequestDto.getNumber());
-        createDoctorServiceRequestDto.setNumber(createDoctorControllerRequestDto.getNumber());
         createDoctorServiceRequestDto.setSpecialization(createDoctorControllerRequestDto.getSpecialization());
         createDoctorServiceRequestDto.setYearsOfExperience(createDoctorControllerRequestDto.getYearsOfExperience());
         createDoctorServiceRequestDto.setHospitalName(createDoctorControllerRequestDto.getHospitalName());
@@ -107,6 +112,7 @@ public class DoctorMapper {
         createDoctorServiceRequestDto.setLicenseNumber(createDoctorControllerRequestDto.getLicenseNumber());
         createDoctorServiceRequestDto.setAvailable(createDoctorControllerRequestDto.isAvailable());
         createDoctorServiceRequestDto.setPatientCount(createDoctorControllerRequestDto.getPatientCount());
+        createDoctorServiceRequestDto.setMaxPatientCount(createDoctorControllerRequestDto.getMaxPatientCount());
         return createDoctorServiceRequestDto;
     }
 

@@ -8,6 +8,7 @@ public class UpdateDoctorServiceRequestDto {
     private String email;
     private String hospitalName;
     private int licenseNumber;
+    private int maxPatientCount;
 
     public String getName() {
         return name;
@@ -47,5 +48,13 @@ public class UpdateDoctorServiceRequestDto {
 
     public void setLicenseNumber(int licenseNumber) {
         this.licenseNumber = licenseNumber;
+    }
+
+    public int getMaxPatientCount() {
+        return maxPatientCount;
+    }
+
+    public void setMaxPatientCount(int maxPatientCount) {
+        this.maxPatientCount = maxPatientCount;
     }
 }

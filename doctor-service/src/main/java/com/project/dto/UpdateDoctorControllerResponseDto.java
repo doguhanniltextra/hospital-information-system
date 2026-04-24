@@ -14,6 +14,7 @@ public class UpdateDoctorControllerResponseDto {
     private String number;
     private Specialization specialization;
     private int yearsOfExperience;
+    private int maxPatientCount;
 
 
     public UUID getId() {
@@ -62,5 +63,13 @@ public class UpdateDoctorControllerResponseDto {
 
     public void setYearsOfExperience(int yearsOfExperience) {
         this.yearsOfExperience = yearsOfExperience;
+    }
+
+    public int getMaxPatientCount() {
+        return maxPatientCount;
+    }
+
+    public void setMaxPatientCount(int maxPatientCount) {
+        this.maxPatientCount = maxPatientCount;
     }
 }

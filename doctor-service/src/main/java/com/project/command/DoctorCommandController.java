@@ -67,6 +67,7 @@ public class DoctorCommandController {
         serviceRequestDto.setHospitalName(requestDto.getHospitalName());
         serviceRequestDto.setSpecialization(requestDto.getSpecialization());
         serviceRequestDto.setLicenseNumber(requestDto.getLicenseNumber());
+        serviceRequestDto.setMaxPatientCount(requestDto.getMaxPatientCount());
 
         UpdateDoctorCommand command = new UpdateDoctorCommand(id, serviceRequestDto);
         UpdateDoctorServiceResponseDto updatedDoctor = doctorCommandService.updateDoctor(command);

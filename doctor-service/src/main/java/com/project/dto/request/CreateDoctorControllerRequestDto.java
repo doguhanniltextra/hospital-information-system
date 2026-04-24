@@ -44,6 +44,8 @@ public class CreateDoctorControllerRequestDto {
 
     private boolean getMaximumPatient;
 
+    private int maxPatientCount;
+
     @Version
     private int version;
 
@@ -143,4 +145,11 @@ public class CreateDoctorControllerRequestDto {
         return getMaximumPatient;
     }
 
+    public int getMaxPatientCount() {
+        return maxPatientCount;
+    }
+
+    public void setMaxPatientCount(int maxPatientCount) {
+        this.maxPatientCount = maxPatientCount;
+    }
 }

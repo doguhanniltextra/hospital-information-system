@@ -43,6 +43,9 @@ public class Doctor {
     @NotNull
     private int patientCount;
 
+    @NotNull
+    private int maxPatientCount = 10;
+
     private boolean getMaximumPatient;
 
     @Version
@@ -146,5 +149,13 @@ public class Doctor {
 
     public void setGetMaximumPatient(boolean getMaximumPatient) {
         this.getMaximumPatient = getMaximumPatient;
+    }
+
+    public int getMaxPatientCount() {
+        return maxPatientCount;
+    }
+
+    public void setMaxPatientCount(int maxPatientCount) {
+        this.maxPatientCount = maxPatientCount;
     }
 }
