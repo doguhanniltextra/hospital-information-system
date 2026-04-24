@@ -13,6 +13,7 @@ This documentation suite provides a comprehensive architectural breakdown of the
 ## Distributed Paradigms
 - [Hybrid Data Enrichment](hybrid_enrichment.md): Two-tier caching strategy (Redis L1 + gRPC L2) for PII-clean event hydration.
 - [Idempotency and Consistency](admission_and_billing.md#idempotency-tracking): Exactly-once processing logic using message tracking in downstream consumers.
+- [Security and Compliance](security_and_compliance.md): Identity linking, privilege escalation mitigation, and data exposure prevention.
 
 ---
 
@@ -22,7 +23,7 @@ This documentation suite provides a comprehensive architectural breakdown of the
 | :--- | :--- | :--- | :--- | :--- |
 | `api-gateway` | 4004 | N/A | N/A | Stateless (JWT) |
 | `auth-service` | 8089 | N/A | Postgres (User) | ACID |
-| `patient-service` | 8080 | 9090 | Postgres (Master) | ACID (R/W Split) |
+| `patient-management` | 8080 | 9090 | Postgres (Master) | ACID (R/W Split) |
 | `appointment-service`| 8084 | N/A | Postgres (Transactional) | Eventual (Outbox) |
 | `admission-service` | 8086 | N/A | Postgres (CQRS) | Eventual (Outbox) |
 | `support-service` | 8085 | N/A | Postgres (CQRS) | Read-Repair / Async |

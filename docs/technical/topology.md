@@ -80,3 +80,16 @@ The system employs a decentralized event-driven model to ensure loose coupling.
 ### 3. Database Strategy
 - **Master Data**: `patient-management` uses a Read/Write splitting pattern with dedicated data sources to optimize for read-heavy gRPC lookups.
 - **Transactional Outbox**: Command-side services (Admission, Appointment) implement the Outbox pattern in Postgres to ensure atomic state updates and event publishing.
+
+## Build Architecture and Dependency Strategy
+
+The system has transitioned from a centralized inheritance model to an **Independent Build Lifecycle** strategy.
+
+### 1. Dependency Decoupling
+- **Removal of BOM**: The `patient-management-bom` has been eliminated to prevent dependency version collisions and allow services to upgrade libraries (e.g., Spring Boot, gRPC) at different velocities.
+- **Direct Parentage**: Every microservice now inherits directly from `spring-boot-starter-parent`, ensuring they have full control over their runtime configuration.
+
+### 2. Standardization via Infrastructure
+- **Common Libraries**: Cross-cutting concerns (Lombok, Jackson, Protobuf) are managed via explicit, service-local version properties to maintain build hermeticity.
+- **Protocol Consistency**: While builds are independent, the API contracts (Protobuf definitions) remain the "source of truth," ensuring that decoupled services remain compatible over gRPC.
+
