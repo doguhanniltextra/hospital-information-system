@@ -29,7 +29,18 @@ public class AuthValidator {
         user.setEmail(registerRequestDto.getEmail());
         user.setRegisterDate(registerRequestDto.getRegisterDate());
 
-        // Roles must be explicitly provided in the request or default to PATIENT
+        user.getRoles().add(com.project.auth_service.entity.Role.PATIENT);
+        return user;
+    }
+
+    public User adminRegisterRequestDtoToUser(com.project.auth_service.dto.AdminRegisterRequestDto registerRequestDto,
+            PasswordEncoder passwordEncoder) {
+        User user = new User();
+        user.setName(registerRequestDto.getName());
+        user.setPassword(passwordEncoder.encode(registerRequestDto.getPassword()));
+        user.setEmail(registerRequestDto.getEmail());
+        user.setRegisterDate(registerRequestDto.getRegisterDate());
+
         if (registerRequestDto.getRoles() != null && !registerRequestDto.getRoles().isEmpty()) {
             user.getRoles().addAll(registerRequestDto.getRoles());
         } else {

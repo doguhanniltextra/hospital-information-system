@@ -1,8 +1,6 @@
 package com.project.auth_service.dto;
 
 import java.time.LocalDate;
-import java.util.List;
-import com.project.auth_service.entity.Role;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -25,7 +23,6 @@ public class RegisterRequestDto {
     private String password;
 
     private LocalDate registerDate;
-    private List<Role> roles;
 
     public String getName() {
         return name;
@@ -57,13 +54,5 @@ public class RegisterRequestDto {
 
     public void setRegisterDate(LocalDate registerDate) {
         this.registerDate = registerDate;
-    }
-
-    public List<Role> getRoles() {
-        return roles;
-    }
-
-    public void setRoles(List<Role> roles) {
-        this.roles = roles;
     }
 }

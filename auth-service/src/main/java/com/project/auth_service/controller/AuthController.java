@@ -77,6 +77,31 @@ public class AuthController {
                         jwtService.getAccessTokenExpiration() / 1000));
     }
 
+    @PostMapping(path = Endpoints.ADMIN_REGISTER, produces = Endpoints.PRODUCES)
+    public ResponseEntity<?> adminRegister(@Valid @RequestBody AdminRegisterRequestDto registerRequestDto) {
+
+        log.info(LogMessages.REGISTER_METHOD_TRIGGERED);
+        ResponseEntity<String> usernameCheckResult = authValidator
+                .checkIfUsernameAlreadyExistsOrNotForRegisterMethod(registerRequestDto, userRepository);
+        if (usernameCheckResult != null)
+            return usernameCheckResult;
+        log.info(LogMessages.REGISTER_USERNAME_EXISTS);
+        User user = authValidator.adminRegisterRequestDtoToUser(registerRequestDto, passwordEncoder);
+
+        userRepository.save(user);
+        log.info(LogMessages.REGISTER_USER_SAVED);
+
+        String accessToken = jwtService.generateAccessToken(user.getName(), user.getId().toString(), user.getRoles());
+        RefreshToken refreshTokenObj = createRefreshToken(user);
+
+        log.info(LogMessages.REGISTER_TOKEN_GENERATED);
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(new RegisterResponseDto("Privileged user registered successfully", accessToken,
+                        refreshTokenObj.getToken(),
+                        jwtService.getAccessTokenExpiration() / 1000));
+    }
+
     @PostMapping(path = Endpoints.LOGIN, produces = Endpoints.PRODUCES)
     public ResponseEntity<?> login(@RequestBody LoginRequestDto loginRequestDto) {
         log.info(LogMessages.LOGIN_METHOD_TRIGGERED);
