@@ -4,10 +4,10 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>com.project</groupId>
-        <artifactId>patient-management-aggregator</artifactId>
-        <version>1.0-SNAPSHOT</version>
-        <relativePath>../pom.xml</relativePath>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.4.4</version>
+        <relativePath/> <!-- lookup parent from repository -->
     </parent>
 
     <groupId>com.project</groupId>
@@ -16,17 +16,16 @@
     <name>billing-service</name>
     <description>Billing Service</description>
 
-	<dependencyManagement>
-		<dependencies>
-			<dependency>
-				<groupId>com.project</groupId>
-				<artifactId>patient-management-bom</artifactId>
-				<version>1.0-SNAPSHOT</version>
-				<type>pom</type>
-				<scope>import</scope>
-			</dependency>
-		</dependencies>
-	</dependencyManagement>
+    <properties>
+        <java.version>17</java.version>
+        <resilience4j.version>2.2.0</resilience4j.version>
+        <springdoc.version>2.2.0</springdoc.version>
+        <micrometer.version>1.14.5</micrometer.version>
+        <micrometer-tracing.version>1.4.4</micrometer-tracing.version>
+        <logback-kafka-appender.version>0.2.0-RC2</logback-kafka-appender.version>
+        <logstash-logback-encoder.version>7.4</logstash-logback-encoder.version>
+    </properties>
+
 
 	<dependencies>
 		<dependency>
@@ -52,6 +51,7 @@
 		<dependency>
 			<groupId>io.github.resilience4j</groupId>
 			<artifactId>resilience4j-spring-boot3</artifactId>
+			<version>${resilience4j.version}</version>
 		</dependency>
 
 		<dependency>
@@ -68,6 +68,7 @@
         <dependency>
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <version>${springdoc.version}</version>
         </dependency>
 
         <!-- Monitoring -->
@@ -78,22 +79,29 @@
         <dependency>
             <groupId>io.micrometer</groupId>
             <artifactId>micrometer-registry-prometheus</artifactId>
+            <version>${micrometer.version}</version>
         </dependency>
         <dependency>
             <groupId>io.micrometer</groupId>
             <artifactId>micrometer-tracing-bridge-otel</artifactId>
+            <version>${micrometer-tracing.version}</version>
         </dependency>
       <dependency>
     <groupId>com.github.danielwegener</groupId>
     <artifactId>logback-kafka-appender</artifactId>
-    <version>0.2.0-RC2</version>
+    <version>${logback-kafka-appender.version}</version>
 </dependency>
 <dependency>
     <groupId>net.logstash.logback</groupId>
     <artifactId>logstash-logback-encoder</artifactId>
-    <version>7.4</version>
+    <version>${logstash-logback-encoder.version}</version>
 </dependency>
 
+		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+			<optional>true</optional>
+		</dependency>
 	</dependencies>
 
 	<build>

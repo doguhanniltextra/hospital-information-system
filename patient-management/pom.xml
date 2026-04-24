@@ -3,44 +3,31 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
-		<groupId>com.project</groupId>
-		<artifactId>patient-management-aggregator</artifactId>
-		<version>1.0-SNAPSHOT</version>
-		<relativePath>../pom.xml</relativePath>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-parent</artifactId>
+		<version>3.4.4</version>
+		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.project</groupId>
 	<artifactId>patient-service</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>patient-service</name>
 	<description>Patient Service</description>
-	<url/>
-	<licenses>
-		<license/>
-	</licenses>
-	<developers>
-		<developer/>
-	</developers>
-	<scm>
-		<connection/>
-		<developerConnection/>
-		<tag/>
-		<url/>
-	</scm>
+
 	<properties>
 		<java.version>17</java.version>
+		<grpc.version>1.68.1</grpc.version>
+		<protobuf.version>3.25.5</protobuf.version>
+		<grpc-spring-boot-starter.version>3.1.0.RELEASE</grpc-spring-boot-starter.version>
+		<jjwt.version>0.11.5</jjwt.version>
+		<micrometer.version>1.14.4</micrometer.version>
+		<micrometer-tracing.version>1.4.3</micrometer-tracing.version>
+		<resilience4j.version>2.2.0</resilience4j.version>
+		<logback-kafka-appender.version>0.2.0-RC2</logback-kafka-appender.version>
+		<logstash-logback-encoder.version>7.4</logstash-logback-encoder.version>
+		<springdoc.version>2.3.0</springdoc.version>
+		<jsoup.version>1.17.2</jsoup.version>
 	</properties>
-
-	<dependencyManagement>
-		<dependencies>
-			<dependency>
-				<groupId>com.project</groupId>
-				<artifactId>patient-management-bom</artifactId>
-				<version>1.0-SNAPSHOT</version>
-				<type>pom</type>
-				<scope>import</scope>
-			</dependency>
-		</dependencies>
-	</dependencyManagement>
 
 	<dependencies>
 
@@ -57,15 +44,18 @@
 		<dependency>
 			<groupId>io.jsonwebtoken</groupId>
 			<artifactId>jjwt-api</artifactId>
+			<version>${jjwt.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>io.jsonwebtoken</groupId>
 			<artifactId>jjwt-impl</artifactId>
+			<version>${jjwt.version}</version>
 			<scope>runtime</scope>
 		</dependency>
 		<dependency>
 			<groupId>io.jsonwebtoken</groupId>
 			<artifactId>jjwt-jackson</artifactId>
+			<version>${jjwt.version}</version>
 			<scope>runtime</scope>
 		</dependency>
 
@@ -91,12 +81,14 @@
 		<dependency>
 			<groupId>io.micrometer</groupId>
 			<artifactId>micrometer-registry-prometheus</artifactId>
+			<version>${micrometer.version}</version>
 		</dependency>
 
 		<!-- Resilience4j -->
 		<dependency>
 			<groupId>io.github.resilience4j</groupId>
 			<artifactId>resilience4j-spring-boot3</artifactId>
+			<version>${resilience4j.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -122,33 +114,40 @@
         <dependency>
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <version>${springdoc.version}</version>
         </dependency>
 
 		<!--GRPC -->
 		<dependency>
 			<groupId>io.grpc</groupId>
 			<artifactId>grpc-netty-shaded</artifactId>
+			<version>${grpc.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>io.grpc</groupId>
 			<artifactId>grpc-protobuf</artifactId>
+			<version>${grpc.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>io.grpc</groupId>
 			<artifactId>grpc-stub</artifactId>
+			<version>${grpc.version}</version>
 		</dependency>
 		<dependency> <!-- necessary for Java 9+ -->
 			<groupId>org.apache.tomcat</groupId>
 			<artifactId>annotations-api</artifactId>
+			<version>6.0.53</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>net.devh</groupId>
 			<artifactId>grpc-spring-boot-starter</artifactId>
+			<version>${grpc-spring-boot-starter.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.google.protobuf</groupId>
 			<artifactId>protobuf-java</artifactId>
+			<version>${protobuf.version}</version>
 		</dependency>
 
 		<!-- Kafka -->
@@ -162,23 +161,29 @@
 <dependency>
     <groupId>io.micrometer</groupId>
     <artifactId>micrometer-tracing-bridge-otel</artifactId>
+    <version>${micrometer-tracing.version}</version>
 </dependency>
 <dependency>
     <groupId>com.github.danielwegener</groupId>
     <artifactId>logback-kafka-appender</artifactId>
-    <version>0.2.0-RC2</version>  
+    <version>${logback-kafka-appender.version}</version>  
 </dependency>
 <dependency>
     <groupId>net.logstash.logback</groupId>
     <artifactId>logstash-logback-encoder</artifactId>
-    <version>7.4</version>  
+    <version>${logstash-logback-encoder.version}</version>  
 </dependency>
 <dependency>
     <groupId>org.jsoup</groupId>
     <artifactId>jsoup</artifactId>
-    <version>1.17.2</version>  
+    <version>${jsoup.version}</version>  
 </dependency>
 
+		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+			<optional>true</optional>
+		</dependency>
 	</dependencies>
 
 	<build>

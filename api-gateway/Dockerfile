@@ -2,19 +2,7 @@ FROM maven:3.9.9-eclipse-temurin-21 AS builder
 
 WORKDIR /app
 
-# Copy the BOM and install it to the local maven repo
-COPY patient-management-bom ./patient-management-bom
-RUN mvn install -f patient-management-bom/pom.xml -B
-
-# Copy and install the aggregator (parent) POM
-COPY pom.xml ./pom.xml
-RUN mvn install -N -B
-
-# Copy the service project
-COPY api-gateway ./api-gateway
-
-# Build the service from its own directory
-WORKDIR /app/api-gateway
+COPY . .
 RUN mvn clean package -Dmaven.test.skip=true
 
 FROM eclipse-temurin:21-jre-alpine AS runner
@@ -23,7 +11,7 @@ RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 
 WORKDIR /app
 
-COPY --from=builder /app/api-gateway/target/api-gateway-1.0-SNAPSHOT.jar ./app.jar
+COPY --from=builder /app/target/api-gateway-1.0-SNAPSHOT.jar ./app.jar
 
 USER appuser
 

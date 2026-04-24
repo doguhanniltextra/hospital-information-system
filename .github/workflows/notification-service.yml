@@ -6,7 +6,6 @@ on:
     paths:
       - 'notification-service/**'
       - '.github/workflows/notification-service.yml'
-      - 'patient-management-bom/**'
       - '!**.md'
   workflow_dispatch:
 

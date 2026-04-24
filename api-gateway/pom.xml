@@ -5,10 +5,10 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>com.project</groupId>
-        <artifactId>patient-management-aggregator</artifactId>
-        <version>1.0-SNAPSHOT</version>
-        <relativePath>../pom.xml</relativePath>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.4.4</version>
+        <relativePath/> <!-- lookup parent from repository -->
     </parent>
 
     <groupId>com.project</groupId>
@@ -18,21 +18,20 @@
     <description>Api Gateway</description>
 
     <properties>
+        <java.version>17</java.version>
         <maven.compiler.source>22</maven.compiler.source>
         <maven.compiler.target>22</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <spring-cloud.version>2024.0.0</spring-cloud.version>
+        <jjwt.version>0.11.5</jjwt.version>
+        <micrometer-tracing.version>1.4.4</micrometer-tracing.version>
+        <micrometer.version>1.14.5</micrometer.version>
+        <logback-kafka-appender.version>0.2.0-RC2</logback-kafka-appender.version>
+        <logstash-logback-encoder.version>7.4</logstash-logback-encoder.version>
     </properties>
 
     <dependencyManagement>
         <dependencies>
-            <dependency>
-                <groupId>com.project</groupId>
-                <artifactId>patient-management-bom</artifactId>
-                <version>1.0-SNAPSHOT</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
             <dependency>
                 <groupId>org.springframework.cloud</groupId>
                 <artifactId>spring-cloud-dependencies</artifactId>
@@ -42,6 +41,7 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
+
 
     <dependencies>
 
@@ -72,15 +72,18 @@
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-api</artifactId>
+            <version>${jjwt.version}</version>
         </dependency>
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-impl</artifactId>
+            <version>${jjwt.version}</version>
             <scope>runtime</scope>
         </dependency>
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-jackson</artifactId>
+            <version>${jjwt.version}</version>
             <scope>runtime</scope>
         </dependency>
 
@@ -92,18 +95,22 @@
         <dependency>
             <groupId>io.micrometer</groupId>
             <artifactId>micrometer-registry-prometheus</artifactId>
+            <version>${micrometer.version}</version>
         </dependency>
         <dependency>
             <groupId>io.micrometer</groupId>
             <artifactId>micrometer-tracing-bridge-otel</artifactId>
+            <version>${micrometer-tracing.version}</version>
         </dependency>
         <dependency>
             <groupId>com.github.danielwegener</groupId>
             <artifactId>logback-kafka-appender</artifactId>
+            <version>${logback-kafka-appender.version}</version>
         </dependency>
         <dependency>
             <groupId>net.logstash.logback</groupId>
             <artifactId>logstash-logback-encoder</artifactId>
+            <version>${logstash-logback-encoder.version}</version>
         </dependency>
         <dependency>
             <groupId>org.springdoc</groupId>

@@ -6,7 +6,6 @@ on:
     paths:
       - 'doctor-service/**'
       - '.github/workflows/doctor-service.yml'
-      - 'patient-management-bom/**'
       - '!**.md'
   workflow_dispatch:
 
