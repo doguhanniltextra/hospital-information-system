@@ -7,3 +7,4 @@ target/
 hack/
 agent/
 .agents/
+.vscode/
