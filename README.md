@@ -57,16 +57,16 @@ graph TD
 - **Security**: JWT-based stateless authentication
 - **Observability**: Prometheus, Grafana, and Micrometer
 
-## Deep Dives
-
-- [Distributed System Patterns: CQRS, gRPC, and Saga](https://doguhanniltextra.github.io/portfolio/blog/page/cqrs_grpc_design_patterns.html)
-- [Hospital Information System: Architectural Overview](https://doguhanniltextra.github.io/portfolio/blog/page/his_overview.html)
-
 ## Detailed Documentation
 
 For a deep dive into the system design, microservice patterns, and technical specifications, please refer to the official documentation portal:
 
 **[https://doguhanniltextra.github.io/hospital-information-system/](https://doguhanniltextra.github.io/hospital-information-system/)**
+
+## Deep Dives
+
+- [Distributed System Patterns: CQRS, gRPC, and Saga](https://doguhanniltextra.github.io/portfolio/blog/page/cqrs_grpc_design_patterns.html)
+- [Hospital Information System: Architectural Overview](https://doguhanniltextra.github.io/portfolio/blog/page/his_overview.html)
 
 ## How to Run
 
