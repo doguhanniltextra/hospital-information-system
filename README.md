@@ -61,7 +61,7 @@ graph TD
 
 For a deep dive into the system design, microservice patterns, and technical specifications, please refer to the official documentation portal:
 
-**[https://doguhanniltextra.github.io/hospital-information-system/](https://doguhanniltextra.github.io/hospital-information-system/)**
+- **[Documentation](https://doguhanniltextra.github.io/hospital-information-system/)**
 
 ## Deep Dives
 
