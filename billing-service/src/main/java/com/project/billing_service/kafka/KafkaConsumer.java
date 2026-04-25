@@ -21,7 +21,7 @@ public class KafkaConsumer {
         this.billingCommandService = billingCommandService;
     }
 
-    @KafkaListener(topics = "${kafka.topics.appointment-payment-updated:" + KafkaTopics.APPOINTMENT_PAYMENT_UPDATED + "}", groupId = "${kafka.groups.appointment:" + KafkaTopics.APPOINTMENT_GROUP + "}")
+    @KafkaListener(topics = "${kafka.topics.appointment-payment-updated:" + KafkaTopics.APPOINTMENT_PAYMENT_UPDATES + "}", groupId = "${kafka.groups.appointment:" + KafkaTopics.APPOINTMENT_GROUP + "}")
     public void listen(String message) throws Exception {
         AppointmentDTO appointment = objectMapper.readValue(message, AppointmentDTO.class);
         log.info(LogMessages.LISTENER_RECEIVED_MESSAGE, appointment);

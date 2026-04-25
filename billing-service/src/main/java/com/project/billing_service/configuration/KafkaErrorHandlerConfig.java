@@ -50,7 +50,7 @@ public class KafkaErrorHandlerConfig {
 
     @Bean
     public NewTopic appointmentPaymentDlq() {
-        return TopicBuilder.name(KafkaTopics.APPOINTMENT_PAYMENT_UPDATED + ".DLQ")
+        return TopicBuilder.name(KafkaTopics.APPOINTMENT_PAYMENT_UPDATES + ".DLQ")
                 .partitions(partitions)
                 .replicas(replicas)
                 .build();

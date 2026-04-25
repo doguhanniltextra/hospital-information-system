@@ -1,7 +1,7 @@
 package com.project.billing_service.constants;
 
 public class KafkaTopics {
-    public static final String APPOINTMENT_PAYMENT_UPDATED = "appointment-payment-updated";
+    public static final String APPOINTMENT_PAYMENT_UPDATES = "appointment-payment-updates.v1";
     public static final String APPOINTMENT_GROUP = "appointment-group";
     
     // Topic Names (Spring property keys or defaults)
