@@ -8,16 +8,16 @@ services:
     ports:
       - "5442:5432"
     environment:
-      POSTGRES_DB: support_db
-      POSTGRES_USER: support_user
-      POSTGRES_PASSWORD: support_pass_123
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - support-db-data:/var/lib/postgresql/data
       - ./init/init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - patient-global-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U support_user -d support_db"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -46,16 +46,16 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: dev
       SERVER_PORT: 8085
-      SPRING_DATASOURCE_URL: jdbc:postgresql://support-db:5432/support_db?currentSchema=support_schema&reWriteBatchedInserts=true
-      SPRING_DATASOURCE_USERNAME: support_user
-      SPRING_DATASOURCE_PASSWORD: support_pass_123
+      SPRING_DATASOURCE_URL: jdbc:postgresql://support-db:5432/${POSTGRES_DB}?currentSchema=support_schema&reWriteBatchedInserts=true
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
       SPRING_DATA_REDIS_HOST: redis
       SPRING_DATA_REDIS_PORT: 6379
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       KAFKA_TOPIC_LAB_ORDER_PLACED: lab-order-placed.v1
       KAFKA_TOPIC_LAB_RESULT_COMPLETED: lab-result-completed.v1
       KAFKA_TOPIC_INVENTORY_ITEM_CONSUMED: inventory-item-consumed.v1
-      APP_SECRET: A7f9K2mN8pQ3sT6vY1zB4cD7gH0jL3nP6qR9uW2xE5yI8oU1aS4dF7hK0mP3sV6z
+      APP_SECRET: ${APP_SECRET}
     volumes:
       - ./src:/app/src
     networks:

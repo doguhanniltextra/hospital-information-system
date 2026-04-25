@@ -9,16 +9,16 @@ services:
     ports:
       - "5432:5432"
     environment:
-      POSTGRES_DB: patient_db
-      POSTGRES_USER: patient_user
-      POSTGRES_PASSWORD: patient_pass_123
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - patient-write-data:/var/lib/postgresql/data
       - ./init/write-schema.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - patient-global-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U patient_user -d patient_db"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -31,16 +31,16 @@ services:
     ports:
       - "5433:5432"
     environment:
-      POSTGRES_DB: patient_db
-      POSTGRES_USER: patient_user
-      POSTGRES_PASSWORD: patient_pass_123
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - patient-read-data:/var/lib/postgresql/data
       - ./init/read-schema.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - patient-global-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U patient_user -d patient_db"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -70,11 +70,11 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: dev
       SERVER_PORT: 8080
-      SPRING_APPLICATION_JSON: '{"spring":{"datasource":{"write":{"jdbc-url":"jdbc:postgresql://patient-write-db:5432/patient_db?currentSchema=patient_schema","username":"patient_user","password":"patient_pass_123","driver-class-name":"org.postgresql.Driver"},"read":{"jdbc-url":"jdbc:postgresql://patient-read-db:5432/patient_db?currentSchema=patient_schema","username":"patient_user","password":"patient_pass_123","driver-class-name":"org.postgresql.Driver"}},"jpa":{"hibernate":{"ddl-auto":"update"}}}}'
+      SPRING_APPLICATION_JSON: '{"spring":{"datasource":{"write":{"jdbc-url":"jdbc:postgresql://patient-write-db:5432/${POSTGRES_DB}?currentSchema=patient_schema","username":"${POSTGRES_USER}","password":"${POSTGRES_PASSWORD}","driver-class-name":"org.postgresql.Driver"},"read":{"jdbc-url":"jdbc:postgresql://patient-read-db:5432/${POSTGRES_DB}?currentSchema=patient_schema","username":"${POSTGRES_USER}","password":"${POSTGRES_PASSWORD}","driver-class-name":"org.postgresql.Driver"}},"jpa":{"hibernate":{"ddl-auto":"update"}}}}'
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       KAFKA_TOPIC_LAB_RESULT_COMPLETED: lab-result-completed.v1
       KAFKA_GROUP_PATIENT_LAB_RESULT: patient-lab-result-group
-      APP_SECRET: A7f9K2mN8pQ3sT6vY1zB4cD7gH0jL3nP6qR9uW2xE5yI8oU1aS4dF7hK0mP3sV6z
+      APP_SECRET: ${APP_SECRET}
     volumes:
       - ./src:/app/src
     networks:

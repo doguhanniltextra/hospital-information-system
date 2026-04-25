@@ -8,16 +8,16 @@ services:
     ports:
       - "5443:5432"
     environment:
-      POSTGRES_DB: notification_db
-      POSTGRES_USER: notification_user
-      POSTGRES_PASSWORD: notification_pass_123
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - notification-db-data:/var/lib/postgresql/data
       - ./init/init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - patient-global-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U notification_user -d notification_db"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -44,9 +44,9 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: dev
       SERVER_PORT: 8090
-      SPRING_DATASOURCE_URL: jdbc:postgresql://notification-db:5432/notification_db?currentSchema=notification_schema&reWriteBatchedInserts=true
-      SPRING_DATASOURCE_USERNAME: notification_user
-      SPRING_DATASOURCE_PASSWORD: notification_pass_123
+      SPRING_DATASOURCE_URL: jdbc:postgresql://notification-db:5432/${POSTGRES_DB}?currentSchema=notification_schema&reWriteBatchedInserts=true
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       PATIENT_SERVICE_URL: http://patient-management:8080
     volumes:

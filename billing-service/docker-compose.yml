@@ -9,16 +9,16 @@ services:
     ports:
       - "5439:5432"
     environment:
-      POSTGRES_DB: billing_db
-      POSTGRES_USER: billing_user
-      POSTGRES_PASSWORD: billing_pass_123
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - billing-write-data:/var/lib/postgresql/data
       - ./init/write-schema.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - patient-global-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U billing_user -d billing_db"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -31,16 +31,16 @@ services:
     ports:
       - "5440:5432"
     environment:
-      POSTGRES_DB: billing_db
-      POSTGRES_USER: billing_user
-      POSTGRES_PASSWORD: billing_pass_123
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - billing-read-data:/var/lib/postgresql/data
       - ./init/read-schema.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - patient-global-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U billing_user -d billing_db"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -69,14 +69,14 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: dev
       SERVER_PORT: 8081
-      SPRING_DATASOURCE_WRITE_URL: jdbc:postgresql://billing-write-db:5432/billing_db?currentSchema=billing_schema&reWriteBatchedInserts=true
-      SPRING_DATASOURCE_READ_URL: jdbc:postgresql://billing-read-db:5432/billing_db?currentSchema=billing_schema&reWriteBatchedInserts=true
-      SPRING_DATASOURCE_USERNAME: billing_user
-      SPRING_DATASOURCE_PASSWORD: billing_pass_123
+      SPRING_DATASOURCE_WRITE_URL: jdbc:postgresql://billing-write-db:5432/${POSTGRES_DB}?currentSchema=billing_schema&reWriteBatchedInserts=true
+      SPRING_DATASOURCE_READ_URL: jdbc:postgresql://billing-read-db:5432/${POSTGRES_DB}?currentSchema=billing_schema&reWriteBatchedInserts=true
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       KAFKA_TOPIC_LAB_ORDER_PLACED: lab-order-placed.v1
       KAFKA_GROUP_BILLING_LAB_ORDER: billing-lab-order-group
-      INVOICE_API_KEY: placeholder-api-key
+      INVOICE_API_KEY: ${INVOICE_API_KEY}
       INVOICE_API_URL: https://invoice-generator.com/api/v1/invoices
     volumes:
       - ./src:/app/src

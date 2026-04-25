@@ -8,16 +8,16 @@ services:
     ports:
       - "5442:5432"
     environment:
-      POSTGRES_DB: admission_db
-      POSTGRES_USER: admission_user
-      POSTGRES_PASSWORD: admission_pass_123
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - admission-db-data:/var/lib/postgresql/data
       - ./init/init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - patient-global-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U admission_user -d admission_db"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -44,9 +44,9 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: dev
       SERVER_PORT: 8086
-      SPRING_DATASOURCE_URL: jdbc:postgresql://admission-db:5432/admission_db?currentSchema=admission_schema&reWriteBatchedInserts=true
-      SPRING_DATASOURCE_USERNAME: admission_user
-      SPRING_DATASOURCE_PASSWORD: admission_pass_123
+      SPRING_DATASOURCE_URL: jdbc:postgresql://admission-db:5432/${POSTGRES_DB}?currentSchema=admission_schema&reWriteBatchedInserts=true
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
     volumes:
       - ./src:/app/src
