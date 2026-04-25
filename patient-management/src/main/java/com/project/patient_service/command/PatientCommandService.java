@@ -40,12 +40,12 @@ public class PatientCommandService {
     private final ObjectMapper objectMapper;
     private static final Logger log = LoggerFactory.getLogger(PatientCommandService.class);
 
-    public PatientCommandService(PatientRepository patientRepository, 
-                                 PatientOutboxRepository patientOutboxRepository, 
-                                 UserMapper userMapper, 
-                                 UserValidator userValidator,
-                                 ApplicationEventPublisher eventPublisher,
-                                 ObjectMapper objectMapper) {
+    public PatientCommandService(PatientRepository patientRepository,
+            PatientOutboxRepository patientOutboxRepository,
+            UserMapper userMapper,
+            UserValidator userValidator,
+            ApplicationEventPublisher eventPublisher,
+            ObjectMapper objectMapper) {
         this.patientRepository = patientRepository;
         this.patientOutboxRepository = patientOutboxRepository;
         this.userMapper = userMapper;
@@ -54,7 +54,8 @@ public class PatientCommandService {
         this.objectMapper = objectMapper;
     }
 
-    public CreatePatientServiceResponseDto createPatient(CreatePatientCommand command) throws EmailAlreadyExistsException {
+    public CreatePatientServiceResponseDto createPatient(CreatePatientCommand command)
+            throws EmailAlreadyExistsException {
         CreatePatientServiceRequestDto patientRequestDTO = command.patientRequest();
 
         // Sanitize sensitive input fields
@@ -72,7 +73,7 @@ public class PatientCommandService {
         try {
             String payload = objectMapper.writeValueAsString(userMapper.getKafkaPatientRequestDto(newPatient));
             patientOutboxRepository.save(new PatientOutboxEvent(
-                newPatient.getId().toString(), "PATIENT", "PATIENT_CREATED", payload));
+                    newPatient.getId().toString(), "PATIENT", "PATIENT_CREATED", payload));
         } catch (JsonProcessingException e) {
             log.error("Failed to serialize patient created event", e);
             throw new RuntimeException("Outbox serialization failure", e);
@@ -105,7 +106,7 @@ public class PatientCommandService {
         try {
             String payload = objectMapper.writeValueAsString(userMapper.getKafkaPatientRequestDto(updatedPatient));
             patientOutboxRepository.save(new PatientOutboxEvent(
-                updatedPatient.getId().toString(), "PATIENT", "PATIENT_UPDATED", payload));
+                    updatedPatient.getId().toString(), "PATIENT", "PATIENT_UPDATED", payload));
         } catch (JsonProcessingException e) {
             log.error("Failed to serialize patient updated event", e);
         }
@@ -125,7 +126,7 @@ public class PatientCommandService {
             Map<String, String> deletePayload = Map.of("patientId", id.toString(), "eventType", "PATIENT_DELETED");
             String payload = objectMapper.writeValueAsString(deletePayload);
             patientOutboxRepository.save(new PatientOutboxEvent(
-                id.toString(), "PATIENT", "PATIENT_DELETED", payload));
+                    id.toString(), "PATIENT", "PATIENT_DELETED", payload));
         } catch (JsonProcessingException e) {
             log.error("Failed to serialize patient deleted event", e);
         }

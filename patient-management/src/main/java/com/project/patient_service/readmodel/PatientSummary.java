@@ -1,8 +1,10 @@
 package com.project.patient_service.readmodel;
 
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import com.project.patient_service.security.CryptoConverter;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -17,12 +19,17 @@ public class PatientSummary {
     @Id
     private UUID id;
 
+    @Convert(converter = CryptoConverter.class)
     private String name;
     private String email;
+    
+    @Convert(converter = CryptoConverter.class)
     private String phoneNumber;
     
     // Denormalized/Flattened Insurance Data
     private String insuranceProviderName;
+    
+    @Convert(converter = CryptoConverter.class)
     private String insurancePolicyNumber;
 
     private LocalDateTime lastUpdated;

@@ -31,7 +31,8 @@ public class PatientQueryController {
     private final UserMapper userMapper;
     private final UserValidator userValidator;
 
-    public PatientQueryController(PatientQueryService patientQueryService, UserMapper userMapper, UserValidator userValidator) {
+    public PatientQueryController(PatientQueryService patientQueryService, UserMapper userMapper,
+            UserValidator userValidator) {
         this.patientQueryService = patientQueryService;
         this.userMapper = userMapper;
         this.userValidator = userValidator;
@@ -60,23 +61,24 @@ public class PatientQueryController {
     @org.springframework.security.access.prepost.PreAuthorize("hasAnyRole('DOCTOR', 'ADMIN', 'RECEPTIONIST') or @securityService.isPatientOwner(authentication, #id)")
     public ResponseEntity<com.project.patient_service.readmodel.PatientSummary> findPatientById(@PathVariable UUID id) {
         log.info(LogMessages.CONTROLLER_FIND_BY_ID_TRIGGERED);
-        
+
         GetPatientQuery query = new GetPatientQuery(id);
-        Optional<com.project.patient_service.readmodel.PatientSummary> currentId = patientQueryService.findPatientById(query);
-        
+        Optional<com.project.patient_service.readmodel.PatientSummary> currentId = patientQueryService
+                .findPatientById(query);
+
         return currentId.map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
     }
-
 
     @GetMapping(Endpoints.PATIENT_CONTROLLER_FIND_PATIENT_BY_EMAIL)
     @Operation(summary = SwaggerMessages.FIND_PATIENT_BY_EMAIL)
     @org.springframework.security.access.prepost.PreAuthorize("hasAnyRole('DOCTOR', 'ADMIN', 'RECEPTIONIST')")
     public ResponseEntity<Boolean> findPatientByEmail(@PathVariable String email) {
         log.info(LogMessages.CONTROLLER_FIND_BY_EMAIL_TRIGGERED);
-        
-        // Note: Special lookup that doesn't use a Query object for now as it's a simple boolean check
+
+        // Note: Special lookup that doesn't use a Query object for now as it's a simple
+        // boolean check
         boolean exists = patientQueryService.findPatientByEmail(email);
-        
+
         return userValidator.getBooleanResponseEntity(exists);
     }
 }

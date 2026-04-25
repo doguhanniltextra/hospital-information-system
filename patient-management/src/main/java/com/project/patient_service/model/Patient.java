@@ -3,6 +3,8 @@ package com.project.patient_service.model;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotNull;
+import com.project.patient_service.security.CryptoConverter;
+import com.project.patient_service.security.LocalDateCryptoConverter;
 
 import java.time.LocalDate;
 import java.util.UUID;
@@ -15,6 +17,7 @@ public class Patient {
     private UUID id;
 
     @NotNull
+    @Convert(converter = CryptoConverter.class)
     private String name;
 
     @NotNull
@@ -23,12 +26,15 @@ public class Patient {
     private String email;
 
     @NotNull
+    @Convert(converter = CryptoConverter.class)
     private String phoneNumber;
 
     @NotNull
+    @Convert(converter = CryptoConverter.class)
     private String address;
 
     @NotNull
+    @Convert(converter = LocalDateCryptoConverter.class)
     private LocalDate dateOfBirth;
 
     @NotNull
