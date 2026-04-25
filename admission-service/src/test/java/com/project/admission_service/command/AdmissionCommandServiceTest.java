@@ -1,8 +1,10 @@
-package com.project.admission_service.service;
+package com.project.admission_service.command;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.project.admission_service.dto.AdmissionRequest;
+import com.project.admission_service.event.*;
+import com.project.admission_service.grpc.PatientGrpcClient;
 import com.project.admission_service.model.*;
 import com.project.admission_service.repository.*;
 import org.junit.jupiter.api.BeforeEach;
@@ -10,14 +12,17 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.context.ApplicationEventPublisher;
+
 import java.util.Collections;
 import java.util.Optional;
 import java.util.UUID;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-class AdmissionServiceTest {
+class AdmissionCommandServiceTest {
 
     @Mock
     private WardRepository wardRepository;
@@ -30,10 +35,16 @@ class AdmissionServiceTest {
     @Mock
     private AdmissionOutboxRepository outboxRepository;
     @Mock
+    private AdmissionProcessedEventRepository processedEventRepository;
+    @Mock
+    private PatientGrpcClient patientGrpcClient;
+    @Mock
     private ObjectMapper objectMapper;
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
-    private AdmissionService admissionService;
+    private AdmissionCommandService admissionCommandService;
 
     @BeforeEach
     void setUp() {
@@ -67,7 +78,7 @@ class AdmissionServiceTest {
         when(admissionRepository.save(any(Admission.class))).thenAnswer(i -> i.getArguments()[0]);
 
         // Act
-        Admission result = admissionService.admitPatient(request);
+        Admission result = admissionCommandService.admitPatient(request);
 
         // Assert
         assertNotNull(result);
@@ -77,6 +88,7 @@ class AdmissionServiceTest {
         assertEquals(AdmissionStatus.ACTIVE, result.getStatus());
         verify(bedRepository, times(1)).save(bed);
         verify(admissionRepository, times(1)).save(any(Admission.class));
+        verify(eventPublisher, times(1)).publishEvent(any(AdmissionCreatedEvent.class));
     }
 
     @Test
@@ -89,7 +101,7 @@ class AdmissionServiceTest {
         when(roomRepository.findByWardId(wardId)).thenReturn(Collections.emptyList());
 
         // Act & Assert
-        Exception exception = assertThrows(RuntimeException.class, () -> admissionService.admitPatient(request));
+        Exception exception = assertThrows(RuntimeException.class, () -> admissionCommandService.admitPatient(request));
         assertEquals("No available beds in the selected ward.", exception.getMessage());
     }
 
@@ -116,7 +128,7 @@ class AdmissionServiceTest {
         when(objectMapper.writeValueAsString(any())).thenReturn("{}");
 
         // Act
-        Admission result = admissionService.dischargePatient(admissionId);
+        Admission result = admissionCommandService.dischargePatient(admissionId);
 
         // Assert
         assertNotNull(result);
@@ -125,6 +137,7 @@ class AdmissionServiceTest {
         assertNotNull(result.getDischargeDate());
         verify(bedRepository, times(1)).save(bed);
         verify(outboxRepository, times(1)).save(any(AdmissionOutboxEvent.class));
+        verify(eventPublisher, times(1)).publishEvent(any(AdmissionUpdatedEvent.class));
     }
 
     @Test
@@ -134,7 +147,7 @@ class AdmissionServiceTest {
         when(admissionRepository.findById(admissionId)).thenReturn(Optional.empty());
 
         // Act & Assert
-        Exception exception = assertThrows(RuntimeException.class, () -> admissionService.dischargePatient(admissionId));
+        Exception exception = assertThrows(RuntimeException.class, () -> admissionCommandService.dischargePatient(admissionId));
         assertEquals("Admission not found.", exception.getMessage());
     }
 
@@ -147,7 +160,7 @@ class AdmissionServiceTest {
         when(admissionRepository.findById(admissionId)).thenReturn(Optional.of(admission));
 
         // Act & Assert
-        Exception exception = assertThrows(IllegalStateException.class, () -> admissionService.dischargePatient(admissionId));
+        Exception exception = assertThrows(IllegalStateException.class, () -> admissionCommandService.dischargePatient(admissionId));
         assertEquals("Patient already discharged.", exception.getMessage());
     }
 }
