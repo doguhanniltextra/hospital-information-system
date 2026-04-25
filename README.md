@@ -65,8 +65,8 @@ For a deep dive into the system design, microservice patterns, and technical spe
 
 ## Deep Dives
 
-- [Distributed System Patterns: CQRS, gRPC, and Saga](https://doguhanniltextra.github.io/portfolio/blog/page/cqrs_grpc_design_patterns.html)
-- [Hospital Information System: Architectural Overview](https://doguhanniltextra.github.io/portfolio/blog/page/his_overview.html)
+- [Release v6.2.0 - Distributed System Patterns: CQRS, gRPC, and Saga](https://doguhanniltextra.github.io/portfolio/blog/page/cqrs_grpc_design_patterns.html)
+- [Release v1.0.0 - Hospital Information System: Architectural Overview](https://doguhanniltextra.github.io/portfolio/blog/page/his_overview.html)
 
 ## How to Run
 
