@@ -1,8 +1,7 @@
-# Disclaimer
-
-Please be advised that the project is just for learning and improving. Also, the project is under heavy development.
-
 # Hospital Information System (HIS)
+
+> **Project Status: Active Development & Research**
+> This repository serves as a technical showcase for implementing distributed systems patterns. It is a hands-on environment where I apply distributed architectures and modern backend stacks to a simulated healthcare domain.
 
 A Hospital Information System (HIS) designed to coordinate clinical and administrative operations across a distributed environment. The project focuses on managing the lifecycle of patient data, medical appointments, and inpatient admissions, ensuring each department has access to the information it needs to deliver care.
 
