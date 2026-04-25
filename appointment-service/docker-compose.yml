@@ -4,6 +4,7 @@ services:
   appointment-write-db:
     image: postgres:15-alpine
     container_name: appointment-write-db
+    env_file: .env
     restart: unless-stopped
     ports:
       - "5436:5432"
@@ -25,6 +26,7 @@ services:
   appointment-read-db:
     image: postgres:15-alpine
     container_name: appointment-read-db
+    env_file: .env
     restart: unless-stopped
     ports:
       - "5437:5432"
@@ -56,6 +58,7 @@ services:
       context: ../
       dockerfile: appointment-service/Dockerfile
     container_name: appointment-service
+    env_file: .env
     restart: unless-stopped
     ports:
       - "8084:8084"

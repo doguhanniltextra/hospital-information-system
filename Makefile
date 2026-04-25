@@ -18,14 +18,13 @@ COMPOSE_DOMAIN := -f patient-management/docker-compose.yml \
                   -f doctor-service/docker-compose.yml \
                   -f appointment-service/docker-compose.yml \
                   -f billing-service/docker-compose.yml \
-                  -f lab-service/docker-compose.yml \
-                  -f inventory-service/docker-compose.yml \
+                  -f support-service/docker-compose.yml \
                   -f admission-service/docker-compose.yml \
                   -f notification-service/docker-compose.yml
 
 COMPOSE_ALL := $(COMPOSE_INFRA) $(COMPOSE_DOMAIN)
 
-SERVICES := api-gateway patient-management auth-service doctor-service appointment-service billing-service lab-service inventory-service admission-service notification-service
+SERVICES := api-gateway patient-management auth-service doctor-service appointment-service billing-service support-service admission-service notification-service
 
 .PHONY: help
 help:

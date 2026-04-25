@@ -4,6 +4,7 @@ services:
   auth-db:
     image: postgres:15-alpine
     container_name: auth-db
+    env_file: .env
     restart: unless-stopped
     ports:
       - "5438:5432"
@@ -35,6 +36,7 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: auth-service
+    env_file: .env
     restart: unless-stopped
     ports:
       - "8089:8089"

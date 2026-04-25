@@ -4,6 +4,7 @@ services:
   admission-db:
     image: postgres:15-alpine
     container_name: admission-db
+    env_file: .env
     restart: unless-stopped
     ports:
       - "5442:5432"
@@ -35,6 +36,7 @@ services:
       context: ../
       dockerfile: admission-service/Dockerfile
     container_name: admission-service
+    env_file: .env
     restart: unless-stopped
     ports:
       - "8086:8086"

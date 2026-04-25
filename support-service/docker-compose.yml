@@ -4,6 +4,7 @@ services:
   support-db:
     image: postgres:15-alpine
     container_name: support-db
+    env_file: .env
     restart: unless-stopped
     ports:
       - "5442:5432"
@@ -35,6 +36,7 @@ services:
       context: ../
       dockerfile: support-service/Dockerfile
     container_name: support-service
+    env_file: .env
     restart: unless-stopped
     ports:
       - "8085:8085"

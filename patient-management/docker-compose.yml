@@ -5,6 +5,7 @@ services:
   patient-write-db:
     image: postgres:15-alpine
     container_name: patient-write-db
+    env_file: .env
     restart: unless-stopped
     ports:
       - "5432:5432"
@@ -27,6 +28,7 @@ services:
   patient-read-db:
     image: postgres:15-alpine
     container_name: patient-read-db
+    env_file: .env
     restart: unless-stopped
     ports:
       - "5433:5432"
@@ -59,6 +61,7 @@ services:
       context: ../
       dockerfile: patient-management/Dockerfile
     container_name: patient-management
+    env_file: .env
     restart: unless-stopped
     ports:
       - "8080:8080"

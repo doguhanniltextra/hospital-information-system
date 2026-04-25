@@ -4,6 +4,7 @@ services:
   doctor-write-db:
     image: postgres:15-alpine
     container_name: doctor-write-db
+    env_file: .env
     restart: unless-stopped
     ports:
       - "5434:5432"
@@ -25,6 +26,7 @@ services:
   doctor-read-db:
     image: postgres:15-alpine
     container_name: doctor-read-db
+    env_file: .env
     restart: unless-stopped
     ports:
       - "5435:5432"
@@ -56,6 +58,7 @@ services:
       context: ../
       dockerfile: doctor-service/Dockerfile
     container_name: doctor-service
+    env_file: .env
     restart: unless-stopped
     ports:
       - "8083:8083"

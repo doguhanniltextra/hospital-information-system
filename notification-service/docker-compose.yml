@@ -4,6 +4,7 @@ services:
   notification-db:
     image: postgres:15-alpine
     container_name: notification-db
+    env_file: .env
     restart: unless-stopped
     ports:
       - "5443:5432"
@@ -35,6 +36,7 @@ services:
       context: ../
       dockerfile: notification-service/Dockerfile
     container_name: notification-service
+    env_file: .env
     restart: unless-stopped
     ports:
       - "8090:8090"

@@ -110,6 +110,7 @@ services:
       context: ../
       dockerfile: api-gateway/Dockerfile
     container_name: api-gateway
+    env_file: .env
     restart: unless-stopped
     ports:
       - "4004:4004"
@@ -167,6 +168,7 @@ services:
   grafana:
     image: grafana/grafana:10.4.0
     container_name: grafana
+    env_file: .env
     restart: unless-stopped
     ports:
       - "3000:3000"

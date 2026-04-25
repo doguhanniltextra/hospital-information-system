@@ -5,6 +5,7 @@ services:
   billing-write-db:
     image: postgres:15-alpine
     container_name: billing-write-db
+    env_file: .env
     restart: unless-stopped
     ports:
       - "5439:5432"
@@ -27,6 +28,7 @@ services:
   billing-read-db:
     image: postgres:15-alpine
     container_name: billing-read-db
+    env_file: .env
     restart: unless-stopped
     ports:
       - "5440:5432"
@@ -58,6 +60,7 @@ services:
       context: ../
       dockerfile: billing-service/Dockerfile
     container_name: billing-service
+    env_file: .env
     restart: unless-stopped
     ports:
       - "8081:8081"
