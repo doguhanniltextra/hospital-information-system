@@ -20,15 +20,27 @@ import java.util.Map;
 public class DataSourceConfig {
 
     @Bean
-    @ConfigurationProperties(prefix = "spring.datasource.write")
-    public DataSource writeDataSource() {
-        return DataSourceBuilder.create().build();
+    @ConfigurationProperties("spring.datasource.write")
+    public org.springframework.boot.autoconfigure.jdbc.DataSourceProperties writeDataSourceProperties() {
+        return new org.springframework.boot.autoconfigure.jdbc.DataSourceProperties();
     }
 
     @Bean
-    @ConfigurationProperties(prefix = "spring.datasource.read")
+    @Qualifier("writeDataSource")
+    public DataSource writeDataSource() {
+        return writeDataSourceProperties().initializeDataSourceBuilder().build();
+    }
+
+    @Bean
+    @ConfigurationProperties("spring.datasource.read")
+    public org.springframework.boot.autoconfigure.jdbc.DataSourceProperties readDataSourceProperties() {
+        return new org.springframework.boot.autoconfigure.jdbc.DataSourceProperties();
+    }
+
+    @Bean
+    @Qualifier("readDataSource")
     public DataSource readDataSource() {
-        return DataSourceBuilder.create().build();
+        return readDataSourceProperties().initializeDataSourceBuilder().build();
     }
 
     @Bean

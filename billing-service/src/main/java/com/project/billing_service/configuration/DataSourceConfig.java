@@ -1,8 +1,8 @@
 package com.project.billing_service.configuration;
 
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.jdbc.DataSourceProperties;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.boot.jdbc.DataSourceBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
@@ -16,15 +16,26 @@ import java.util.Map;
 public class DataSourceConfig {
 
     @Bean
-    @ConfigurationProperties(prefix = "spring.datasource.write")
-    public DataSource writeDataSource() {
-        return DataSourceBuilder.create().build();
+    @Primary
+    @ConfigurationProperties("spring.datasource.write")
+    public DataSourceProperties writeDataSourceProperties() {
+        return new DataSourceProperties();
     }
 
     @Bean
-    @ConfigurationProperties(prefix = "spring.datasource.read")
+    @ConfigurationProperties("spring.datasource.read")
+    public DataSourceProperties readDataSourceProperties() {
+        return new DataSourceProperties();
+    }
+
+    @Bean
+    public DataSource writeDataSource() {
+        return writeDataSourceProperties().initializeDataSourceBuilder().build();
+    }
+
+    @Bean
     public DataSource readDataSource() {
-        return DataSourceBuilder.create().build();
+        return readDataSourceProperties().initializeDataSourceBuilder().build();
     }
 
     @Bean
@@ -45,10 +56,7 @@ public class DataSourceConfig {
     }
 
     @Bean
-    @Primary
     public DataSource dataSource(@Qualifier("routingDataSource") DataSource routingDataSource) {
-        // Use LazyConnectionDataSourceProxy to delay connection acquisition until actual statement execution.
-        // This is crucial for RoutingDataSource to work with @Transactional(readOnly=true).
         return new LazyConnectionDataSourceProxy(routingDataSource);
     }
-}
+}
