@@ -57,8 +57,8 @@ services:
           cpus: "0.25"
           memory: 256M
     build:
-      context: ../
-      dockerfile: billing-service/Dockerfile
+      context: .
+      dockerfile: Dockerfile
     container_name: billing-service
     env_file: .env
     restart: unless-stopped
