@@ -107,8 +107,8 @@ services:
   api-gateway:
     <<: *java-resources
     build:
-      context: ../
-      dockerfile: api-gateway/Dockerfile
+      context: ../api-gateway
+      dockerfile: Dockerfile
     container_name: api-gateway
     env_file: .env
     restart: unless-stopped

@@ -33,8 +33,8 @@ services:
           cpus: "0.5"
           memory: 512M
     build:
-      context: ../
-      dockerfile: support-service/Dockerfile
+      context: .
+      dockerfile: Dockerfile
     container_name: support-service
     env_file: .env
     restart: unless-stopped

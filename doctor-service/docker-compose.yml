@@ -55,8 +55,8 @@ services:
           cpus: "0.25"
           memory: 256M
     build:
-      context: ../
-      dockerfile: doctor-service/Dockerfile
+      context: .
+      dockerfile: Dockerfile
     container_name: doctor-service
     env_file: .env
     restart: unless-stopped

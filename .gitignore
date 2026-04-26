@@ -9,3 +9,6 @@ agent/
 .agents/
 .vscode/
 .aider*
+
+# Kubernetes
+**/secret.yaml

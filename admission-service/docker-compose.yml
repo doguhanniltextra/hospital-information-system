@@ -7,7 +7,7 @@ services:
     env_file: .env
     restart: unless-stopped
     ports:
-      - "5442:5432"
+      - "5441:5432"
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
@@ -33,8 +33,8 @@ services:
           cpus: "0.25"
           memory: 256M
     build:
-      context: ../
-      dockerfile: admission-service/Dockerfile
+      context: .
+      dockerfile: Dockerfile
     container_name: admission-service
     env_file: .env
     restart: unless-stopped
