@@ -20,6 +20,8 @@ public class BillingOutboxEvent {
 
     private String status; // PENDING, PROCESSED, FAILED
 
+    private int retryCount;
+
     private LocalDateTime createdAt;
     private LocalDateTime processedAt;
 
@@ -57,6 +59,9 @@ public class BillingOutboxEvent {
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+
+    public int getRetryCount() { return retryCount; }
+    public void setRetryCount(int retryCount) { this.retryCount = retryCount; }
 
     public LocalDateTime getProcessedAt() { return processedAt; }
     public void setProcessedAt(LocalDateTime processedAt) { this.processedAt = processedAt; }

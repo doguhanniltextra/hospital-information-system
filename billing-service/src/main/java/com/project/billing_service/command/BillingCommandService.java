@@ -24,7 +24,6 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -68,17 +67,27 @@ public class BillingCommandService {
     @Transactional
     public void processPaymentUpdate(AppointmentDTO appointment) {
         BigDecimal totalAmount = BigDecimal.valueOf(appointment.getAmount());
-        InsuranceStrategy insuranceStrategy = insuranceFactory.getStrategy(appointment.getInsuranceProviderType(), appointment.getProviderName());
+        InsuranceStrategy insuranceStrategy = insuranceFactory.getStrategy(
+                appointment.getInsuranceProviderType(), appointment.getProviderName());
         InsuranceCalculationResult split = insuranceStrategy.calculate(totalAmount);
 
         UUID invoiceId = UUID.randomUUID();
         String invoiceNumber = invoiceId.toString();
-        String invoicePdfPath = invoiceService.generateInvoice(
-                "Dr. " + appointment.getDoctorId(),
-                "Patient " + appointment.getPatientId(),
-                totalAmount,
-                invoiceNumber
-        ).toAbsolutePath().toString();
+
+        // FIX: PDF generation via external API is best-effort.
+        // If the third-party service is down we must NOT roll back the financial record.
+        // The invoice is created without a PDF URL; a separate retry job can regenerate it.
+        String invoicePdfPath = null;
+        try {
+            invoicePdfPath = invoiceService.generateInvoice(
+                    "Dr. " + appointment.getDoctorId(),
+                    "Patient " + appointment.getPatientId(),
+                    totalAmount,
+                    invoiceNumber
+            ).toAbsolutePath().toString();
+        } catch (Exception e) {
+            log.error("Failed to generate invoice PDF for invoice {}. Invoice will be persisted without a PDF URL.", invoiceId, e);
+        }
 
         Invoice invoice = new Invoice();
         invoice.setInvoiceId(invoiceId);
@@ -90,10 +99,10 @@ public class BillingCommandService {
         invoice.setInvoicePdfUrl(invoicePdfPath);
         invoiceRepository.save(invoice);
 
-        // Publish Application Event
+        // Publish Application Event (syncs read model in same TX via AFTER_COMMIT listener)
         eventPublisher.publishEvent(new InvoiceGeneratedEvent(invoice));
 
-        // Transactional Outbox
+        // FIX: saveOutboxEvent now throws on serialization failure → triggers TX rollback
         saveOutboxEvent(invoiceId, "INVOICE", "INVOICE_GENERATED", invoice);
 
         if (split.getInsuranceOwes().compareTo(BigDecimal.ZERO) > 0) {
@@ -116,20 +125,32 @@ public class BillingCommandService {
 
         UUID invoiceId = UUID.randomUUID();
         String invoiceNumber = "IP-" + admissionId.toString().substring(0, 8);
-        
-        String invoicePdfPath = invoiceService.generateInvoice(
-                "Hospital Facility",
-                "Patient " + patientId,
-                totalCharges,
-                invoiceNumber
-        ).toAbsolutePath().toString();
+
+        // NOTE: Discharge billing currently assumes the patient bears the full amount
+        // because the discharge Kafka event does not carry insurance information.
+        // When the admission service is extended to include insurance fields in the
+        // `admission-discharged.v1` payload, wire InsuranceFactory here.
+        log.warn("Discharge billing for patient {} uses no insurance split. " +
+                "Ensure admission-discharged event includes insurance info.", patientId);
+
+        String invoicePdfPath = null;
+        try {
+            invoicePdfPath = invoiceService.generateInvoice(
+                    "Hospital Facility",
+                    "Patient " + patientId,
+                    totalCharges,
+                    invoiceNumber
+            ).toAbsolutePath().toString();
+        } catch (Exception e) {
+            log.error("Failed to generate discharge invoice PDF for invoice {}. Invoice will be persisted without a PDF URL.", invoiceId, e);
+        }
 
         Invoice invoice = new Invoice();
         invoice.setInvoiceId(invoiceId);
         invoice.setPatientId(patientId);
         invoice.setDoctorId(doctorId);
         invoice.setTotalAmount(totalCharges);
-        invoice.setPatientOwes(totalCharges); 
+        invoice.setPatientOwes(totalCharges);
         invoice.setInsuranceOwes(BigDecimal.ZERO);
         invoice.setInvoicePdfUrl(invoicePdfPath);
         invoiceRepository.save(invoice);
@@ -140,67 +161,53 @@ public class BillingCommandService {
         openCharges.forEach(charge -> charge.setStatus("BILLED"));
         unbilledChargeRepository.saveAll(openCharges);
 
-        // Transactional Outbox
         Map<String, Object> eventPayload = new HashMap<>();
         eventPayload.put("invoice", invoice);
         eventPayload.put("admissionId", admissionId);
         saveOutboxEvent(invoiceId, "DISCHARGE_BILLING", "DISCHARGE_BILLING_FINALIZED", eventPayload);
     }
 
+    /**
+     * FIX: Throws RuntimeException on serialization failure so the enclosing
+     * @Transactional rolls back the entire operation — invoice + outbox event
+     * are always written together or not at all.
+     */
     private void saveOutboxEvent(UUID aggregateId, String aggregateType, String eventType, Object payloadObj) {
         try {
             String payload = objectMapper.writeValueAsString(payloadObj);
-            BillingOutboxEvent outboxEvent = new BillingOutboxEvent();
-            outboxEvent.setAggregateId(aggregateId.toString());
-            outboxEvent.setAggregateType(aggregateType);
-            outboxEvent.setEventType(eventType);
-            outboxEvent.setPayload(payload);
+            BillingOutboxEvent outboxEvent = new BillingOutboxEvent(
+                    aggregateId.toString(), aggregateType, eventType, payload);
             outboxRepository.save(outboxEvent);
         } catch (JsonProcessingException e) {
-            log.error("Failed to serialize payload for outbox", e);
+            throw new RuntimeException(
+                    "Failed to serialize outbox event payload for aggregate " + aggregateId + ". Rolling back transaction.", e);
         }
     }
 
-    private void submitClaim(Invoice invoice, String providerName, BigDecimal insuranceAmount) {
-        ClaimRequestDto claimRequest = new ClaimRequestDto();
-        claimRequest.setInvoiceId(invoice.getInvoiceId());
-        claimRequest.setProviderName(providerName);
-        claimRequest.setAmount(insuranceAmount);
-
-        try {
-            claimClient.submitClaim(claimRequest);
-            Claim claim = new Claim();
-            claim.setClaimId(UUID.randomUUID());
-            claim.setInvoiceId(invoice.getInvoiceId());
-            claim.setAmount(insuranceAmount);
-            claim.setStatus(ClaimStatus.SUBMITTED);
-            claimRepository.save(claim);
-        } catch (Exception e) {
-            log.error("Failed to submit claim for invoice {}", invoice.getInvoiceId(), e);
-            Claim claim = new Claim();
-            claim.setClaimId(UUID.randomUUID());
-            claim.setInvoiceId(invoice.getInvoiceId());
-            claim.setAmount(insuranceAmount);
-            claim.setStatus(ClaimStatus.FAILED);
-            claimRepository.save(claim);
-        }
-    }
-
+    /**
+     * FIX: Uses claim.getProviderName() instead of hardcoded "unknown".
+     * Also sets providerName on newly created claims in submitClaim().
+     */
     @Scheduled(fixedDelayString = "${claims.retry.fixed-delay-ms:300000}")
     public void retryFailedAndPendingClaims() {
-        log.info("Retrying failed and pending claims...");
+        log.info("Retrying failed claims...");
         List<Claim> retryableClaims = claimRepository.findByStatus(ClaimStatus.FAILED);
-        // Also include pending if needed, but let's stick to failed for now as per previous command service
+
         for (Claim claim : retryableClaims) {
+            if (claim.getProviderName() == null || claim.getProviderName().isBlank()) {
+                log.warn("Claim {} has no providerName stored — cannot retry. Skipping.", claim.getClaimId());
+                continue;
+            }
             try {
                 ClaimRequestDto claimRequest = new ClaimRequestDto();
                 claimRequest.setInvoiceId(claim.getInvoiceId());
-                claimRequest.setProviderName("unknown"); // Note: provider name should ideally be stored in Claim model
+                claimRequest.setProviderName(claim.getProviderName()); // FIX: use stored value
                 claimRequest.setAmount(claim.getAmount());
 
                 claimClient.submitClaim(claimRequest);
                 claim.setStatus(ClaimStatus.SUBMITTED);
                 claimRepository.save(claim);
+                log.info("Claim {} successfully resubmitted.", claim.getClaimId());
             } catch (Exception e) {
                 log.error("Retry failed for claim {}", claim.getClaimId(), e);
             }
@@ -253,5 +260,33 @@ public class BillingCommandService {
         charge.setStatus("OPEN");
         charge.setCreatedAt(Instant.now());
         unbilledChargeRepository.save(charge);
+    }
+
+    /**
+     * FIX: Stores providerName on the Claim entity so retryFailedAndPendingClaims()
+     * can resubmit without losing provider context.
+     * FIX: Sets submittedAt timestamp.
+     */
+    private void submitClaim(Invoice invoice, String providerName, BigDecimal insuranceAmount) {
+        ClaimRequestDto claimRequest = new ClaimRequestDto();
+        claimRequest.setInvoiceId(invoice.getInvoiceId());
+        claimRequest.setProviderName(providerName);
+        claimRequest.setAmount(insuranceAmount);
+
+        Claim claim = new Claim();
+        claim.setClaimId(UUID.randomUUID());
+        claim.setInvoiceId(invoice.getInvoiceId());
+        claim.setAmount(insuranceAmount);
+        claim.setProviderName(providerName); // FIX: persist for retry
+        claim.setSubmittedAt(LocalDateTime.now());
+
+        try {
+            claimClient.submitClaim(claimRequest);
+            claim.setStatus(ClaimStatus.SUBMITTED);
+        } catch (Exception e) {
+            log.error("Failed to submit claim for invoice {}", invoice.getInvoiceId(), e);
+            claim.setStatus(ClaimStatus.FAILED);
+        }
+        claimRepository.save(claim);
     }
 }
