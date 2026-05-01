@@ -32,6 +32,9 @@ public class PatientSummary {
     @Convert(converter = CryptoConverter.class)
     private String insurancePolicyNumber;
 
+    /** Links this clinical record to the auth-service user account. */
+    private UUID authUserId;
+
     private LocalDateTime lastUpdated;
 
     public UUID getId() {
@@ -88,5 +91,13 @@ public class PatientSummary {
 
     public void setLastUpdated(LocalDateTime lastUpdated) {
         this.lastUpdated = lastUpdated;
+    }
+
+    public UUID getAuthUserId() {
+        return authUserId;
+    }
+
+    public void setAuthUserId(UUID authUserId) {
+        this.authUserId = authUserId;
     }
 }

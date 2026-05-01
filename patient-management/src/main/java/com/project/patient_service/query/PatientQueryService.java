@@ -41,4 +41,8 @@ public class PatientQueryService {
         log.info(LogMessages.SERVICE_FIND_BY_EMAIL_TRIGGERED);
         return patientSummaryRepository.existsByEmail(email);
     }
+
+    public Optional<PatientSummary> findPatientByAuthUserId(java.util.UUID authUserId) {
+        return patientSummaryRepository.findByAuthUserId(authUserId);
+    }
 }

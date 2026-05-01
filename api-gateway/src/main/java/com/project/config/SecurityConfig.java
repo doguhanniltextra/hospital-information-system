@@ -103,9 +103,17 @@ public class SecurityConfig {
 
                         log.debug("JWT authentication successful for user: {}", subject);
 
-                        return chain.filter(exchange)
+                        // Forward caller identity to downstream services as trusted internal headers
+                        String rolesHeader = (roles != null) ? String.join(",", roles) : "";
+                        ServerHttpRequest mutatedRequest = request.mutate()
+                                .header("X-Auth-User-Id", subject)
+                                .header("X-Auth-Roles", rolesHeader)
+                                .build();
+
+                        return chain.filter(exchange.mutate().request(mutatedRequest).build())
                                 .contextWrite(ReactiveSecurityContextHolder.withAuthentication(auth));
                     }
+
                 } catch (Exception e) {
                     log.warn("JWT parsing failed: {}", e.getMessage());
                 }

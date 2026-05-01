@@ -163,7 +163,10 @@ public class PatientCommandService {
 
         patient.setAuthUserId(UUID.fromString(authUserId));
         patientRepository.save(patient);
+        // Propagate to read model
+        eventPublisher.publishEvent(new PatientUpdatedEvent(patient));
         log.info("linkAuthUser: Successfully linked patientId={} → authUserId={}", patientId, authUserId);
     }
 }
+
 

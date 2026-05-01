@@ -57,6 +57,7 @@ public class PatientEventHandler {
         }
 
         summary.setLastUpdated(LocalDateTime.now());
+        summary.setAuthUserId(patient.getAuthUserId());
         patientSummaryRepository.save(summary);
     }
 }

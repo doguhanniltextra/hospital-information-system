@@ -8,6 +8,7 @@ import com.project.patient_service.dto.response.GetPatientServiceResponseDto;
 import com.project.patient_service.helper.UserMapper;
 import com.project.patient_service.helper.UserValidator;
 import com.project.patient_service.model.Patient;
+import com.project.patient_service.readmodel.PatientSummary;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.slf4j.Logger;
@@ -16,6 +17,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Optional;
@@ -69,7 +71,7 @@ public class PatientQueryController {
         return currentId.map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
     }
 
-    @GetMapping(Endpoints.PATIENT_CONTROLLER_FIND_PATIENT_BY_EMAIL)
+    @GetMapping("/email/{email}")
     @Operation(summary = SwaggerMessages.FIND_PATIENT_BY_EMAIL)
     @org.springframework.security.access.prepost.PreAuthorize("hasAnyRole('DOCTOR', 'ADMIN', 'RECEPTIONIST')")
     public ResponseEntity<Boolean> findPatientByEmail(@PathVariable String email) {
@@ -80,5 +82,25 @@ public class PatientQueryController {
         boolean exists = patientQueryService.findPatientByEmail(email);
 
         return userValidator.getBooleanResponseEntity(exists);
+    }
+
+    /**
+     * Returns the authenticated patient's own record.
+     * Accessible only to users with PATIENT role.
+     * The authUserId is extracted from the JWT subject (authentication.getName()).
+     */
+    @GetMapping("/me")
+    @Operation(summary = "Get my patient profile")
+    @org.springframework.security.access.prepost.PreAuthorize("hasRole('PATIENT')")
+    public ResponseEntity<PatientSummary> getMyProfile(Authentication authentication) {
+        try {
+            UUID authUserId = UUID.fromString(authentication.getName());
+            return patientQueryService.findPatientByAuthUserId(authUserId)
+                    .map(ResponseEntity::ok)
+                    .orElse(ResponseEntity.notFound().build());
+        } catch (IllegalArgumentException e) {
+            log.warn("getMyProfile: invalid authUserId in token: {}", authentication.getName());
+            return ResponseEntity.status(401).build();
+        }
     }
 }
