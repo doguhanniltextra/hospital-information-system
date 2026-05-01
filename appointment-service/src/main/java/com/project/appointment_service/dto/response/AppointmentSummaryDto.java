@@ -1,5 +1,6 @@
 package com.project.appointment_service.dto.response;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 import com.project.appointment_service.model.ServiceType;
@@ -14,7 +15,7 @@ public class AppointmentSummaryDto {
     private String doctorSpecialization;
     private LocalDateTime appointmentTime;
     private ServiceType serviceType;
-    private float amount;
+    private BigDecimal amount;
     private String status;
 
     public UUID getId() {
@@ -89,11 +90,11 @@ public class AppointmentSummaryDto {
         this.serviceType = serviceType;
     }
 
-    public float getAmount() {
+    public BigDecimal getAmount() {
         return amount;
     }
 
-    public void setAmount(float amount) {
+    public void setAmount(BigDecimal amount) {
         this.amount = amount;
     }
 

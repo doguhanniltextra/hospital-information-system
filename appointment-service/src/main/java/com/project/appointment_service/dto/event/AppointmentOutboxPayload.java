@@ -1,5 +1,6 @@
 package com.project.appointment_service.dto.event;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 public class AppointmentOutboxPayload {
@@ -7,7 +8,7 @@ public class AppointmentOutboxPayload {
     private String patientId;
     private String doctorId;
     private String patientEmail;
-    private float amount;
+    private BigDecimal amount;
     private String status;
     private String action; // e.g., "CREATED", "PAID", "CANCELLED"
     private long timestamp;
@@ -26,8 +27,8 @@ public class AppointmentOutboxPayload {
     public String getPatientEmail() { return patientEmail; }
     public void setPatientEmail(String patientEmail) { this.patientEmail = patientEmail; }
 
-    public float getAmount() { return amount; }
-    public void setAmount(float amount) { this.amount = amount; }
+    public BigDecimal getAmount() { return amount; }
+    public void setAmount(BigDecimal amount) { this.amount = amount; }
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }

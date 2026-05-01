@@ -1,8 +1,10 @@
 package com.project.appointment_service.model;
 
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -29,7 +31,8 @@ public class Appointment {
     @NotNull
     private ServiceType serviceType;
     @NotNull
-    private float amount;
+    @Column(precision = 12, scale = 2)
+    private BigDecimal amount;
     @NotNull
     private boolean paymentStatus;
     @NotNull
@@ -91,10 +94,10 @@ public class Appointment {
     public void setServiceType(ServiceType serviceType) {
         this.serviceType = serviceType;
     }
-    public float getAmount() {
+    public BigDecimal getAmount() {
         return amount;
     }
-    public void setAmount(float amount) {
+    public void setAmount(BigDecimal amount) {
         this.amount = amount;
     }
     public boolean isPaymentStatus() {

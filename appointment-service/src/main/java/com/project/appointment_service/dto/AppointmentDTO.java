@@ -1,5 +1,6 @@
 package com.project.appointment_service.dto;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 import com.project.appointment_service.model.PaymentType;
@@ -9,7 +10,7 @@ public class AppointmentDTO {
 
     public String serviceDate;
     public ServiceType serviceType;
-    public float amount;
+    public BigDecimal amount;
     public PaymentType paymentType;
     public boolean paymentStatus;
     public String status;
@@ -28,10 +29,10 @@ public class AppointmentDTO {
     public void setServiceType(ServiceType serviceType) {
         this.serviceType = serviceType;
     }
-    public float getAmount() {
+    public BigDecimal getAmount() {
         return amount;
     }
-    public void setAmount(float amount) {
+    public void setAmount(BigDecimal amount) {
         this.amount = amount;
     }
     public PaymentType getPaymentType() {

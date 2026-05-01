@@ -83,7 +83,7 @@ public class AppointmentController {
     @org.springframework.security.access.prepost.PreAuthorize("hasAnyRole('ADMIN', 'RECEPTIONIST') or @securityService.isAppointmentOwner(authentication, #id)")
     public ResponseEntity<AppointmentDTO> updateAppointment(@PathVariable UUID id, @RequestBody Appointment appointment) {
         appointment.setId(id);
-        Appointment updatedAppointment = appointmentService.updateAppointment(appointment).getBody();
+        Appointment updatedAppointment = appointmentService.updateAppointment(appointment);
         AppointmentDTO appointmentDTO = appointmentResponseDTO.toUpdateResponseDTO(updatedAppointment);
         return ResponseEntity.ok(appointmentDTO);
     }

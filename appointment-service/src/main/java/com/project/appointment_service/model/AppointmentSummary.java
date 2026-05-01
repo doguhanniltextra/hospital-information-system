@@ -3,6 +3,7 @@ package com.project.appointment_service.model;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -24,7 +25,7 @@ public class AppointmentSummary {
     private LocalDateTime appointmentTime;
     private String status;
     private ServiceType serviceType;
-    private float amount;
+    private BigDecimal amount;
 
     public UUID getId() {
         return id;
@@ -106,11 +107,11 @@ public class AppointmentSummary {
         this.serviceType = serviceType;
     }
 
-    public float getAmount() {
+    public BigDecimal getAmount() {
         return amount;
     }
 
-    public void setAmount(float amount) {
+    public void setAmount(BigDecimal amount) {
         this.amount = amount;
     }
 }

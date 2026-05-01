@@ -1,14 +1,16 @@
 package com.project.appointment_service.dto;
 
+import java.math.BigDecimal;
+
 public class AppointmentKafkaResponseDto {
     private String doctorId;
     private String patientId;
-    private double amount;
+    private BigDecimal amount;
     private boolean paymentStatus;
     private String insuranceProviderType;
     private String providerName;
 
-    public AppointmentKafkaResponseDto(String doctorId, String patientId, double amount, boolean paymentStatus,
+    public AppointmentKafkaResponseDto(String doctorId, String patientId, BigDecimal amount, boolean paymentStatus,
             String insuranceProviderType, String providerName) {
         this.doctorId = doctorId;
         this.patientId = patientId;
@@ -34,11 +36,11 @@ public class AppointmentKafkaResponseDto {
         this.patientId = patientId;
     }
 
-    public double getAmount() {
+    public BigDecimal getAmount() {
         return amount;
     }
 
-    public void setAmount(double amount) {
+    public void setAmount(BigDecimal amount) {
         this.amount = amount;
     }
 

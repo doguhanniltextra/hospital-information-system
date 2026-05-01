@@ -2,17 +2,13 @@ package com.project.appointment_service.dto.request;
 
 import com.project.appointment_service.model.PaymentType;
 import com.project.appointment_service.model.ServiceType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
 import jakarta.validation.constraints.NotNull;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 public class CreateAppointmentServiceRequestDto {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
 
     @NotNull
@@ -26,7 +22,7 @@ public class CreateAppointmentServiceRequestDto {
     @NotNull
     private ServiceType serviceType;
     @NotNull
-    private float amount;
+    private BigDecimal amount;
     @NotNull
     private boolean paymentStatus;
     @NotNull
@@ -81,11 +77,11 @@ public class CreateAppointmentServiceRequestDto {
         this.serviceType = serviceType;
     }
 
-    public float getAmount() {
+    public BigDecimal getAmount() {
         return amount;
     }
 
-    public void setAmount(float amount) {
+    public void setAmount(BigDecimal amount) {
         this.amount = amount;
     }
 
