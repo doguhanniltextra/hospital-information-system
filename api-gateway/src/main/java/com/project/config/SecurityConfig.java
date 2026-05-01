@@ -42,12 +42,10 @@ public class SecurityConfig {
     @Bean
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
         return http
-                .csrf(csrf -> csrf.disable())
+                .csrf(csrf -> csrf.disable()) // in development
                 .authorizeExchange(exchanges -> exchanges
                         .pathMatchers("/auth/**", "/api/auth/**", "/actuator/**").permitAll()
-                        .pathMatchers("/api/notifications/**").hasAuthority("ROLE_ADMIN")
-                        .anyExchange().authenticated()
-                )
+                        .anyExchange().authenticated())
                 .addFilterBefore(jwtAuthenticationFilter(), SecurityWebFiltersOrder.AUTHENTICATION)
                 .build();
     }
@@ -64,11 +62,8 @@ public class SecurityConfig {
             ServerHttpRequest request = exchange.getRequest();
             String path = request.getPath().value();
 
-            log.debug("JWT Filter — path: {}", path);
-
             // Skip authentication for permitted paths
             if (path.startsWith("/auth/") || path.startsWith("/api/auth/") || path.startsWith("/actuator/")) {
-                log.debug("Skipping authentication for permitted path");
                 return chain.filter(exchange);
             }
 
@@ -98,8 +93,8 @@ public class SecurityConfig {
                                     .collect(Collectors.toList());
                         }
 
-                        UsernamePasswordAuthenticationToken auth =
-                                new UsernamePasswordAuthenticationToken(subject, token, authorities);
+                        UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(subject,
+                                token, authorities);
 
                         log.debug("JWT authentication successful for user: {}", subject);
 
@@ -115,14 +110,14 @@ public class SecurityConfig {
                     }
 
                 } catch (Exception e) {
-                    log.warn("JWT parsing failed: {}", e.getMessage());
+                    log.warn(e.getMessage());
                 }
             } else {
-                log.debug("No valid Authorization header found for path: {}", path);
+                log.debug(path);
             }
 
             log.debug("No authentication set — will result in 401");
             return chain.filter(exchange);
         };
     }
-}
+}
