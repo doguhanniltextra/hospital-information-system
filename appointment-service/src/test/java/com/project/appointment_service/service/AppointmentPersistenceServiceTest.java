@@ -18,6 +18,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.lang.reflect.Method;
+import java.math.BigDecimal;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -54,7 +55,7 @@ public class AppointmentPersistenceServiceTest {
 
         Appointment appointment = new Appointment();
         appointment.setId(UUID.randomUUID());
-        appointment.setAmount(100);
+        appointment.setAmount(BigDecimal.valueOf(100));
 
         when(appointmentMapper.getAppointment(request)).thenReturn(appointment);
         when(appointmentRepository.save(appointment)).thenReturn(appointment);

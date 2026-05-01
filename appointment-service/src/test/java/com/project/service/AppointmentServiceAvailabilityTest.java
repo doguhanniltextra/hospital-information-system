@@ -24,6 +24,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -84,7 +85,7 @@ public class AppointmentServiceAvailabilityTest {
         dto.setServiceDate("2026-11-12 10:00");
         dto.setServiceDateEnd("2026-11-12 10:30");
         dto.setServiceType(ServiceType.CONSULTATION);
-        dto.setAmount(200);
+        dto.setAmount(BigDecimal.valueOf(200));
         dto.setPaymentType(PaymentType.DEBIT);
         dto.setPaymentStatus(false);
 

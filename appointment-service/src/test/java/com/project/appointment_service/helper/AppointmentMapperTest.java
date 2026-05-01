@@ -8,6 +8,7 @@ import com.project.appointment_service.model.ServiceType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -59,7 +60,7 @@ public class AppointmentMapperTest {
         Appointment source = new Appointment();
         source.setDoctorId(UUID.randomUUID());
         source.setPatientId(UUID.randomUUID());
-        source.setAmount(500);
+        source.setAmount(BigDecimal.valueOf(500));
         source.setServiceDate("2026-12-01 15:00");
         source.setServiceType(ServiceType.SURGERY);
         source.setPaymentStatus(true);
@@ -87,7 +88,7 @@ public class AppointmentMapperTest {
         appointment.setId(UUID.randomUUID());
         appointment.setDoctorId(UUID.randomUUID());
         appointment.setPatientId(UUID.randomUUID());
-        appointment.setAmount(150);
+        appointment.setAmount(BigDecimal.valueOf(150));
         appointment.setServiceDate("2026-11-20 09:00");
         appointment.setServiceDateEnd("2026-11-20 09:30");
         appointment.setServiceType(ServiceType.VACCINATION);
@@ -112,7 +113,7 @@ public class AppointmentMapperTest {
         request.setId(UUID.randomUUID());
         request.setDoctorId(UUID.randomUUID());
         request.setPatientId(UUID.randomUUID());
-        request.setAmount(250);
+        request.setAmount(BigDecimal.valueOf(250));
         request.setServiceDate("2026-12-25 10:00");
         request.setServiceDateEnd("2026-12-25 10:30");
         request.setPaymentStatus(false);

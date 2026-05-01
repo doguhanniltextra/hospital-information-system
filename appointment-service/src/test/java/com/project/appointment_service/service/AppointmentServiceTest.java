@@ -19,8 +19,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.ResponseEntity;
 
+import java.math.BigDecimal;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -65,7 +65,7 @@ public class AppointmentServiceTest {
     }
 
     @Test
-    public void updateAppointment_ShouldUpdateAndReturnOk() {
+    public void updateAppointment_ShouldUpdateAndReturnSavedEntity() {
         UUID id = UUID.randomUUID();
         Appointment appointment = new Appointment();
         appointment.setId(id);
@@ -75,10 +75,9 @@ public class AppointmentServiceTest {
         when(appointmentRepository.findById(id)).thenReturn(Optional.of(existing));
         when(appointmentRepository.save(existing)).thenReturn(existing);
 
-        ResponseEntity<Appointment> response = appointmentService.updateAppointment(appointment);
+        Appointment result = appointmentService.updateAppointment(appointment);
 
-        assertThat(response.getStatusCode().value()).isEqualTo(200);
-        assertThat(response.getBody()).isEqualTo(existing);
+        assertThat(result).isEqualTo(existing);
         verify(appointmentMapper).updateAppointmentExtracted(appointment, existing);
         verify(appointmentSummaryService).createOrUpdateSummary(existing);
     }
@@ -113,7 +112,7 @@ public class AppointmentServiceTest {
         appointment.setId(id);
         appointment.setPatientId(UUID.randomUUID());
         appointment.setDoctorId(UUID.randomUUID());
-        appointment.setAmount(100);
+        appointment.setAmount(BigDecimal.valueOf(100));
         appointment.setStatus(AppointmentStatus.PAYMENT_PENDING);
 
         PatientInfoDTO patientInfo = new PatientInfoDTO();
