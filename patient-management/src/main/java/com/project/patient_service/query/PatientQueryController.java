@@ -23,6 +23,10 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Optional;
 import java.util.UUID;
 
+/**
+ * REST controller for handling patient query operations.
+ * Implements the read side of the CQRS pattern.
+ */
 @RestController
 @RequestMapping(Endpoints.PATIENT_CONTROLLER_REQUEST)
 @Tag(name = "Patient Query Controller", description = "Query operations for Patients")
@@ -33,6 +37,13 @@ public class PatientQueryController {
     private final UserMapper userMapper;
     private final UserValidator userValidator;
 
+    /**
+     * Initializes the controller with necessary services and helpers.
+     * 
+     * @param patientQueryService Service for handling patient queries
+     * @param userMapper Helper for mapping between entities and DTOs
+     * @param userValidator Helper for validating user input and permissions
+     */
     public PatientQueryController(PatientQueryService patientQueryService, UserMapper userMapper,
             UserValidator userValidator) {
         this.patientQueryService = patientQueryService;
@@ -40,6 +51,14 @@ public class PatientQueryController {
         this.userValidator = userValidator;
     }
 
+    /**
+     * Retrieves a paginated list of patients.
+     * Accessible only by DOCTOR, ADMIN, or RECEPTIONIST roles.
+     * 
+     * @param page The page number to retrieve (0-indexed)
+     * @param size The number of records per page (max 100)
+     * @return A paginated list of patient DTOs
+     */
     @GetMapping
     @Operation(summary = SwaggerMessages.GET_PATIENTS)
     @org.springframework.security.access.prepost.PreAuthorize("hasAnyRole('DOCTOR', 'ADMIN', 'RECEPTIONIST')")
@@ -58,6 +77,13 @@ public class PatientQueryController {
         return ResponseEntity.ok().body(result);
     }
 
+    /**
+     * Finds a specific patient by their unique identifier.
+     * Accessible by medical staff or the patient who owns the record.
+     * 
+     * @param id The UUID of the patient
+     * @return The patient summary if found, or 404 Not Found
+     */
     @GetMapping(Endpoints.PATIENT_CONTROLLER_FIND_PATIENT_BY_ID)
     @Operation(summary = SwaggerMessages.FIND_PATIENT_BY_ID)
     @org.springframework.security.access.prepost.PreAuthorize("hasAnyRole('DOCTOR', 'ADMIN', 'RECEPTIONIST') or @securityService.isPatientOwner(authentication, #id)")
@@ -71,6 +97,13 @@ public class PatientQueryController {
         return currentId.map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
     }
 
+    /**
+     * Checks if a patient exists with the given email address.
+     * Accessible by medical staff only.
+     * 
+     * @param email The email address to check
+     * @return True if a patient exists with the email, false otherwise
+     */
     @GetMapping("/email/{email}")
     @Operation(summary = SwaggerMessages.FIND_PATIENT_BY_EMAIL)
     @org.springframework.security.access.prepost.PreAuthorize("hasAnyRole('DOCTOR', 'ADMIN', 'RECEPTIONIST')")

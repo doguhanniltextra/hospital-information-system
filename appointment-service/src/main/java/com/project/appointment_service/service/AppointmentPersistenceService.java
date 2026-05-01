@@ -17,6 +17,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * Service responsible for atomic persistence of Appointments and their corresponding Outbox events.
+ * Ensures that business data and integration events are written within the same database transaction.
+ */
 @Service
 public class AppointmentPersistenceService {
     private static final Logger log = LoggerFactory.getLogger(AppointmentPersistenceService.class);
@@ -27,6 +31,15 @@ public class AppointmentPersistenceService {
     private final AppointmentSummaryService appointmentSummaryService;
     private final ObjectMapper objectMapper;
 
+    /**
+     * Initializes the AppointmentPersistenceService with required repositories and mappers.
+     * 
+     * @param appointmentRepository Repository for Appointment entities
+     * @param outboxRepository Repository for Transactional Outbox events
+     * @param appointmentMapper Mapper for entity conversions
+     * @param appointmentSummaryService Service for managing appointment summaries
+     * @param objectMapper JSON mapper for serializing outbox payloads
+     */
     public AppointmentPersistenceService(AppointmentRepository appointmentRepository,
                                          AppointmentOutboxRepository outboxRepository,
                                          AppointmentMapper appointmentMapper,
@@ -39,6 +52,20 @@ public class AppointmentPersistenceService {
         this.objectMapper = objectMapper;
     }
 
+    /**
+     * Persists an appointment and creates a corresponding outbox event in a single transaction.
+     * 1. Maps the request to an Appointment entity.
+     * 2. Sets the initial status to PAYMENT_PENDING.
+     * 3. Saves the appointment.
+     * 4. Updates the appointment summary.
+     * 5. Serializes and saves the outbox event for Kafka propagation.
+     * 
+     * @param request The appointment creation request
+     * @param patientInfo Metadata about the patient obtained via gRPC
+     * @param doctorInfo Metadata about the doctor obtained via gRPC
+     * @return The persisted Appointment entity
+     * @throws RuntimeException if serialization fails, triggering a transaction rollback
+     */
     @Transactional
     public Appointment persistAppointmentAndOutbox(CreateAppointmentServiceRequestDto request, PatientInfoDTO patientInfo, DoctorInfoDTO doctorInfo) {
         Appointment appointment = appointmentMapper.getAppointment(request);

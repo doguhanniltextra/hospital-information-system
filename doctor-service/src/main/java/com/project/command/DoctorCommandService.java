@@ -28,6 +28,13 @@ import java.util.Collections;
 import java.util.Optional;
 import java.util.UUID;
 
+/**
+ * Service class for processing doctor-related command operations.
+ * Manages the lifecycle of Doctor records, including creation, updates, deletions,
+ * and management of shifts and leaves.
+ * 
+ * Uses domain events to communicate changes to other components and services.
+ */
 @Service
 @Transactional
 public class DoctorCommandService {
@@ -38,6 +45,16 @@ public class DoctorCommandService {
     private final DoctorValidator doctorValidator;
     private final ApplicationEventPublisher eventPublisher;
 
+    /**
+     * Constructs the service with required repositories, mappers, and event publishers.
+     * 
+     * @param doctorRepository Repository for Doctor persistence
+     * @param shiftRepository Repository for Shift persistence
+     * @param leaveAbsenceRepository Repository for LeaveAbsence persistence
+     * @param doctorMapper Mapper for DTO/Entity conversions
+     * @param doctorValidator Validator for business rules (e.g., email uniqueness)
+     * @param eventPublisher Publisher for internal application events
+     */
     public DoctorCommandService(DoctorRepository doctorRepository, ShiftRepository shiftRepository, 
                                 LeaveAbsenceRepository leaveAbsenceRepository, DoctorMapper doctorMapper, 
                                 DoctorValidator doctorValidator, ApplicationEventPublisher eventPublisher) {
@@ -49,6 +66,14 @@ public class DoctorCommandService {
         this.eventPublisher = eventPublisher;
     }
 
+    /**
+     * Registers a new doctor in the system.
+     * Validates email uniqueness before persistence.
+     * 
+     * @param command Command containing doctor registration details
+     * @return Response DTO with the created doctor's details
+     * @throws EmailIsNotUniqueException If the email is already registered
+     */
     public CreateDoctorServiceResponseDto createDoctor(CreateDoctorCommand command) throws EmailIsNotUniqueException {
         doctorValidator.checkEmailIsUniqueOrNotForCreate(command.request(), doctorRepository);
 
@@ -60,6 +85,13 @@ public class DoctorCommandService {
         return doctorMapper.toCreateDoctorServiceResponseDto(result);
     }
 
+    /**
+     * Updates an existing doctor's profile information.
+     * 
+     * @param command Command containing doctor ID and updated details
+     * @return Response DTO with updated information
+     * @throws DoctorNotFoundException If the doctor ID does not exist
+     */
     public UpdateDoctorServiceResponseDto updateDoctor(UpdateDoctorCommand command) throws DoctorNotFoundException {
         UUID id = command.id();
         Optional<Doctor> optionalDoctor = doctorRepository.findById(id);
@@ -76,11 +108,24 @@ public class DoctorCommandService {
         }
     }
 
+    /**
+     * Deletes a doctor record from the system.
+     * 
+     * @param command Command containing the doctor ID to delete
+     */
     public void deleteDoctor(DeleteDoctorCommand command) {
         doctorRepository.deleteById(command.id());
         eventPublisher.publishEvent(new DoctorDeletedEvent(command.id(), Instant.now()));
     }
 
+    /**
+     * Increments the current patient count for a doctor.
+     * Ensures the count does not exceed the doctor's predefined maximum capacity.
+     * 
+     * @param command Command identifying the doctor
+     * @throws PatientLimitException If the capacity limit has been reached
+     * @throws DoctorNotFoundException If the doctor ID is invalid
+     */
     public void increasePatientNumber(IncreasePatientNumberCommand command) throws PatientLimitException, DoctorNotFoundException {
         UUID id = command.id();
         Doctor doctor = doctorRepository.findById(id)
@@ -92,6 +137,13 @@ public class DoctorCommandService {
         eventPublisher.publishEvent(new DoctorUpdatedEvent(doctor, Collections.singleton("PATIENT_COUNT"), Instant.now()));
     }
 
+    /**
+     * Creates a new working shift for a doctor.
+     * Validates that the shift timing is logical (end after start).
+     * 
+     * @param command Command containing doctor ID and shift details
+     * @return Response DTO for the created shift
+     */
     public ShiftResponseDto createShift(CreateShiftCommand command) {
         UUID doctorId = command.doctorId();
         Doctor doctor = doctorRepository.findById(doctorId)
@@ -113,6 +165,12 @@ public class DoctorCommandService {
         return doctorMapper.toShiftResponseDto(shift);
     }
 
+    /**
+     * Cancels an existing shift.
+     * Marks the shift status as CANCELLED instead of hard deletion.
+     * 
+     * @param command Command identifying the doctor and shift
+     */
     public void deleteShift(DeleteShiftCommand command) {
         UUID doctorId = command.doctorId();
         UUID shiftId = command.shiftId();
@@ -132,6 +190,12 @@ public class DoctorCommandService {
         eventPublisher.publishEvent(new DoctorShiftChangedEvent(doctorId, shiftId, DoctorShiftChangedEvent.ShiftAction.STATUS_CHANGED, Instant.now()));
     }
 
+    /**
+     * Submits a leave of absence request for a doctor.
+     * 
+     * @param command Command containing doctor ID and leave details
+     * @return Response DTO for the pending leave
+     */
     public LeaveResponseDto createLeave(CreateLeaveCommand command) {
         UUID doctorId = command.doctorId();
         doctorRepository.findById(doctorId)
@@ -152,6 +216,12 @@ public class DoctorCommandService {
         return doctorMapper.toLeaveResponseDto(leaveAbsence);
     }
 
+    /**
+     * Approves a pending leave request.
+     * 
+     * @param command Command identifying the doctor and leave request
+     * @return Response DTO for the approved leave
+     */
     public LeaveResponseDto approveLeave(ApproveLeaveCommand command) {
         UUID doctorId = command.doctorId();
         UUID leaveId = command.leaveId();
@@ -173,6 +243,11 @@ public class DoctorCommandService {
         return doctorMapper.toLeaveResponseDto(leaveAbsence);
     }
 
+    /**
+     * Cancels a leave request.
+     * 
+     * @param command Command identifying the doctor and leave request
+     */
     public void deleteLeave(DeleteLeaveCommand command) {
         UUID doctorId = command.doctorId();
         UUID leaveId = command.leaveId();

@@ -19,6 +19,11 @@ import org.springframework.data.domain.PageRequest;
 
 import java.util.UUID;
 
+/**
+ * gRPC service implementation for Doctor-related operations.
+ * This service provides synchronous cross-service communication for verifying doctor existence,
+ * finding doctor details, and checking availability.
+ */
 @GrpcService
 public class DoctorGrpcService extends DoctorServiceGrpc.DoctorServiceImplBase {
 
@@ -27,12 +32,24 @@ public class DoctorGrpcService extends DoctorServiceGrpc.DoctorServiceImplBase {
     private final DoctorQueryService doctorQueryService;
     private final DoctorCommandService doctorCommandService;
 
+    /**
+     * Initializes the gRPC service with necessary query and command services.
+     * 
+     * @param doctorQueryService Service for read operations
+     * @param doctorCommandService Service for write operations
+     */
     @Autowired
     public DoctorGrpcService(DoctorQueryService doctorQueryService, DoctorCommandService doctorCommandService) {
         this.doctorQueryService = doctorQueryService;
         this.doctorCommandService = doctorCommandService;
     }
 
+    /**
+     * Checks if a doctor exists by their ID.
+     * 
+     * @param request Request containing the doctor UUID as a string
+     * @param responseObserver Observer for the boolean exists response
+     */
     @Override
     public void existsById(FindDoctorRequest request, StreamObserver<ExistsResponse> responseObserver) {
         log.info("gRPC: ExistsById called for doctorId: {}", request.getDoctorId());
@@ -48,6 +65,12 @@ public class DoctorGrpcService extends DoctorServiceGrpc.DoctorServiceImplBase {
         }
     }
 
+    /**
+     * Retrieves full doctor details by ID.
+     * 
+     * @param request Request containing the doctor UUID
+     * @param responseObserver Observer for the DoctorResponse containing profile data
+     */
     @Override
     public void findById(FindDoctorRequest request, StreamObserver<DoctorResponse> responseObserver) {
         log.info("gRPC: FindById called for doctorId: {}", request.getDoctorId());
@@ -68,6 +91,12 @@ public class DoctorGrpcService extends DoctorServiceGrpc.DoctorServiceImplBase {
         }
     }
 
+    /**
+     * Checks if a doctor is available for a specific time slot via gRPC.
+     * 
+     * @param request Request containing doctor ID, slot times, and service type
+     * @param responseObserver Observer for the availability status and reason
+     */
     @Override
     public void checkAvailability(CheckAvailabilityRequest request, StreamObserver<AvailabilityResponse> responseObserver) {
         log.info("gRPC: CheckAvailability called for doctorId: {}", request.getDoctorId());
@@ -92,6 +121,13 @@ public class DoctorGrpcService extends DoctorServiceGrpc.DoctorServiceImplBase {
         }
     }
 
+    /**
+     * Incrementally increases the patient count for a doctor.
+     * Typically called when a new appointment is finalized.
+     * 
+     * @param request Request containing the doctor ID
+     * @param responseObserver Observer for the success status
+     */
     @Override
     public void increasePatientCount(FindDoctorRequest request, StreamObserver<ExistsResponse> responseObserver) {
         log.info("gRPC: IncreasePatientCount called for doctorId: {}", request.getDoctorId());
@@ -108,6 +144,12 @@ public class DoctorGrpcService extends DoctorServiceGrpc.DoctorServiceImplBase {
         }
     }
 
+    /**
+     * Retrieves a paginated list of available doctors for a given time slot and specialization.
+     * 
+     * @param request Request containing slot times, specialization, and pagination info
+     * @param responseObserver Observer for the paginated availability results
+     */
     @Override
     public void getAvailableDoctors(GetAvailableDoctorsRequest request, StreamObserver<AvailabilityPageResponse> responseObserver) {
         log.info("gRPC: GetAvailableDoctors called");

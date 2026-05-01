@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 
 /**
  * Seeds required notification templates on startup if they do not already exist.
- * Idempotent: uses existsByTemplateCode check before inserting.
+ * Ensures that the system has the necessary templates (e.g., Welcome Email) for core workflows.
  */
 @Component
 public class NotificationDataSeeder {
@@ -18,15 +18,28 @@ public class NotificationDataSeeder {
 
     private final NotificationTemplateRepository templateRepository;
 
+    /**
+     * Initializes the seeder with the template repository.
+     * 
+     * @param templateRepository Repository for persisting templates
+     */
     public NotificationDataSeeder(NotificationTemplateRepository templateRepository) {
         this.templateRepository = templateRepository;
     }
 
+    /**
+     * Execution entry point for data seeding.
+     * Runs automatically after the bean initialization is complete.
+     */
     @PostConstruct
     public void seed() {
         seedPatientWelcome();
     }
 
+    /**
+     * Seeds the 'PATIENT_WELCOME' template if it is missing.
+     * This template is used when a new patient record is provisioned with an auth account.
+     */
     private void seedPatientWelcome() {
         final String code = "PATIENT_WELCOME";
         if (templateRepository.findByTemplateCode(code).isPresent()) {
@@ -53,3 +66,4 @@ public class NotificationDataSeeder {
         log.info("NotificationDataSeeder: Seeded template '{}'", code);
     }
 }
+

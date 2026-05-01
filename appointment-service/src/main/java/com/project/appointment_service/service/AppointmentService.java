@@ -35,6 +35,11 @@ import com.project.appointment_service.repository.AppointmentRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Service for managing appointment operations.
+ * Handles creation, updates, deletions, and payment status tracking for appointments.
+ * Incorporates saga orchestration for complex creation flows and outbox pattern for reliable event delivery.
+ */
 @Service
 public class AppointmentService {
 
@@ -50,6 +55,19 @@ public class AppointmentService {
     private final AppointmentValidator appointmentValidator;
     private final com.project.appointment_service.saga.CreateAppointmentSaga createAppointmentSaga;
 
+    /**
+     * Initializes the AppointmentService with required dependencies.
+     * 
+     * @param kafkaProducer Producer for Kafka event messaging
+     * @param appointmentRepository Repository for appointment data
+     * @param idValidation Service for cross-service ID validation via gRPC
+     * @param appointmentMapper Mapper for converting between DTOs and entities
+     * @param appointmentValidator Validator for appointment business rules
+     * @param appointmentSummaryService Service for managing appointment summaries
+     * @param createAppointmentSaga Saga orchestrator for creating appointments
+     * @param outboxRepository Repository for tracking outbox events
+     * @param objectMapper Mapper for JSON serialization
+     */
     public AppointmentService(KafkaProducer kafkaProducer, AppointmentRepository appointmentRepository, IdValidation idValidation,
                               AppointmentMapper appointmentMapper, AppointmentValidator appointmentValidator,
                               AppointmentSummaryService appointmentSummaryService,
@@ -67,11 +85,23 @@ public class AppointmentService {
         this.objectMapper = objectMapper;
     }
 
+    /**
+     * Orchestrates the creation of a new appointment using the Saga pattern.
+     * 
+     * @param createAppointmentServiceRequestDto The request details for the new appointment
+     * @return The response details of the created (or pending) appointment
+     */
     public CreateAppointmentServiceResponseDto createAppointment(CreateAppointmentServiceRequestDto createAppointmentServiceRequestDto) {
         log.info("Reflecting CreateAppointment request to Saga Orchestrator");
         return createAppointmentSaga.execute(createAppointmentServiceRequestDto);
     }
 
+    /**
+     * Updates an existing appointment's details.
+     * 
+     * @param appointment The appointment entity containing updated information
+     * @return ResponseEntity containing the updated and saved appointment
+     */
     public ResponseEntity<Appointment> updateAppointment(Appointment appointment) {
         log.info(LogMessages.SERVICE_UPDATE_STARTING, appointment.getId());
         Appointment existingAppointment = appointmentRepository.findById(appointment.getId())
@@ -83,12 +113,25 @@ public class AppointmentService {
         return ResponseEntity.ok().body(saved);
     }
 
+    /**
+     * Deletes an appointment by its unique identifier.
+     * Also removes the associated appointment summary.
+     * 
+     * @param id The UUID of the appointment to delete
+     */
     public void deleteAppointment(UUID id) {
         log.info(LogMessages.SERVICE_DELETE_TRIGGERED, id);
         appointmentRepository.deleteById(id);
         appointmentSummaryService.deleteSummary(id);
     }
 
+    /**
+     * Updates the payment status of an appointment.
+     * Triggers a status change to PAYMENT_CONFIRMED if successful and registers an outbox event.
+     * 
+     * @param id The UUID of the appointment
+     * @param status The new payment status (true for paid, false for failed)
+     */
     @Transactional
     public void updatePaymentStatus(UUID id, boolean status) {
         log.info(LogMessages.SERVICE_UPDATE_PAYMENT_STATUS_TRIGGERED);
@@ -130,12 +173,25 @@ public class AppointmentService {
         }
     }
 
+    /**
+     * Retrieves a paginated list of all appointments.
+     * 
+     * @param pageable Pagination and sorting information
+     * @return A page of appointment entities
+     */
     @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public Page<Appointment> getAllAppointments(Pageable pageable) {
         log.info(LogMessages.SERVICE_GET_ALL_TRIGGERED);
         return appointmentRepository.findAll(pageable);
     }
 
+    /**
+     * Retrieves a paginated list of appointment summaries.
+     * Summaries provide a flattened view of appointment, patient, and doctor data.
+     * 
+     * @param pageable Pagination and sorting information
+     * @return A page of appointment summary DTOs
+     */
     @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public Page<AppointmentSummaryDto> getAllAppointmentSummaries(Pageable pageable) {
         log.info("AppointmentService: getAllAppointmentSummaries triggered");

@@ -18,6 +18,11 @@ import org.springframework.stereotype.Component;
 
 import java.util.UUID;
 
+/**
+ * Saga Orchestrator for the "Create Appointment" business process.
+ * Coordinates cross-service validation (Patient, Doctor, Availability) via gRPC 
+ * and local transactional writes to ensure data consistency.
+ */
 @Component
 public class CreateAppointmentSaga {
     private static final Logger log = LoggerFactory.getLogger(CreateAppointmentSaga.class);
@@ -27,6 +32,14 @@ public class CreateAppointmentSaga {
     private final AppointmentMapper appointmentMapper;
     private final AppointmentPersistenceService persistenceService;
 
+    /**
+     * Initializes the CreateAppointmentSaga with required dependencies.
+     * 
+     * @param idValidation Service for cross-service validation via gRPC
+     * @param appointmentRepository Repository for local appointment data
+     * @param appointmentMapper Mapper for DTO conversions
+     * @param persistenceService Service for transactional writes (Appointment + Outbox)
+     */
     public CreateAppointmentSaga(IdValidation idValidation,
                                  AppointmentRepository appointmentRepository,
                                  AppointmentMapper appointmentMapper,
@@ -37,6 +50,19 @@ public class CreateAppointmentSaga {
         this.persistenceService = persistenceService;
     }
 
+    /**
+     * Executes the Create Appointment Saga.
+     * 1. Validates patient existence.
+     * 2. Validates doctor existence.
+     * 3. Checks doctor availability via gRPC.
+     * 4. Checks for overlapping appointments in local DB.
+     * 5. Persists the appointment and a corresponding outbox event in a single transaction.
+     * 
+     * @param request The request details for the new appointment
+     * @return The response DTO containing the result of the saga execution
+     * @throws RuntimeException if validation fails or external services are unreachable
+     * @throws CustomConflictException if the doctor is unavailable or there's a time slot overlap
+     */
     public CreateAppointmentServiceResponseDto execute(CreateAppointmentServiceRequestDto request) {
         UUID patientId = request.getPatientId();
         UUID doctorId = request.getDoctorId();

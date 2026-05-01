@@ -12,6 +12,11 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ * Background scheduler that implements the "Transactional Outbox" pattern.
+ * Periodically polls the database for pending appointment events and publishes them to Kafka.
+ * This ensures "At Least Once" delivery guarantee for asynchronous service integrations.
+ */
 @Component
 public class AppointmentOutboxPublisher {
     private static final Logger log = LoggerFactory.getLogger(AppointmentOutboxPublisher.class);
@@ -19,12 +24,30 @@ public class AppointmentOutboxPublisher {
     private final AppointmentOutboxRepository outboxRepository;
     private final KafkaProducer kafkaProducer;
 
+    /**
+     * Initializes the AppointmentOutboxPublisher.
+     * 
+     * @param outboxRepository Repository to query pending events
+     * @param kafkaProducer Producer to dispatch events to Kafka
+     */
     public AppointmentOutboxPublisher(AppointmentOutboxRepository outboxRepository,
                                      KafkaProducer kafkaProducer) {
         this.outboxRepository = outboxRepository;
         this.kafkaProducer = kafkaProducer;
     }
 
+    /**
+     * Scheduled task that runs every 5 seconds.
+     * 1. Fetches all PENDING events from the outbox table.
+     * 2. Maps events to their respective Kafka topics based on event type.
+     * 3. Dispatches payload to Kafka via {@link KafkaProducer}.
+     * 4. Marks events as PROCESSED upon successful dispatch.
+     * 
+     * Topics handled:
+     * - APPOINTMENT_CREATED -> doctor-patient-count-update.v1
+     * - PAYMENT_UPDATE -> appointment-payment-updates.v1
+     * - DEFAULT -> appointment-events.v1
+     */
     @Scheduled(fixedDelay = 5000)
     @Transactional
     public void publishEvents() {

@@ -10,6 +10,10 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
+/**
+ * Service for automated cleanup of old appointment records.
+ * Maintains database health by removing historical data that is no longer clinically relevant.
+ */
 @Service
 public class AppointmentCleanupService {
 
@@ -18,11 +22,20 @@ public class AppointmentCleanupService {
     private final AppointmentRepository appointmentRepository;
     private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
+    /**
+     * Initializes the AppointmentCleanupService.
+     * 
+     * @param appointmentRepository Repository for Appointment operations
+     */
     public AppointmentCleanupService(AppointmentRepository appointmentRepository) {
         this.appointmentRepository = appointmentRepository;
     }
 
-    // Runs every day at 06:00 AM
+    /**
+     * Scheduled task that runs daily at 6:00 AM.
+     * Deletes all appointments that are already PAID and whose end date is in the past.
+     * Uses a single optimized database query to avoid loading entities into memory.
+     */
     @Scheduled(cron = "0 0 6 * * ?")
     @Transactional
     public void cleanOutDatedAppointments() {

@@ -18,12 +18,24 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+/**
+ * Service for managing laboratory test orders placed by doctors.
+ * Implements the Transactional Outbox pattern to ensure reliable delivery of lab order events
+ * to the billing and notification services.
+ */
 @Service
 public class DoctorLabOrderService {
     private final DoctorLabOrderRepository labOrderRepository;
     private final DoctorOutboxEventRepository outboxEventRepository;
     private final ObjectMapper objectMapper;
 
+    /**
+     * Initializes the service with required repositories and JSON mapper.
+     * 
+     * @param labOrderRepository Repository for LabOrder persistence
+     * @param outboxEventRepository Repository for Outbox event storage
+     * @param objectMapper Mapper for JSON serialization of outbox payloads
+     */
     public DoctorLabOrderService(
             DoctorLabOrderRepository labOrderRepository, 
             DoctorOutboxEventRepository outboxEventRepository,
@@ -33,6 +45,15 @@ public class DoctorLabOrderService {
         this.objectMapper = objectMapper;
     }
 
+    /**
+     * Places a new laboratory order for a patient.
+     * Atomic transaction covers saving the order entity and creating the outbox event.
+     * 
+     * @param doctorId The ID of the doctor placing the order
+     * @param request DTO containing patient info and list of tests
+     * @return DTO containing the generated order ID and status
+     * @throws IllegalStateException If JSON serialization fails for the outbox event
+     */
     @Transactional
     public CreateLabOrderResponseDto placeOrder(UUID doctorId, CreateLabOrderRequestDto request) {
         UUID orderId = UUID.randomUUID();

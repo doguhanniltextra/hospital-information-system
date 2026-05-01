@@ -14,34 +14,66 @@ import org.springframework.transaction.event.TransactionalEventListener;
 
 import java.time.LocalDateTime;
 
+/**
+ * Component responsible for maintaining the CQRS Read Model (PatientSummary).
+ * Listens for application events and synchronizes changes to the denormalized store.
+ */
 @Component
 public class PatientEventHandler {
 
     private static final Logger log = LoggerFactory.getLogger(PatientEventHandler.class);
     private final PatientSummaryRepository patientSummaryRepository;
 
+    /**
+     * Initializes the event handler with the summary repository.
+     * 
+     * @param patientSummaryRepository Repository for the read model
+     */
     public PatientEventHandler(PatientSummaryRepository patientSummaryRepository) {
         this.patientSummaryRepository = patientSummaryRepository;
     }
 
+    /**
+     * Handles the creation of a new patient.
+     * Triggered after the database transaction is successfully committed.
+     * 
+     * @param event The event containing the newly created patient entity
+     */
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handlePatientCreated(PatientCreatedEvent event) {
         log.info("Synchronizing new patient to Read Model: {}", event.patient().getId());
         upsertSummary(event.patient());
     }
 
+    /**
+     * Handles updates to an existing patient record.
+     * Triggered after the database transaction is successfully committed.
+     * 
+     * @param event The event containing the updated patient entity
+     */
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handlePatientUpdated(PatientUpdatedEvent event) {
         log.info("Synchronizing updated patient to Read Model: {}", event.patient().getId());
         upsertSummary(event.patient());
     }
 
+    /**
+     * Handles the deletion of a patient record.
+     * Removes the corresponding entry from the read model.
+     * 
+     * @param event The event containing the deleted patient's identifier
+     */
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handlePatientDeleted(PatientDeletedEvent event) {
         log.info("Removing patient from Read Model: {}", event.id());
         patientSummaryRepository.deleteById(event.id());
     }
 
+    /**
+     * Internal helper to create or update a patient summary record based on a domain entity.
+     * 
+     * @param patient The clinical patient entity to synchronize
+     */
     private void upsertSummary(Patient patient) {
         PatientSummary summary = patientSummaryRepository.findById(patient.getId())
                 .orElse(new PatientSummary());
@@ -61,3 +93,4 @@ public class PatientEventHandler {
         patientSummaryRepository.save(summary);
     }
 }
+

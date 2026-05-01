@@ -22,6 +22,10 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+/**
+ * Service class for handling read-only operations and availability checks for Doctors.
+ * Provides functionality to list doctors, shifts, and verify availability for specific time slots.
+ */
 @Service
 @Transactional(readOnly = true)
 public class DoctorQueryService {
@@ -30,6 +34,14 @@ public class DoctorQueryService {
     private final LeaveAbsenceRepository leaveAbsenceRepository;
     private final DoctorMapper doctorMapper;
 
+    /**
+     * Initializes the service with required repositories and mappers.
+     * 
+     * @param doctorRepository Repository for Doctor entity access
+     * @param shiftRepository Repository for Shift entity access
+     * @param leaveAbsenceRepository Repository for LeaveAbsence entity access
+     * @param doctorMapper Mapper for DTO/Entity transformations
+     */
     public DoctorQueryService(DoctorRepository doctorRepository, ShiftRepository shiftRepository, 
                               LeaveAbsenceRepository leaveAbsenceRepository, DoctorMapper doctorMapper) {
         this.doctorRepository = doctorRepository;
@@ -38,16 +50,37 @@ public class DoctorQueryService {
         this.doctorMapper = doctorMapper;
     }
 
+    /**
+     * Retrieves a doctor by their unique identifier.
+     * 
+     * @param query Query object containing the doctor ID
+     * @return An Optional containing the doctor if found, or empty otherwise
+     */
     public Optional<Doctor> findDoctorById(GetDoctorQuery query) {
         return doctorRepository.findById(query.id());
     }
 
+    /**
+     * Retrieves a paginated list of doctors.
+     * 
+     * @param query Query object containing pagination and filtering parameters
+     * @return A Page of Doctor entities
+     */
     public Page<Doctor> getDoctors(GetDoctorsQuery query) {
         // Current implementation doesn't use the specialization filter in the repository call yet, 
         // but we can add it if needed. For now, we follow the legacy logic.
         return doctorRepository.findAll(query.pageable());
     }
 
+    /**
+     * Lists active shifts for a specific doctor within a date range.
+     * 
+     * @param doctorId The unique ID of the doctor
+     * @param fromDate Start date of the range
+     * @param toDate End date of the range
+     * @return A list of Shift response DTOs
+     * @throws DoctorNotFoundException If the doctor ID is invalid
+     */
     public List<ShiftResponseDto> listShifts(UUID doctorId, LocalDate fromDate, LocalDate toDate) {
         doctorRepository.findById(doctorId)
                 .orElseThrow(() -> new DoctorNotFoundException("Doctor not found: " + doctorId));
@@ -58,6 +91,16 @@ public class DoctorQueryService {
                 .toList();
     }
 
+    /**
+     * Checks if a doctor is available for a requested time slot and service type.
+     * Considers active shifts, approved leaves, and surgery-specific constraints.
+     * 
+     * @param doctorId The unique ID of the doctor
+     * @param query Query containing requested start/end times and service type
+     * @return Availability response detailing whether the doctor is free and why
+     * @throws DoctorNotFoundException If the doctor ID is invalid
+     * @throws ApiException If time slot parameters are invalid
+     */
     public AvailabilityResponseDto checkDoctorAvailability(UUID doctorId, GetAvailableDoctorsQuery query) {
         doctorRepository.findById(doctorId)
                 .orElseThrow(() -> new DoctorNotFoundException("Doctor not found: " + doctorId));
@@ -84,6 +127,15 @@ public class DoctorQueryService {
         return new AvailabilityResponseDto(true, "IN_SHIFT", "Doctor is available for requested slot");
     }
 
+    /**
+     * Lists all doctors with their availability status for a specific time slot.
+     * 
+     * @param query Query containing the requested slot
+     * @param specializationFilterStr Optional specialization filter
+     * @param pageable Pagination details
+     * @return A paginated list of doctor availability summaries
+     * @throws ApiException If time slot or specialization parameters are invalid
+     */
     public Page<DoctorAvailabilitySummaryDto> getAvailableDoctors(GetAvailableDoctorsQuery query, String specializationFilterStr, Pageable pageable) {
         LocalDateTime startDateTime = DateUtils.parseDateTime(query.start());
         LocalDateTime endDateTime = DateUtils.parseDateTime(query.end());
@@ -118,6 +170,9 @@ public class DoctorQueryService {
                 });
     }
 
+    /**
+     * Checks if a requested slot falls entirely within a doctor's active shift.
+     */
     private boolean isWithinShift(UUID doctorId, LocalDateTime startDateTime, LocalDateTime endDateTime) {
         LocalDate shiftDate = startDateTime.toLocalDate();
         if (!shiftDate.equals(endDateTime.toLocalDate())) {
@@ -129,6 +184,9 @@ public class DoctorQueryService {
                         && !endDateTime.toLocalTime().isAfter(shift.getEndTime()));
     }
 
+    /**
+     * Checks if a requested slot overlaps with an approved leave.
+     */
     private boolean hasLeaveConflict(UUID doctorId, LocalDateTime startDateTime, LocalDateTime endDateTime) {
         return leaveAbsenceRepository.existsByDoctorIdAndStatusAndStartDateTimeLessThanEqualAndEndDateTimeGreaterThanEqual(
                 doctorId,
@@ -138,6 +196,9 @@ public class DoctorQueryService {
         );
     }
 
+    /**
+     * Checks if a surgery slot conflicts with an existing surgery shift.
+     */
     private boolean hasSurgeryConflict(UUID doctorId, LocalDateTime startDateTime, LocalDateTime endDateTime) {
         LocalDate shiftDate = startDateTime.toLocalDate();
         if (!shiftDate.equals(endDateTime.toLocalDate())) {

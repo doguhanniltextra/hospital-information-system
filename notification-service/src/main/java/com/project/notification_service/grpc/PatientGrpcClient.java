@@ -12,6 +12,10 @@ import org.springframework.stereotype.Service;
 
 import java.util.UUID;
 
+/**
+ * Client for communicating with the Patient Service via gRPC.
+ * Fetches and caches patient contact information for notification enrichment.
+ */
 @Service
 public class PatientGrpcClient {
     private static final Logger log = LoggerFactory.getLogger(PatientGrpcClient.class);
@@ -19,6 +23,13 @@ public class PatientGrpcClient {
     @GrpcClient("patient-service")
     private PatientQueryServiceGrpc.PatientQueryServiceBlockingStub patientStub;
 
+    /**
+     * Retrieves patient contact information (email, phone, etc.) from the Patient Service.
+     * Results are cached to minimize inter-service gRPC calls.
+     * 
+     * @param patientId The UUID of the patient to look up
+     * @return PatientContactInfo containing delivery details, or null if lookup fails
+     */
     @Cacheable(value = "patientContacts", key = "#patientId", unless = "#result == null")
     public PatientContactInfo getPatientContactInfo(UUID patientId) {
         log.info("Fetching patient contact info from gRPC for patientId: {}", patientId);
@@ -42,3 +53,4 @@ public class PatientGrpcClient {
         }
     }
 }
+

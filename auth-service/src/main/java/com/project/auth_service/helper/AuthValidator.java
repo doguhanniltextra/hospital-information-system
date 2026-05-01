@@ -10,9 +10,20 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
+/**
+ * Helper component for validating authentication and registration requests.
+ * Provides methods for checking duplicate users, password verification, and DTO-to-Entity mapping.
+ */
 @Component
 public class AuthValidator {
 
+    /**
+     * Checks if a username already exists in the system during registration.
+     * 
+     * @param registerRequestDto Registration data containing the name to check
+     * @param userRepository Repository for user lookups
+     * @return ResponseEntity with error if exists, or null if unique
+     */
     public ResponseEntity<String> checkIfUsernameAlreadyExistsOrNotForRegisterMethod(
             RegisterRequestDto registerRequestDto, UserRepository userRepository) {
         if (userRepository.existsByName(registerRequestDto.getName())) {
@@ -21,6 +32,14 @@ public class AuthValidator {
         return null;
     }
 
+    /**
+     * Maps a standard registration DTO to a User entity.
+     * Assigns the default PATIENT role.
+     * 
+     * @param registerRequestDto Source DTO
+     * @param passwordEncoder Encoder for the user's password
+     * @return User entity populated with DTO data
+     */
     public User registerRequestDtoToUserForRegisterMethod(RegisterRequestDto registerRequestDto,
             PasswordEncoder passwordEncoder) {
         User user = new User();
@@ -33,6 +52,14 @@ public class AuthValidator {
         return user;
     }
 
+    /**
+     * Maps an administrative registration DTO to a User entity.
+     * Supports multiple roles; defaults to PATIENT if none provided.
+     * 
+     * @param registerRequestDto Source DTO
+     * @param passwordEncoder Encoder for the user's password
+     * @return User entity populated with DTO data and roles
+     */
     public User adminRegisterRequestDtoToUser(com.project.auth_service.dto.AdminRegisterRequestDto registerRequestDto,
             PasswordEncoder passwordEncoder) {
         User user = new User();
@@ -49,6 +76,14 @@ public class AuthValidator {
         return user;
     }
 
+    /**
+     * Validates if the provided login password matches the stored user password.
+     * 
+     * @param loginRequestDto Login credentials from request
+     * @param user User entity from database
+     * @param passwordEncoder Encoder used for verification
+     * @return ResponseEntity with error if mismatch, or null if valid
+     */
     public ResponseEntity<String> checkIfPasswordIsInvalidForLogin(LoginRequestDto loginRequestDto, User user,
             PasswordEncoder passwordEncoder) {
         if (!passwordEncoder.matches(loginRequestDto.getPassword(), user.getPassword())) {
@@ -58,6 +93,12 @@ public class AuthValidator {
         return null;
     }
 
+    /**
+     * Validates that the user entity exists for a login attempt.
+     * 
+     * @param user User entity to check
+     * @return ResponseEntity with error if null, or null if exists
+     */
     public ResponseEntity<String> checkIfUsernameOrPasswordIsEmptyForLoginMethod(User user) {
         if (user == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)

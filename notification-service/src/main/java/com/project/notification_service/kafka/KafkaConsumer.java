@@ -22,6 +22,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+/**
+ * Kafka consumer service responsible for listening to system-wide events and triggering notifications.
+ * It handles events from lab-results, appointments, inventory, and authentication services.
+ * Implements idempotency checks using NotificationProcessedEventRepository.
+ */
 @Service
 public class KafkaConsumer {
     private static final Logger log = LoggerFactory.getLogger(KafkaConsumer.class);
@@ -32,6 +37,15 @@ public class KafkaConsumer {
     private final String opsAlertEmails;
     private static final UUID SYSTEM_PATIENT_ID = new UUID(0, 0);
 
+    /**
+     * Initializes the Kafka consumer with required services and configurations.
+     * 
+     * @param notificationService Service for processing and sending notifications
+     * @param patientGrpcClient gRPC client for patient data enrichment
+     * @param processedEventRepository Repository for idempotency tracking
+     * @param objectMapper Mapper for JSON deserialization
+     * @param opsAlertEmails Configured email addresses for operational alerts
+     */
     public KafkaConsumer(NotificationService notificationService,
                          PatientGrpcClient patientGrpcClient,
                          NotificationProcessedEventRepository processedEventRepository,
@@ -44,6 +58,12 @@ public class KafkaConsumer {
         this.opsAlertEmails = opsAlertEmails;
     }
 
+    /**
+     * Consumes lab result completion events and notifies the patient.
+     * Data is enriched via gRPC to fetch the patient's latest contact details.
+     * 
+     * @param event The lab result completion event data
+     */
     @Transactional
     @KafkaListener(topics = "lab-result-completed.v1", groupId = "notification-group")
     public void consumeLabResult(LabResultCompletedEvent event) {
@@ -63,6 +83,11 @@ public class KafkaConsumer {
         markAsProcessed(event.eventId);
     }
 
+    /**
+     * Consumes appointment scheduling events and sends a confirmation to the patient.
+     * 
+     * @param event The appointment scheduling event data
+     */
     @Transactional
     @KafkaListener(topics = "appointment-scheduled.v1", groupId = "notification-group")
     public void consumeAppointment(AppointmentScheduledEvent event) {
@@ -84,6 +109,11 @@ public class KafkaConsumer {
         markAsProcessed(messageId);
     }
 
+    /**
+     * Consumes patient discharge events and sends a follow-up notification.
+     * 
+     * @param event The patient discharge event data
+     */
     @Transactional
     @KafkaListener(topics = "patient-discharged.v1", groupId = "notification-group")
     public void consumeDischarge(PatientDischargedEvent event) {
@@ -104,6 +134,11 @@ public class KafkaConsumer {
         markAsProcessed(messageId);
     }
 
+    /**
+     * Consumes low stock alerts from the inventory service and notifies operations.
+     * 
+     * @param event The low stock alert event data
+     */
     @KafkaListener(topics = "inventory-low-stock.v1", groupId = "notification-group")
     public void consumeLowStockAlert(InventoryAlertEvent event) {
         log.warn("Consumed LowStockAlert for item: {}", event.itemId);
@@ -121,6 +156,11 @@ public class KafkaConsumer {
         }
     }
 
+    /**
+     * Consumes item expiration alerts from the inventory service and notifies operations.
+     * 
+     * @param event The item expiration alert event data
+     */
     @KafkaListener(topics = "inventory-item-expired.v1", groupId = "notification-group")
     public void consumeInventoryExpiryAlert(InventoryAlertEvent event) {
         log.warn("Consumed InventoryExpiryAlert for item: {}", event.itemId);
@@ -137,6 +177,12 @@ public class KafkaConsumer {
         }
     }
 
+    /**
+     * Checks if a message has already been processed to ensure idempotency.
+     * 
+     * @param messageId The unique identifier for the message/event
+     * @return True if the message should be processed
+     */
     private boolean shouldProcess(String messageId) {
         if (messageId == null) return true;
         if (processedEventRepository.existsByMessageId(messageId)) {
@@ -146,6 +192,11 @@ public class KafkaConsumer {
         return true;
     }
 
+    /**
+     * Marks a message as processed in the idempotency repository.
+     * 
+     * @param messageId The unique identifier for the message/event
+     */
     private void markAsProcessed(String messageId) {
         if (messageId != null) {
             processedEventRepository.save(new NotificationProcessedEvent(messageId));
@@ -156,6 +207,8 @@ public class KafkaConsumer {
      * Listens to user-provisioned.v1 published by auth-service (raw JSON string).
      * Sends the PATIENT_WELCOME email containing the secure password-set link.
      * Uses stringContainerFactory to avoid JsonDeserializer type mismatch.
+     * 
+     * @param message The raw JSON string of the UserProvisionedEvent
      */
     @Transactional
     @KafkaListener(topics = "user-provisioned.v1", groupId = "notification-group", containerFactory = "stringContainerFactory")
@@ -190,3 +243,4 @@ public class KafkaConsumer {
         }
     }
 }
+

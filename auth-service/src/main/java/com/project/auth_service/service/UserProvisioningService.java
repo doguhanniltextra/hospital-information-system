@@ -20,6 +20,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+/**
+ * Service for auto-provisioning user accounts for clinical patients.
+ * Handles the creation of authentication credentials and propagation of provisioning events.
+ */
 @Service
 public class UserProvisioningService {
 
@@ -32,6 +36,15 @@ public class UserProvisioningService {
     private final KafkaTemplate<String, String> kafkaTemplate;
     private final ObjectMapper objectMapper;
 
+    /**
+     * Initializes the user provisioning service with required dependencies.
+     * 
+     * @param userRepository Repository for user data
+     * @param resetTokenRepository Repository for password reset tokens
+     * @param passwordEncoder Encoder for securing temporary passwords
+     * @param kafkaTemplate Kafka template for event publication
+     * @param objectMapper Mapper for JSON serialization
+     */
     public UserProvisioningService(UserRepository userRepository,
                                    PasswordResetTokenRepository resetTokenRepository,
                                    PasswordEncoder passwordEncoder,

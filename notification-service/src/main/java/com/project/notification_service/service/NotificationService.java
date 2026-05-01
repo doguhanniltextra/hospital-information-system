@@ -16,6 +16,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+/**
+ * Service responsible for processing and sending notifications.
+ * It manages template retrieval, variable injection, and delivery via appropriate providers.
+ */
 @Service
 public class NotificationService {
     private static final Logger log = LoggerFactory.getLogger(NotificationService.class);
@@ -25,6 +29,14 @@ public class NotificationService {
     private final List<NotificationProvider> providers;
     private final TemplateService templateService;
 
+    /**
+     * Initializes the notification service with required dependencies.
+     * 
+     * @param templateRepository Repository for notification templates
+     * @param historyRepository Repository for tracking notification history
+     * @param providers List of available notification providers (Email, SMS, etc.)
+     * @param templateService Service for processing template placeholders
+     */
     public NotificationService(NotificationTemplateRepository templateRepository,
                                NotificationHistoryRepository historyRepository,
                                List<NotificationProvider> providers,
@@ -35,6 +47,15 @@ public class NotificationService {
         this.templateService = templateService;
     }
 
+    /**
+     * Processes a notification by resolving the template, injecting variables, and sending via a provider.
+     * Includes retry logic for transient failures.
+     * 
+     * @param patientId The UUID of the patient receiving the notification
+     * @param recipient The destination address (email, phone number, etc.)
+     * @param templateCode The unique code identifying the template to use
+     * @param variables Map of variables to inject into the template
+     */
     @Transactional
     @Retryable(retryFor = Exception.class, maxAttempts = 3, backoff = @Backoff(delay = 2000))
     public void processNotification(UUID patientId, String recipient, String templateCode, Map<String, Object> variables) {
@@ -70,3 +91,4 @@ public class NotificationService {
         }
     }
 }
+

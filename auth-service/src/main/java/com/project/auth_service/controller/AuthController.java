@@ -26,6 +26,10 @@ import java.time.Instant;
 
 import jakarta.validation.Valid;
 
+/**
+ * REST controller for authentication and authorization operations.
+ * Handles user registration, login, token refresh, logout, and password setting.
+ */
 @RestController
 @RequestMapping(Endpoints.AUTH_CONTROLLER_REQUEST)
 public class AuthController {
@@ -38,6 +42,16 @@ public class AuthController {
     private final AuthValidator authValidator;
     private final PasswordResetTokenRepository resetTokenRepository;
 
+    /**
+     * Initializes the AuthController with required dependencies.
+     * 
+     * @param jwtService Service for JWT token generation and parsing
+     * @param userRepository Repository for user data
+     * @param refreshTokenRepository Repository for refresh tokens
+     * @param passwordEncoder Encoder for secure password storage
+     * @param authValidator Helper for validating authentication requests
+     * @param resetTokenRepository Repository for password reset tokens
+     */
     public AuthController(JwtService jwtService, UserRepository userRepository,
             RefreshTokenRepository refreshTokenRepository, PasswordEncoder passwordEncoder,
             AuthValidator authValidator, PasswordResetTokenRepository resetTokenRepository) {
@@ -49,6 +63,12 @@ public class AuthController {
         this.resetTokenRepository = resetTokenRepository;
     }
 
+    /**
+     * Creates and saves a new refresh token for a user.
+     * 
+     * @param user The user to create the token for
+     * @return The saved RefreshToken entity
+     */
     private RefreshToken createRefreshToken(User user) {
         RefreshToken refreshToken = new RefreshToken();
         refreshToken.setUser(user);
@@ -57,6 +77,12 @@ public class AuthController {
         return refreshTokenRepository.save(refreshToken);
     }
 
+    /**
+     * Registers a new standard user.
+     * 
+     * @param registerRequestDto Data transfer object containing registration details
+     * @return ResponseEntity containing success message and tokens, or error message
+     */
     @PostMapping(path = Endpoints.REGISTER, produces = Endpoints.PRODUCES)
     public ResponseEntity<?> register(@Valid @RequestBody RegisterRequestDto registerRequestDto) {
 
@@ -81,6 +107,12 @@ public class AuthController {
                         jwtService.getAccessTokenExpiration() / 1000));
     }
 
+    /**
+     * Registers a new administrative/privileged user.
+     * 
+     * @param registerRequestDto Data transfer object containing registration details
+     * @return ResponseEntity containing success message and tokens, or error message
+     */
     @PostMapping(path = Endpoints.ADMIN_REGISTER, produces = Endpoints.PRODUCES)
     public ResponseEntity<?> adminRegister(@Valid @RequestBody AdminRegisterRequestDto registerRequestDto) {
 
@@ -106,6 +138,12 @@ public class AuthController {
                         jwtService.getAccessTokenExpiration() / 1000));
     }
 
+    /**
+     * Authenticates a user and generates access and refresh tokens.
+     * 
+     * @param loginRequestDto Data transfer object containing login credentials
+     * @return ResponseEntity containing success message and tokens, or error message
+     */
     @PostMapping(path = Endpoints.LOGIN, produces = Endpoints.PRODUCES)
     public ResponseEntity<?> login(@RequestBody LoginRequestDto loginRequestDto) {
         log.info(LogMessages.LOGIN_METHOD_TRIGGERED);
@@ -133,6 +171,13 @@ public class AuthController {
                 refreshTokenObj.getToken(), jwtService.getAccessTokenExpiration() / 1000));
     }
 
+    /**
+     * Refreshes an expired access token using a valid refresh token.
+     * Revokes the old refresh token and issues a new one.
+     * 
+     * @param requestDto Data transfer object containing the refresh token
+     * @return ResponseEntity containing new tokens, or error message
+     */
     @PostMapping(path = Endpoints.REFRESH, produces = Endpoints.PRODUCES)
     public ResponseEntity<?> refresh(@RequestBody RefreshTokenRequestDto requestDto) {
         String requestToken = requestDto.getRefreshToken();
@@ -165,6 +210,12 @@ public class AuthController {
                         () -> ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Refresh token is not in database!"));
     }
 
+    /**
+     * Logs out a user by revoking their refresh token.
+     * 
+     * @param requestDto Data transfer object containing the refresh token to revoke
+     * @return ResponseEntity with a success message
+     */
     @PostMapping(path = Endpoints.LOGOUT, produces = Endpoints.PRODUCES)
     public ResponseEntity<?> logout(@RequestBody LogoutRequestDto requestDto) {
         String requestToken = requestDto.getRefreshToken();

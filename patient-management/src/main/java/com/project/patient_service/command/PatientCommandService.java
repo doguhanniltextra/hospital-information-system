@@ -28,6 +28,10 @@ import com.project.patient_service.event.PatientDeletedEvent;
 import java.util.Map;
 import java.util.UUID;
 
+/**
+ * Service class for handling patient command operations.
+ * Implements the write side of the CQRS pattern with Transactional Outbox support.
+ */
 @Service
 @Transactional
 public class PatientCommandService {
@@ -40,6 +44,16 @@ public class PatientCommandService {
     private final ObjectMapper objectMapper;
     private static final Logger log = LoggerFactory.getLogger(PatientCommandService.class);
 
+    /**
+     * Initializes the command service with necessary repositories and publishers.
+     * 
+     * @param patientRepository Repository for core patient data
+     * @param patientOutboxRepository Repository for transactional outbox events
+     * @param userMapper Helper for mapping between entities and DTOs
+     * @param userValidator Helper for validating patient data and business rules
+     * @param eventPublisher Spring event publisher for internal read-model sync
+     * @param objectMapper JSON mapper for serializing outbox payloads
+     */
     public PatientCommandService(PatientRepository patientRepository,
             PatientOutboxRepository patientOutboxRepository,
             UserMapper userMapper,
@@ -54,6 +68,14 @@ public class PatientCommandService {
         this.objectMapper = objectMapper;
     }
 
+    /**
+     * Creates a new patient record.
+     * Sanitizes input, validates uniqueness, saves to DB, and records an outbox event.
+     * 
+     * @param command The command containing patient creation data
+     * @return DTO representing the created patient
+     * @throws EmailAlreadyExistsException If the email is already in use
+     */
     public CreatePatientServiceResponseDto createPatient(CreatePatientCommand command)
             throws EmailAlreadyExistsException {
         CreatePatientServiceRequestDto patientRequestDTO = command.patientRequest();
@@ -85,6 +107,13 @@ public class PatientCommandService {
         return userMapper.getCreatePatientServiceResponseDto(patient);
     }
 
+    /**
+     * Updates an existing patient record.
+     * Sanitizes input, validates state, updates DB, and records an outbox event.
+     * 
+     * @param command The command containing patient update data and identifier
+     * @return DTO representing the updated patient
+     */
     public UpdatePatientServiceResponseDto updatePatient(UpdatePatientCommand command) {
         UUID id = command.id();
         UpdatePatientServiceRequestDto updateRequest = command.updateRequest();
@@ -117,6 +146,12 @@ public class PatientCommandService {
         return userMapper.getUpdatePatientServiceResponseDto(updatedPatient);
     }
 
+    /**
+     * Deletes a patient record by ID.
+     * Records a deletion event in the outbox before removing the record.
+     * 
+     * @param command The command containing the patient identifier to delete
+     */
     public void deletePatient(DeletePatientCommand command) {
         UUID id = command.id();
         log.info(LogMessages.SERVICE_DELETE_TRIGGERED);
@@ -136,6 +171,7 @@ public class PatientCommandService {
         // Publish internal event for Read Model synchronization
         eventPublisher.publishEvent(new PatientDeletedEvent(id));
     }
+
 
     /**
      * Links a clinical patient record to its auth-service account.

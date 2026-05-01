@@ -29,6 +29,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+/**
+ * Service class responsible for processing financial commands in the billing microservice.
+ * Handles payment updates from appointments, finalizes discharge billing, 
+ * manages unbilled charges, and coordinates with insurance claim processing.
+ * 
+ * Implements the Transactional Outbox pattern for reliable event propagation.
+ */
 @Service
 public class BillingCommandService {
     private static final Logger log = LoggerFactory.getLogger(BillingCommandService.class);
@@ -43,6 +50,19 @@ public class BillingCommandService {
     private final ObjectMapper objectMapper;
     private final ApplicationEventPublisher eventPublisher;
 
+    /**
+     * Initializes the billing command service with required dependencies.
+     * 
+     * @param invoiceService Service for generating PDF invoices
+     * @param invoiceRepository Repository for invoice persistence
+     * @param claimRepository Repository for insurance claim persistence
+     * @param unbilledChargeRepository Repository for tracking unbilled services
+     * @param outboxRepository Repository for Transactional Outbox events
+     * @param insuranceFactory Factory for retrieving insurance calculation strategies
+     * @param claimClient External client for submitting claims
+     * @param objectMapper Mapper for JSON serialization
+     * @param eventPublisher Publisher for internal application events
+     */
     public BillingCommandService(
             InvoiceService invoiceService,
             InvoiceRepository invoiceRepository,
@@ -64,6 +84,12 @@ public class BillingCommandService {
         this.eventPublisher = eventPublisher;
     }
 
+    /**
+     * Processes a payment update for a completed appointment.
+     * Calculates the insurance split, generates an invoice, and submits an insurance claim if applicable.
+     * 
+     * @param appointment DTO containing appointment and insurance details
+     */
     @Transactional
     public void processPaymentUpdate(AppointmentDTO appointment) {
         BigDecimal totalAmount = BigDecimal.valueOf(appointment.getAmount());
@@ -110,6 +136,14 @@ public class BillingCommandService {
         }
     }
 
+    /**
+     * Finalizes billing for a patient being discharged.
+     * Consolidates all open charges (Lab, Inventory, Bed) into a final invoice.
+     * 
+     * @param patientId The unique ID of the patient
+     * @param admissionId The unique ID of the admission
+     * @param doctorId The unique ID of the primary doctor
+     */
     @Transactional
     public void finalizeDischargeBilling(UUID patientId, UUID admissionId, UUID doctorId) {
         List<UnbilledCharge> openCharges = unbilledChargeRepository.findByPatientIdAndStatus(patientId, "OPEN");
@@ -168,9 +202,8 @@ public class BillingCommandService {
     }
 
     /**
-     * FIX: Throws RuntimeException on serialization failure so the enclosing
-     * @Transactional rolls back the entire operation — invoice + outbox event
-     * are always written together or not at all.
+     * Persists an event to the outbox table for reliable Kafka publishing.
+     * Throws a RuntimeException if serialization fails to ensure transaction rollback.
      */
     private void saveOutboxEvent(UUID aggregateId, String aggregateType, String eventType, Object payloadObj) {
         try {
@@ -185,8 +218,8 @@ public class BillingCommandService {
     }
 
     /**
-     * FIX: Uses claim.getProviderName() instead of hardcoded "unknown".
-     * Also sets providerName on newly created claims in submitClaim().
+     * Scheduled job to retry failed or pending insurance claims.
+     * Uses stored provider context to re-submit claims to external systems.
      */
     @Scheduled(fixedDelayString = "${claims.retry.fixed-delay-ms:300000}")
     public void retryFailedAndPendingClaims() {
@@ -214,6 +247,9 @@ public class BillingCommandService {
         }
     }
 
+    /**
+     * Records a new unbilled charge originating from a laboratory order.
+     */
     @Transactional
     public void createUnbilledLabCharge(UUID patientId, UUID sourceOrderId, BigDecimal amount, String currency) {
         if (unbilledChargeRepository.findBySourceTypeAndSourceOrderId("LAB", sourceOrderId).isPresent()) {
@@ -230,6 +266,9 @@ public class BillingCommandService {
         unbilledChargeRepository.save(charge);
     }
 
+    /**
+     * Records a new unbilled charge originating from inventory usage.
+     */
     @Transactional
     public void createUnbilledInventoryCharge(UUID patientId, UUID itemId, Integer quantity, BigDecimal unitPrice, String currency, UUID eventId) {
         if (unbilledChargeRepository.findBySourceTypeAndSourceOrderId("INVENTORY", eventId).isPresent()) {
@@ -246,6 +285,9 @@ public class BillingCommandService {
         unbilledChargeRepository.save(charge);
     }
 
+    /**
+     * Records a new unbilled charge for hospital bed occupancy.
+     */
     @Transactional
     public void createUnbilledBedCharge(UUID patientId, UUID admissionId, BigDecimal amount, String currency, UUID eventId) {
         if (unbilledChargeRepository.findBySourceTypeAndSourceOrderId("BED", eventId).isPresent()) {
@@ -263,9 +305,8 @@ public class BillingCommandService {
     }
 
     /**
-     * FIX: Stores providerName on the Claim entity so retryFailedAndPendingClaims()
-     * can resubmit without losing provider context.
-     * FIX: Sets submittedAt timestamp.
+     * Submits an insurance claim via the external ClaimClient.
+     * Persists the claim record with its initial status (SUBMITTED or FAILED).
      */
     private void submitClaim(Invoice invoice, String providerName, BigDecimal insuranceAmount) {
         ClaimRequestDto claimRequest = new ClaimRequestDto();
@@ -289,4 +330,6 @@ public class BillingCommandService {
         }
         claimRepository.save(claim);
     }
+}
+
 }

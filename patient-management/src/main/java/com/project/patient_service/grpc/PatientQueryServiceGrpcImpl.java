@@ -6,15 +6,30 @@ import io.grpc.stub.StreamObserver;
 import net.devh.boot.grpc.server.service.GrpcService;
 import java.util.UUID;
 
+/**
+ * gRPC service implementation for querying patient data.
+ * Provides high-performance, cross-service communication for patient lookups.
+ */
 @GrpcService
 public class PatientQueryServiceGrpcImpl extends PatientQueryServiceGrpc.PatientQueryServiceImplBase {
 
     private final PatientRepository patientRepository;
 
+    /**
+     * Initializes the gRPC service with the patient repository.
+     * 
+     * @param patientRepository Repository for accessing core patient data
+     */
     public PatientQueryServiceGrpcImpl(PatientRepository patientRepository) {
         this.patientRepository = patientRepository;
     }
 
+    /**
+     * Finds a patient by ID and returns a gRPC response.
+     * 
+     * @param request The gRPC request containing the patient ID string
+     * @param responseObserver The observer for sending the gRPC response
+     */
     @Override
     public void findById(FindPatientRequest request, StreamObserver<PatientResponse> responseObserver) {
         try {
@@ -39,6 +54,12 @@ public class PatientQueryServiceGrpcImpl extends PatientQueryServiceGrpc.Patient
         }
     }
 
+    /**
+     * Checks if a patient exists by ID and returns a gRPC boolean response.
+     * 
+     * @param request The gRPC request containing the patient ID string
+     * @param responseObserver The observer for sending the existence response
+     */
     @Override
     public void existsById(FindPatientRequest request, StreamObserver<ExistsResponse> responseObserver) {
         try {
@@ -54,3 +75,4 @@ public class PatientQueryServiceGrpcImpl extends PatientQueryServiceGrpc.Patient
         }
     }
 }
+

@@ -21,6 +21,11 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+/**
+ * Service for managing de-normalized Appointment Summaries.
+ * These summaries combine appointment details with metadata from other services (Patient, Doctor)
+ * to facilitate efficient read operations and reporting without cross-service joins.
+ */
 @Service
 public class AppointmentSummaryService {
 
@@ -30,16 +35,37 @@ public class AppointmentSummaryService {
     private final AppointmentSummaryRepository appointmentSummaryRepository;
     private final IdValidation idValidation;
 
+    /**
+     * Initializes the AppointmentSummaryService.
+     * 
+     * @param appointmentSummaryRepository Repository for AppointmentSummary entities
+     * @param idValidation Service for fetching metadata from external services
+     */
     public AppointmentSummaryService(AppointmentSummaryRepository appointmentSummaryRepository,
                                      IdValidation idValidation) {
         this.appointmentSummaryRepository = appointmentSummaryRepository;
         this.idValidation = idValidation;
     }
 
+    /**
+     * Overloaded method to create or update a summary using internal gRPC calls for missing info.
+     * 
+     * @param appointment The appointment entity
+     */
     public void createOrUpdateSummary(Appointment appointment) {
         createOrUpdateSummary(appointment, null, null);
     }
 
+    /**
+     * Core logic to create or update an appointment summary.
+     * Populates clinical metadata (names, emails, specializations) by either:
+     * 1. Using provided info (from a Saga execution).
+     * 2. Fetching via gRPC (for manual updates or re-syncs).
+     * 
+     * @param appointment The source appointment entity
+     * @param patientInfo Optional pre-fetched patient metadata
+     * @param doctorInfo Optional pre-fetched doctor metadata
+     */
     public void createOrUpdateSummary(Appointment appointment, PatientInfoDTO patientInfo, DoctorInfoDTO doctorInfo) {
         if (appointment == null || appointment.getId() == null) {
             log.warn("AppointmentSummaryService: appointment or appointment.id is null; skipping summary creation.");
@@ -87,6 +113,12 @@ public class AppointmentSummaryService {
         log.info("AppointmentSummary saved for appointment id={}", appointment.getId());
     }
 
+    /**
+     * Updates the payment status in the summary table.
+     * 
+     * @param appointmentId The UUID of the appointment
+     * @param status The new payment status (true for PAID)
+     */
     public void updatePaymentStatus(UUID appointmentId, boolean status) {
         appointmentSummaryRepository.findById(appointmentId).ifPresent(summary -> {
             summary.setStatus(status ? "PAID" : "PENDING");
@@ -94,10 +126,21 @@ public class AppointmentSummaryService {
         });
     }
 
+    /**
+     * Deletes an appointment summary.
+     * 
+     * @param appointmentId The UUID of the appointment
+     */
     public void deleteSummary(UUID appointmentId) {
         appointmentSummaryRepository.findById(appointmentId).ifPresent(summary -> appointmentSummaryRepository.delete(summary));
     }
 
+    /**
+     * Retrieves all appointment summaries in a paginated format.
+     * 
+     * @param pageable Pagination details
+     * @return A page of appointment summary DTOs
+     */
     @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public Page<AppointmentSummaryDto> getAllAppointmentSummaries(Pageable pageable) {
         Page<AppointmentSummary> summaries = appointmentSummaryRepository.findAll(pageable);
