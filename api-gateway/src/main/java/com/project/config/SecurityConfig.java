@@ -82,7 +82,7 @@ public class SecurityConfig {
 
                     Claims claims = Jwts.parserBuilder()
                             .setSigningKey(signingKey)
-                            .setAllowedClockSkewSeconds(300) // 5 dakika tolerance
+                            .setAllowedClockSkewSeconds(30) // Zero Trust: 30 saniye tolerance
                             .build()
                             .parseClaimsJws(token)
                             .getBody();

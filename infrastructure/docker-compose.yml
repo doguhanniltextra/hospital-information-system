@@ -130,6 +130,7 @@ services:
       LAB_SERVICE_URL: http://support-service:8085
       INVENTORY_SERVICE_URL: http://support-service:8085
       SUPPORT_SERVICE_URL: http://support-service:8085
+      REDIS_HOST: redis
     volumes:
       - ../api-gateway/src:/app/src
     networks:

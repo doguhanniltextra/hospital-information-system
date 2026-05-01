@@ -5,33 +5,62 @@ server:
 ### API GATEWAY -> http://patient-service:8080/patients
 
 spring:
+  data:
+    redis:
+      host: ${REDIS_HOST:redis}
+      port: ${REDIS_PORT:6379}
+      connect-timeout: 2s
+      timeout: 1s
+
   cloud:
     gateway:
       routes:
+
+        # ── Patient Service ──────────────────────────────────────────────────
         - id: patient-service-route
           uri: http://patient-management:8080
           predicates:
             - Path=/api/patients/**
           filters:
             - StripPrefix=1
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 20
+                redis-rate-limiter.burstCapacity: 50
+
         - id: api-docs-patient-route
           uri: http://patient-management:8080
           predicates:
             - Path=/api-docs/patients
           filters:
             - RewritePath=/api-docs/patients,/v3/api-docs
+
+        # ── Doctor Service ───────────────────────────────────────────────────
         - id: doctor-service-route
           uri: http://doctor-service:8083
           predicates:
             - Path=/api/doctors/**
           filters:
             - StripPrefix=1
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 20
+                redis-rate-limiter.burstCapacity: 50
+
+        # ── Appointment Service ──────────────────────────────────────────────
         - id: appointment-service-route
           uri: http://appointment-service:8084
           predicates:
             - Path=/api/appointments/**
           filters:
             - StripPrefix=1
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 20
+                redis-rate-limiter.burstCapacity: 50
+
+        # ── Auth Service ─────────────────────────────────────────────────────
+        # Stricter limits — brute-force protection on login/register
         - id: auth-service-route
           uri: http://auth-service:8089
           predicates:
@@ -39,51 +68,75 @@ spring:
           filters:
             - StripPrefix=1
             - SetRequestHeader=Content-Type, application/json
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 5
+                redis-rate-limiter.burstCapacity: 10
+
+        # ── Support Service (Labs + Inventory) ───────────────────────────────
         - id: lab-service-route
           uri: ${SUPPORT_SERVICE_URL:http://support-service:8085}
           predicates:
             - Path=/api/labs/**
           filters:
             - StripPrefix=1
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 20
+                redis-rate-limiter.burstCapacity: 50
+
         - id: inventory-service-route
           uri: ${SUPPORT_SERVICE_URL:http://support-service:8085}
           predicates:
             - Path=/api/inventory/**
           filters:
             - StripPrefix=1
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 20
+                redis-rate-limiter.burstCapacity: 50
+
+        # ── Admission Service ────────────────────────────────────────────────
         - id: admission-service-route
           uri: ${ADMISSION_SERVICE_URL:http://admission-service:8086}
           predicates:
             - Path=/api/admissions/**
           filters:
             - StripPrefix=1
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 20
+                redis-rate-limiter.burstCapacity: 50
 
-
-        # AGGREGATED OPENAPI ROUTES
+        # ── Aggregated OpenAPI Docs (no rate limiting) ───────────────────────
         - id: patient-docs
           uri: http://patient-management:8080
           predicates:
             - Path=/aggregate/patient/v3/api-docs
           filters:
             - RewritePath=/aggregate/patient/v3/api-docs, /api-docs
+
         - id: doctor-docs
           uri: http://doctor-service:8083
           predicates:
             - Path=/aggregate/doctor/v3/api-docs
           filters:
             - RewritePath=/aggregate/doctor/v3/api-docs, /api-docs
+
         - id: appointment-docs
           uri: http://appointment-service:8084
           predicates:
             - Path=/aggregate/appointment/v3/api-docs
           filters:
             - RewritePath=/aggregate/appointment/v3/api-docs, /api-docs
+
         - id: support-docs
           uri: http://support-service:8085
           predicates:
             - Path=/aggregate/support/v3/api-docs
           filters:
             - RewritePath=/aggregate/support/v3/api-docs, /api-docs
+
         - id: admission-docs
           uri: http://admission-service:8086
           predicates:
