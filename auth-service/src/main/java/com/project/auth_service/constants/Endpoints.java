@@ -8,5 +8,6 @@ public class Endpoints {
     public static final String REFRESH = "/refresh";
     public static final String LOGOUT = "/logout";
     public static final String ADMIN_REGISTER = "/admin/register";
+    public static final String SET_PASSWORD = "/set-password";
     public static final String PRODUCES = "application/json";
 }

@@ -136,4 +136,34 @@ public class PatientCommandService {
         // Publish internal event for Read Model synchronization
         eventPublisher.publishEvent(new PatientDeletedEvent(id));
     }
+
+    /**
+     * Links a clinical patient record to its auth-service account.
+     * Called by AuthEventKafkaConsumer when a user-provisioned.v1 event is received.
+     * Idempotent: skips if authUserId is already set.
+     */
+    public void linkAuthUser(String patientId, String authUserId) {
+        UUID id;
+        try {
+            id = UUID.fromString(patientId);
+        } catch (IllegalArgumentException e) {
+            log.error("linkAuthUser: Invalid patientId format: {}", patientId);
+            return;
+        }
+
+        Patient patient = patientRepository.findById(id).orElse(null);
+        if (patient == null) {
+            log.warn("linkAuthUser: Patient not found for id={}", patientId);
+            return;
+        }
+        if (patient.getAuthUserId() != null) {
+            log.warn("linkAuthUser: authUserId already set for patientId={}. Skipping.", patientId);
+            return;
+        }
+
+        patient.setAuthUserId(UUID.fromString(authUserId));
+        patientRepository.save(patient);
+        log.info("linkAuthUser: Successfully linked patientId={} → authUserId={}", patientId, authUserId);
+    }
 }
+

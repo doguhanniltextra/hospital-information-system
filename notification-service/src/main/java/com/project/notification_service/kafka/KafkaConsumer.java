@@ -5,10 +5,12 @@ import com.project.notification_service.dto.LabResultCompletedEvent;
 import com.project.notification_service.dto.InventoryAlertEvent;
 import com.project.notification_service.dto.PatientContactInfo;
 import com.project.notification_service.dto.PatientDischargedEvent;
+import com.project.notification_service.dto.UserProvisionedEvent;
 import com.project.notification_service.grpc.PatientGrpcClient;
 import com.project.notification_service.model.NotificationProcessedEvent;
 import com.project.notification_service.repository.NotificationProcessedEventRepository;
 import com.project.notification_service.service.NotificationService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,16 +28,19 @@ public class KafkaConsumer {
     private final NotificationService notificationService;
     private final PatientGrpcClient patientGrpcClient;
     private final NotificationProcessedEventRepository processedEventRepository;
+    private final ObjectMapper objectMapper;
     private final String opsAlertEmails;
     private static final UUID SYSTEM_PATIENT_ID = new UUID(0, 0);
 
     public KafkaConsumer(NotificationService notificationService,
                          PatientGrpcClient patientGrpcClient,
                          NotificationProcessedEventRepository processedEventRepository,
+                         ObjectMapper objectMapper,
                          @Value("${ops.alert.emails:admin@hospital.com}") String opsAlertEmails) {
         this.notificationService = notificationService;
         this.patientGrpcClient = patientGrpcClient;
         this.processedEventRepository = processedEventRepository;
+        this.objectMapper = objectMapper;
         this.opsAlertEmails = opsAlertEmails;
     }
 
@@ -144,6 +149,44 @@ public class KafkaConsumer {
     private void markAsProcessed(String messageId) {
         if (messageId != null) {
             processedEventRepository.save(new NotificationProcessedEvent(messageId));
+        }
+    }
+
+    /**
+     * Listens to user-provisioned.v1 published by auth-service (raw JSON string).
+     * Sends the PATIENT_WELCOME email containing the secure password-set link.
+     * Uses stringContainerFactory to avoid JsonDeserializer type mismatch.
+     */
+    @Transactional
+    @KafkaListener(topics = "user-provisioned.v1", groupId = "notification-group", containerFactory = "stringContainerFactory")
+    public void consumeUserProvisioned(String message) {
+        try {
+            UserProvisionedEvent event = objectMapper.readValue(message, UserProvisionedEvent.class);
+
+            String messageId = "PROV-" + event.getEventId();
+            if (!shouldProcess(messageId)) return;
+
+            log.info("Consumed user-provisioned.v1 for patientId={}, email={}", event.getPatientId(), event.getEmail());
+
+            String resetLink = "https://hospital.com/set-password?token=" + event.getResetToken();
+
+            Map<String, Object> variables = new HashMap<>();
+            variables.put("name", event.getName());
+            variables.put("email", event.getEmail());
+            variables.put("resetLink", resetLink);
+            variables.put("resetToken", event.getResetToken());
+
+            // SYSTEM_PATIENT_ID is used since this is a provisioning notification, not a clinical event
+            notificationService.processNotification(
+                    SYSTEM_PATIENT_ID,
+                    event.getEmail(),
+                    "PATIENT_WELCOME",
+                    variables
+            );
+
+            markAsProcessed(messageId);
+        } catch (Exception e) {
+            log.error("consumeUserProvisioned: Failed to process message: {}", message, e);
         }
     }
 }

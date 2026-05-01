@@ -56,20 +56,11 @@ public class PatientOutboxPublisher {
     }
 
     private void publishToKafka(PatientOutboxEvent event) throws Exception {
-        JsonNode payloadNode = objectMapper.readTree(event.getPayload());
-        
-        if ("PATIENT_DELETED".equals(event.getEventType())) {
-            kafkaProducer.sendDeleteEventAsync(java.util.UUID.fromString(event.getAggregateId()));
-        } else {
-            // For Created/Updated, we use the serialized DTO in the payload
-            // This is a bit tricky because KafkaProducer expects a specific DTO
-            // We should ideally have a more generic method in KafkaProducer
-            // But for now, we'll use a direct send if kafkaTemplate is accessible or 
-            // modify KafkaProducer.
-            
-            // Re-routing to a generic send if possible, or using the existing producer logic.
-            // Let's assume KafkaProducer has a way to send raw JSON if we add it.
-            kafkaProducer.sendRawEvent("patient-updated.v1", event.getPayload());
+        switch (event.getEventType()) {
+            case "PATIENT_CREATED" -> kafkaProducer.sendRawEvent("patient-created.v1", event.getPayload());
+            case "PATIENT_UPDATED" -> kafkaProducer.sendRawEvent("patient-updated.v1", event.getPayload());
+            case "PATIENT_DELETED" -> kafkaProducer.sendDeleteEventAsync(java.util.UUID.fromString(event.getAggregateId()));
+            default -> log.warn("Outbox: Unknown patient event type '{}' for event {}", event.getEventType(), event.getId());
         }
     }
 }

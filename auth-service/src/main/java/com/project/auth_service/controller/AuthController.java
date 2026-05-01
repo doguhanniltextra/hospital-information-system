@@ -3,9 +3,11 @@ package com.project.auth_service.controller;
 import com.project.auth_service.constants.Endpoints;
 import com.project.auth_service.constants.LogMessages;
 import com.project.auth_service.dto.*;
+import com.project.auth_service.entity.PasswordResetToken;
 import com.project.auth_service.entity.RefreshToken;
 import com.project.auth_service.entity.User;
 import com.project.auth_service.helper.AuthValidator;
+import com.project.auth_service.repository.PasswordResetTokenRepository;
 import com.project.auth_service.repository.RefreshTokenRepository;
 import com.project.auth_service.repository.UserRepository;
 import com.project.auth_service.service.JwtService;
@@ -34,15 +36,17 @@ public class AuthController {
     private final RefreshTokenRepository refreshTokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthValidator authValidator;
+    private final PasswordResetTokenRepository resetTokenRepository;
 
     public AuthController(JwtService jwtService, UserRepository userRepository,
             RefreshTokenRepository refreshTokenRepository, PasswordEncoder passwordEncoder,
-            AuthValidator authValidator) {
+            AuthValidator authValidator, PasswordResetTokenRepository resetTokenRepository) {
         this.jwtService = jwtService;
         this.userRepository = userRepository;
         this.refreshTokenRepository = refreshTokenRepository;
         this.passwordEncoder = passwordEncoder;
         this.authValidator = authValidator;
+        this.resetTokenRepository = resetTokenRepository;
     }
 
     private RefreshToken createRefreshToken(User user) {
@@ -170,5 +174,42 @@ public class AuthController {
             log.info("Refresh token revoked for user {}", token.getUser().getId());
         });
         return ResponseEntity.ok().body("Log out successful");
+    }
+
+    /**
+     * Allows auto-provisioned PATIENT accounts to activate their account by setting a real password.
+     * The token is a one-time UUID sent via the welcome email. Token is valid for 24 hours.
+     */
+    @PostMapping(path = Endpoints.SET_PASSWORD, produces = Endpoints.PRODUCES)
+    public ResponseEntity<?> setPassword(@Valid @RequestBody SetPasswordRequestDto requestDto) {
+        PasswordResetToken resetToken = resetTokenRepository.findByToken(requestDto.getToken())
+                .orElse(null);
+
+        if (resetToken == null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid or expired reset token.");
+        }
+        if (resetToken.isUsed()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Reset token has already been used.");
+        }
+        if (resetToken.getExpiresAt().isBefore(java.time.Instant.now())) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Reset token has expired. Please contact the clinic.");
+        }
+
+        User user = resetToken.getUser();
+        user.setPassword(passwordEncoder.encode(requestDto.getNewPassword()));
+        userRepository.save(user);
+
+        resetToken.setUsed(true);
+        resetTokenRepository.save(resetToken);
+
+        log.info("SetPassword: Account activated for userId={}", user.getId());
+
+        String accessToken = jwtService.generateAccessToken(user.getName(), user.getId().toString(), user.getRoles());
+        RefreshToken refreshTokenObj = createRefreshToken(user);
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(new LoginResponseDto("Password set successfully. Welcome!", accessToken,
+                        refreshTokenObj.getToken(), jwtService.getAccessTokenExpiration() / 1000));
     }
 }
