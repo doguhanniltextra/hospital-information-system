@@ -1,180 +1,100 @@
-# Patient Management System - Makefile
-# Optimized for WSL/Linux and Windows compatibility
+SHELL := /bin/sh
 
-# Force Bash shell for consistency across environments
-SHELL := /bin/bash
+COMPOSE := docker compose
 
-# Variables
-DOCKER := docker
+ENV_DIRS := infrastructure api-gateway auth-service patient-management doctor-service appointment-service support-service admission-service billing-service notification-service
+APP_SERVICES := patient-management doctor-service appointment-service support-service admission-service billing-service notification-service
+CORE_SERVICES := api-gateway auth-service
+COMPOSE_DIRS := infrastructure $(CORE_SERVICES) $(APP_SERVICES)
 
-# Detect 'docker compose' vs 'docker-compose'
-DOCKER_COMPOSE := $(shell docker compose version >/dev/null 2>&1 && echo "docker compose" || echo "docker-compose")
+.DEFAULT_GOAL := help
 
-# Multi-compose Configuration
-# We aggregate all bounded contexts to maintain the global orchestration capability of the Makefile
-COMPOSE_INFRA  := -f infrastructure/docker-compose.yml
-COMPOSE_DOMAIN := -f patient-management/docker-compose.yml \
-                  -f auth-service/docker-compose.yml \
-                  -f doctor-service/docker-compose.yml \
-                  -f appointment-service/docker-compose.yml \
-                  -f billing-service/docker-compose.yml \
-                  -f support-service/docker-compose.yml \
-                  -f admission-service/docker-compose.yml \
-                  -f notification-service/docker-compose.yml
+.PHONY: help setup up infra-up core-up services-up smoke health ps logs down reset
 
-COMPOSE_ALL := $(COMPOSE_INFRA) $(COMPOSE_DOMAIN)
-
-SERVICES := api-gateway patient-management auth-service doctor-service appointment-service billing-service support-service admission-service notification-service
-
-.PHONY: help
 help:
-	@echo "╔══════════════════════════════════════════════════════════╗"
-	@echo "║  Patient Management System - Development Commands        ║"
-	@echo "╚══════════════════════════════════════════════════════════╝"
+	@echo "Hospital Information System local commands"
 	@echo ""
-	@echo "📦 LOCAL DEVELOPMENT (Docker Compose):"
-	@echo "  make dev-up                - Start all services locally with Docker Compose"
-	@echo "  make dev-down              - Stop all local services"
-	@echo "  make dev-logs              - View logs from all services"
-	@echo "  make dev-logs-service SVC  - View logs from specific service (e.g., SVC=patient-management)"
-	@echo "  make dev-build             - Build all Docker images locally"
-	@echo "  make dev-rebuild           - Rebuild all Docker images from scratch"
-	@echo ""
-	@echo "🏗️  BUILD COMMANDS:"
-	@echo "  make build-all             - Build all services"
-	@echo "  make build-service SVC     - Build specific service"
-	@echo ""
-	@echo "🧹 CLEANUP:"
-	@echo "  make clean-local           - Remove all local Docker containers and volumes"
-	@echo ""
+	@echo "  make setup              Create missing .env files from .env.example"
+	@echo "  make up                 Start infrastructure, gateway, auth, and all services"
+	@echo "  make infra-up           Start Kafka, Redis, MongoDB, Prometheus, Grafana"
+	@echo "  make core-up            Start API Gateway and Auth Service"
+	@echo "  make services-up        Start domain/background services"
+	@echo "  make smoke              Get a dev JWT and call appointment-service through gateway"
+	@echo "  make health             Check public actuator health endpoints"
+	@echo "  make ps                 Show Docker Compose status for every compose file"
+	@echo "  make logs SERVICE=name  Follow logs for one compose directory, e.g. SERVICE=appointment-service"
+	@echo "  make down               Stop containers without deleting volumes"
+	@echo "  make reset              Stop containers and delete local volumes"
 
-# ============================================================================
-# LOCAL DEVELOPMENT WITH DOCKER COMPOSE
-# ============================================================================
-
-.PHONY: dev-up
-dev-up:
-	@echo "Starting all services with Docker Compose..."
-	$(DOCKER_COMPOSE) $(COMPOSE_ALL) up -d
-	@echo "Services started!"
-	@echo "Services available at:"
-	@echo "   API Gateway:       http://localhost:4004"
-	@echo ""
-
-.PHONY: dev-down
-dev-down:
-	@echo "Stopping all services..."
-	$(DOCKER_COMPOSE) $(COMPOSE_ALL) down
-	@echo "Services stopped!"
-
-.PHONY: dev-logs
-dev-logs:
-	$(DOCKER_COMPOSE) $(COMPOSE_ALL) logs -f
-
-.PHONY: dev-logs-service
-dev-logs-service:
-	@if [ -z "$(SVC)" ]; then \
-		echo "Error: Please specify SVC=<service-name>"; \
-		echo "   Example: make dev-logs-service SVC=patient-management"; \
-		exit 1; \
-	fi
-	$(DOCKER_COMPOSE) $(COMPOSE_ALL) logs -f $(SVC)
-
-.PHONY: dev-build
-dev-build:
-	@echo "Building Docker images..."
-	$(DOCKER_COMPOSE) $(COMPOSE_ALL) build
-	@echo "Build complete!"
-
-.PHONY: dev-rebuild
-dev-rebuild:
-	@echo "Rebuilding Docker images (no cache)..."
-	$(DOCKER_COMPOSE) $(COMPOSE_ALL) build --no-cache
-	@echo " Rebuild complete!"
-
-# ============================================================================
-# BUILD COMMANDS
-# ============================================================================
-
-.PHONY: build-all
-build-all:
-	@echo " Building all services with Maven..."
-	@for svc in $(SERVICES); do \
-		echo "----------------------------------------------------------------"; \
-		echo "Building $$svc..."; \
-		(cd $$svc && mvn clean package -DskipTests) || exit 1; \
+setup:
+	@for d in $(ENV_DIRS); do \
+		if [ ! -f "$$d/.env" ]; then \
+			cp "$$d/.env.example" "$$d/.env"; \
+			echo "created $$d/.env"; \
+		else \
+			echo "exists  $$d/.env"; \
+		fi; \
 	done
-	@echo " All services built!"
 
-.PHONY: build-service
-build-service:
-	@if [ -z "$(SVC)" ]; then \
-		echo "Error: Please specify SVC=<service-directory>"; \
-		echo "   Example: make build-service SVC=auth-service"; \
+up: setup infra-up core-up services-up
+
+infra-up:
+	$(COMPOSE) -f infrastructure/docker-compose.yml up -d
+
+core-up:
+	$(COMPOSE) -f api-gateway/docker-compose.yml up -d
+	$(COMPOSE) -f auth-service/docker-compose.yml up -d
+
+services-up:
+	@for d in $(APP_SERVICES); do \
+		echo "starting $$d"; \
+		$(COMPOSE) -f "$$d/docker-compose.yml" up -d; \
+	done
+
+smoke:
+	@echo "Requesting development JWT from auth-service via the API Gateway..."
+	@TOKEN=$$(curl -fsS "http://localhost:4004/api/auth/dev/token/raw?role=RECEPTIONIST"); \
+	echo "Calling appointment-service through the API Gateway..."; \
+	curl -i -s "http://localhost:4004/api/appointments/get" \
+		-H "Authorization: Bearer $$TOKEN"
+
+health:
+	@for endpoint in \
+		"http://localhost:4004/actuator/health" \
+		"http://localhost:8089/actuator/health" \
+		"http://localhost:8080/actuator/health" \
+		"http://localhost:8083/actuator/health" \
+		"http://localhost:8084/actuator/health" \
+		"http://localhost:8085/actuator/health" \
+		"http://localhost:8086/actuator/health" \
+		"http://localhost:8081/actuator/health" \
+		"http://localhost:8090/actuator/health"; do \
+		printf "%-45s " "$$endpoint"; \
+		curl -fsS "$$endpoint" >/dev/null && echo "OK" || echo "NOT READY"; \
+	done
+
+ps:
+	@for d in $(COMPOSE_DIRS); do \
+		echo ""; \
+		echo "== $$d =="; \
+		$(COMPOSE) -f "$$d/docker-compose.yml" ps; \
+	done
+
+logs:
+	@if [ -z "$(SERVICE)" ]; then \
+		echo "Usage: make logs SERVICE=appointment-service"; \
 		exit 1; \
 	fi
-	@echo "Building $(SVC)..."
-	cd $(SVC) && mvn clean package -DskipTests
-	@echo " $(SVC) built!"
+	$(COMPOSE) -f "$(SERVICE)/docker-compose.yml" logs -f --tail=200
 
-.PHONY: test-all
-test-all:
-	@echo " Running all microservice tests from the Maven aggregator..."
-	./mvnw test
-	@echo " All microservice tests finished!"
+down:
+	@for d in notification-service billing-service admission-service support-service appointment-service doctor-service patient-management auth-service api-gateway infrastructure; do \
+		echo "stopping $$d"; \
+		$(COMPOSE) -f "$$d/docker-compose.yml" down --remove-orphans; \
+	done
 
-.PHONY: test-e2e
-test-e2e:
-	@echo " Running API/E2E tests from scripts/tests..."
-	cd scripts/tests && ../../mvnw test
-	@echo " API/E2E tests finished!"
-
-.PHONY: test-service
-test-service:
-	@if [ -z "$(SVC)" ]; then \
-		echo "Error: Please specify SVC=<service-directory>"; \
-		echo "   Example: make test-service SVC=auth-service"; \
-		exit 1; \
-	fi
-	@echo "Running tests for $(SVC)..."
-	cd $(SVC) && mvn test
-	@echo " $(SVC) tests finished!"
-
-# ============================================================================
-# CLEANUP
-# ============================================================================
-
-.PHONY: clean-local
-clean-local:
-	@echo "Cleaning up Docker resources..."
-	$(DOCKER_COMPOSE) $(COMPOSE_ALL) down -v
-	$(DOCKER) system prune -f
-	@echo " Local cleanup complete!"
-
-.PHONY: clean-all
-clean-all: clean-local
-	@echo " Complete cleanup done!"
-
-# ============================================================================
-# UTILITY COMMANDS
-# ============================================================================
-
-.PHONY: ping
-ping:
-	@echo "Pong!"
-
-.PHONY: status
-status:
-	@echo "Checking services status..."
-	@if command -v $(DOCKER) > /dev/null 2>&1; then \
-		echo -n "Docker: "; \
-		$(DOCKER) ps -q | wc -l | tr -d ' ' | xargs echo -n; \
-		echo " containers running"; \
-	else \
-		echo "Docker: Not found"; \
-	fi
-
-.PHONY: info
-info:
-	@echo "Project Information:"
-	@echo "   Services:  $(SERVICES)"
+reset:
+	@for d in notification-service billing-service admission-service support-service appointment-service doctor-service patient-management auth-service api-gateway infrastructure; do \
+		echo "removing $$d containers and volumes"; \
+		$(COMPOSE) -f "$$d/docker-compose.yml" down -v --remove-orphans; \
+	done

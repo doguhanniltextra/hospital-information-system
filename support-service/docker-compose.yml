@@ -1,4 +1,3 @@
-version: "3.8"
 
 services:
   support-db:
@@ -42,8 +41,6 @@ services:
       - "8085:8085"
     depends_on:
       support-db:
-        condition: service_healthy
-      redis:
         condition: service_healthy
     environment:
       SPRING_PROFILES_ACTIVE: dev

@@ -148,3 +148,4 @@ spring:
 logging:
   level:
     org.springframework.cloud.gateway: INFO
+    org.springframework.security: TRACE

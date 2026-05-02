@@ -46,7 +46,7 @@ public class AuthValidator {
         user.setName(registerRequestDto.getName());
         user.setPassword(passwordEncoder.encode(registerRequestDto.getPassword()));
         user.setEmail(registerRequestDto.getEmail());
-        user.setRegisterDate(registerRequestDto.getRegisterDate());
+        user.setRegisterDate(registerRequestDto.getRegisterDate() != null ? registerRequestDto.getRegisterDate() : java.time.LocalDate.now());
 
         user.getRoles().add(com.project.auth_service.entity.Role.PATIENT);
         return user;
@@ -66,7 +66,7 @@ public class AuthValidator {
         user.setName(registerRequestDto.getName());
         user.setPassword(passwordEncoder.encode(registerRequestDto.getPassword()));
         user.setEmail(registerRequestDto.getEmail());
-        user.setRegisterDate(registerRequestDto.getRegisterDate());
+        user.setRegisterDate(registerRequestDto.getRegisterDate() != null ? registerRequestDto.getRegisterDate() : java.time.LocalDate.now());
 
         if (registerRequestDto.getRoles() != null && !registerRequestDto.getRoles().isEmpty()) {
             user.getRoles().addAll(registerRequestDto.getRoles());

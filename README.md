@@ -70,16 +70,32 @@ For a deep dive into the system design, microservice patterns, and technical spe
 
 ## How to Run
 
-The project uses Docker for local orchestration. Ensure you have Docker and Docker Compose installed.
+The project uses Docker for local orchestration. You need Docker Engine/Desktop with Docker Compose v2.
+The root `Makefile` is the recommended entry point for running the full stack from the repository root.
 
 ```bash
-# Clone the repository
-git clone https://github.com/doguhanniltextra/patient-management.git
-cd patient-management
-
-# Start services
-make dev-up
+make setup
+make up
+make smoke
 ```
+
+What these commands do:
+
+- `make setup` creates missing `.env` files from `.env.example`.
+- `make up` starts infrastructure, API Gateway, Auth Service, and all microservices in the right order.
+- `make smoke` gets a development JWT and calls `appointment-service` through the API Gateway.
+
+First Docker builds can take a few minutes. Later runs are much faster.
+
+On Windows, use Git Bash/WSL or install GNU Make. If you prefer native PowerShell, each microservice README includes equivalent PowerShell-friendly commands.
+
+Useful commands:
+
+- `make health` checks public actuator health endpoints.
+- `make ps` shows container status for every compose file.
+- `make logs SERVICE=appointment-service` follows logs for one service.
+- `make down` stops containers without deleting database volumes.
+- `make reset` stops containers and deletes local volumes.
 
 ### Access Points
 

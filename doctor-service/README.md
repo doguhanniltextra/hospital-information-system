@@ -37,3 +37,50 @@ The REST API will bind to port `8083` and the gRPC server will bind to port `900
 docker build -t doctor-service .
 docker run -p 8083:8083 -p 9005:9005 --env-file .env doctor-service
 ```
+
+### Try it yourself (in < 60 seconds)
+Run these commands from the doctor-service directory. On the first Docker build this can take a few minutes; after images are built, the smoke test is quick.
+
+```bash
+# 0. Prepare local env files (first run only)
+# Linux/macOS/Git Bash:
+[ -f ../infrastructure/.env ] || cp ../infrastructure/.env.example ../infrastructure/.env
+[ -f ../api-gateway/.env ] || cp ../api-gateway/.env.example ../api-gateway/.env
+[ -f ../auth-service/.env ] || cp ../auth-service/.env.example ../auth-service/.env
+[ -f .env ] || cp .env.example .env
+# Windows PowerShell:
+# if (!(Test-Path ..\infrastructure\.env)) { Copy-Item ..\infrastructure\.env.example ..\infrastructure\.env }
+# if (!(Test-Path ..\api-gateway\.env)) { Copy-Item ..\api-gateway\.env.example ..\api-gateway\.env }
+# if (!(Test-Path ..\auth-service\.env)) { Copy-Item ..\auth-service\.env.example ..\auth-service\.env }
+# if (!(Test-Path .env)) { Copy-Item .env.example .env }
+
+# 1. Start global infrastructure (Kafka, Redis, etc.)
+docker compose -f ../infrastructure/docker-compose.yml up -d
+
+# 2. Start API Gateway and Auth Service (needed for a development JWT)
+docker compose -f ../api-gateway/docker-compose.yml up -d
+docker compose -f ../auth-service/docker-compose.yml up -d
+
+# 3. Start this microservice and its database
+docker compose up -d
+
+# 4. Wait until Spring Boot is ready, then verify health
+# Linux/macOS/Git Bash:
+curl -s http://localhost:8083/actuator/health
+# Windows PowerShell:
+# curl.exe -s http://localhost:8083/actuator/health
+
+# 5. Get a development JWT with the role required by this endpoint
+# Linux/macOS/Git Bash:
+TOKEN=$(curl -s "http://localhost:4004/api/auth/dev/token/raw?role=RECEPTIONIST")
+# Windows PowerShell:
+# $TOKEN = curl.exe -s "http://localhost:4004/api/auth/dev/token/raw?role=RECEPTIONIST"
+
+# 6. Make an authenticated request through the API Gateway
+# Linux/macOS/Git Bash:
+curl -i -s http://localhost:4004/api/doctors \
+  -H "Authorization: Bearer $TOKEN"
+# Windows PowerShell:
+# curl.exe -i -s http://localhost:4004/api/doctors `
+#   -H "Authorization: Bearer $TOKEN"
+```

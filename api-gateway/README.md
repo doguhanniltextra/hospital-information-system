@@ -31,3 +31,28 @@ The gateway will start on port `4004` by default and begin routing traffic accor
 docker build -t api-gateway .
 docker run -p 4004:4004 --env-file .env api-gateway
 ```
+
+### Try it yourself (in < 60 seconds)
+Run these commands from the api-gateway directory. On the first Docker build this can take a few minutes; after images are built, the smoke test is quick.
+
+```bash
+# 0. Prepare local env files (first run only)
+# Linux/macOS/Git Bash:
+[ -f ../infrastructure/.env ] || cp ../infrastructure/.env.example ../infrastructure/.env
+[ -f .env ] || cp .env.example .env
+# Windows PowerShell:
+# if (!(Test-Path ..\infrastructure\.env)) { Copy-Item ..\infrastructure\.env.example ..\infrastructure\.env }
+# if (!(Test-Path .env)) { Copy-Item .env.example .env }
+
+# 1. Start global infrastructure (Kafka, Redis, etc.)
+docker compose -f ../infrastructure/docker-compose.yml up -d
+
+# 2. Start this microservice
+docker compose up -d
+
+# 3. Verify it's running (Wait ~10 seconds for Spring Boot to start)
+# Linux/macOS/Git Bash:
+curl -s http://localhost:4004/actuator/health
+# Windows PowerShell:
+# curl.exe -s http://localhost:4004/actuator/health
+```
