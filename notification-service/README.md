@@ -22,10 +22,25 @@ The Notification Service is an asynchronous dispatcher responsible for deliverin
 
 ### Environment Variables
 
-- `SPRING_DATASOURCE_URL`
-- `SPRING_DATASOURCE_USERNAME`
-- `SPRING_DATASOURCE_PASSWORD`
-- `KAFKA_BOOTSTRAP_SERVERS`
+For Docker Compose, create `notification-service/.env` from the checked-in example:
+
+```bash
+# Linux/macOS/Git Bash
+cp .env.example .env
+
+# Windows PowerShell
+# Copy-Item .env.example .env
+```
+
+```env
+POSTGRES_DB=notification_db
+POSTGRES_USER=notification_user
+POSTGRES_PASSWORD=password_here
+```
+
+- `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`: credentials used by the notification PostgreSQL container.
+
+Docker Compose fills the runtime database URL, Kafka bootstrap server, and patient-service URL for you. If you run with `mvn spring-boot:run` outside Docker, set `SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME`, `SPRING_DATASOURCE_PASSWORD`, `KAFKA_BOOTSTRAP_SERVERS`, `REDIS_HOST`, `REDIS_PORT`, and `PATIENT_SERVICE_URL` for your local services.
 
 ### Running Locally
 

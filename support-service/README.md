@@ -20,12 +20,28 @@ The Support Service encapsulates ancillary hospital operations, specifically com
 - Kafka cluster active
 
 ### Environment Variables
-- `SPRING_DATASOURCE_URL` (mapped to read/write properties)
-- `SPRING_DATASOURCE_USERNAME`
-- `SPRING_DATASOURCE_PASSWORD`
-- `SPRING_DATA_REDIS_HOST`
-- `SPRING_DATA_REDIS_PORT`
-- `KAFKA_BOOTSTRAP_SERVERS`
+
+For Docker Compose, create `support-service/.env` from the checked-in example:
+
+```bash
+# Linux/macOS/Git Bash
+cp .env.example .env
+
+# Windows PowerShell
+# Copy-Item .env.example .env
+```
+
+```env
+POSTGRES_DB=support_db
+POSTGRES_USER=support_user
+POSTGRES_PASSWORD=password_here
+APP_SECRET=mySecretKeyForJwtTokenWhichMustBeAtLeast256BitsLong
+```
+
+- `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`: credentials used by the support PostgreSQL container.
+- `APP_SECRET`: JWT signing key used to validate Bearer tokens. It must match `auth-service` and `api-gateway`.
+
+Docker Compose points the service at PostgreSQL, Redis, and Kafka on the shared Docker network. If you run with `mvn spring-boot:run` outside Docker, set `SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME`, `SPRING_DATASOURCE_PASSWORD`, `SPRING_DATA_REDIS_HOST`, `SPRING_DATA_REDIS_PORT`, and `KAFKA_BOOTSTRAP_SERVERS` for your local services.
 
 ### Running Locally
 Navigate to the module directory and execute the Spring Boot application:

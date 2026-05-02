@@ -17,11 +17,28 @@ The Admission Service manages the inpatient lifecycle, specifically tracking hos
 - Kafka cluster active
 
 ### Environment Variables
-- `SPRING_DATASOURCE_WRITE_URL`
-- `SPRING_DATASOURCE_READ_URL`
-- `SPRING_DATASOURCE_USERNAME`
-- `SPRING_DATASOURCE_PASSWORD`
-- `KAFKA_BOOTSTRAP_SERVERS`
+
+For Docker Compose, create `admission-service/.env` from the checked-in example:
+
+```bash
+# Linux/macOS/Git Bash
+cp .env.example .env
+
+# Windows PowerShell
+# Copy-Item .env.example .env
+```
+
+```env
+POSTGRES_DB=admission_db
+POSTGRES_USER=admission_user
+POSTGRES_PASSWORD=password_here
+APP_SECRET=mySecretKeyForJwtTokenWhichMustBeAtLeast256BitsLong
+```
+
+- `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`: credentials used by the admission PostgreSQL container.
+- `APP_SECRET`: JWT signing key used to validate Bearer tokens. It must match `auth-service` and `api-gateway`.
+
+Docker Compose fills the runtime database URL for you. If you run with `mvn spring-boot:run` outside Docker, override the datasource values from `src/main/resources/application.properties`, plus `KAFKA_BOOTSTRAP_SERVERS`, `REDIS_HOST`, and `REDIS_PORT` if those services are not using the defaults.
 
 ### Running Locally
 Navigate to the module directory and execute the Spring Boot application:

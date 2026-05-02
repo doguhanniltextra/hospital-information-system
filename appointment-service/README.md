@@ -24,12 +24,27 @@ The Appointment Service is a core microservice that handles the scheduling lifec
 
 ### Environment Variables
 
-- `SPRING_DATASOURCE_URL`
-- `SPRING_DATASOURCE_USERNAME`
-- `SPRING_DATASOURCE_PASSWORD`
-- `KAFKA_BOOTSTRAP_SERVERS`
-- `PATIENT_SERVICE_HOST` / `PATIENT_SERVICE_PORT`
-- `DOCTOR_SERVICE_HOST` / `DOCTOR_SERVICE_PORT`
+For Docker Compose, create `appointment-service/.env` from the checked-in example:
+
+```bash
+# Linux/macOS/Git Bash
+cp .env.example .env
+
+# Windows PowerShell
+# Copy-Item .env.example .env
+```
+
+```env
+POSTGRES_DB=appointment_db
+POSTGRES_USER=appointment_user
+POSTGRES_PASSWORD=password_here
+APP_SECRET=mySecretKeyForJwtTokenWhichMustBeAtLeast256BitsLong
+```
+
+- `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`: credentials used by the appointment write/read PostgreSQL containers.
+- `APP_SECRET`: JWT signing key used to validate Bearer tokens. It must match `auth-service` and `api-gateway`.
+
+Docker Compose fills the Spring datasource URLs for you. If you run with `mvn spring-boot:run` outside Docker, override the Spring variables from `src/main/resources/application.properties`, especially `SPRING_DATASOURCE_WRITE_JDBC_URL`, `SPRING_DATASOURCE_READ_JDBC_URL`, `SPRING_DATASOURCE_WRITE_USERNAME`, `SPRING_DATASOURCE_WRITE_PASSWORD`, `SPRING_DATASOURCE_READ_USERNAME`, `SPRING_DATASOURCE_READ_PASSWORD`, and `KAFKA_BOOTSTRAP_SERVERS`.
 
 ### Running Locally
 

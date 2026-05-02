@@ -16,7 +16,24 @@ The API Gateway serves as the centralized edge node and single entry point for a
 - Downstream services must be reachable via the network
 
 ### Environment Variables
-- Target routing URIs (e.g., `AUTH_SERVICE_URL`, `PATIENT_SERVICE_URL`, etc., as configured in `application.yml`)
+
+For Docker Compose, create `api-gateway/.env` from the checked-in example:
+
+```bash
+# Linux/macOS/Git Bash
+cp .env.example .env
+
+# Windows PowerShell
+# Copy-Item .env.example .env
+```
+
+```env
+APP_SECRET=mySecretKeyForJwtTokenWhichMustBeAtLeast256BitsLong
+```
+
+- `APP_SECRET`: JWT signing key used by the gateway to validate incoming tokens. It must match `auth-service` and every secured downstream service.
+
+The gateway routes to Docker service names by default, so you usually do not need to set downstream URLs manually when using the provided Compose files.
 
 ### Running Locally
 Navigate to the module directory and execute the Spring Boot application:

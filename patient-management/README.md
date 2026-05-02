@@ -18,11 +18,28 @@ The Patient Service manages the primary medical demographic and historical recor
 - Kafka cluster active
 
 ### Environment Variables
-- `SPRING_DATASOURCE_WRITE_URL`
-- `SPRING_DATASOURCE_READ_URL`
-- `SPRING_DATASOURCE_USERNAME`
-- `SPRING_DATASOURCE_PASSWORD`
-- `KAFKA_BOOTSTRAP_SERVERS`
+
+For Docker Compose, create `patient-management/.env` from the checked-in example:
+
+```bash
+# Linux/macOS/Git Bash
+cp .env.example .env
+
+# Windows PowerShell
+# Copy-Item .env.example .env
+```
+
+```env
+POSTGRES_DB=patient_db
+POSTGRES_USER=patient_user
+POSTGRES_PASSWORD=password_here
+APP_SECRET=mySecretKeyForJwtTokenWhichMustBeAtLeast256BitsLong
+```
+
+- `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`: credentials used by the patient write/read PostgreSQL containers.
+- `APP_SECRET`: JWT signing key used to validate Bearer tokens. It must match `auth-service` and `api-gateway`.
+
+Docker Compose injects the datasource configuration through `SPRING_APPLICATION_JSON`. If you run with `mvn spring-boot:run` outside Docker, configure equivalent write/read datasource properties and `KAFKA_BOOTSTRAP_SERVERS` for your local environment.
 
 ### Running Locally
 Navigate to the module directory and execute the Spring Boot application:

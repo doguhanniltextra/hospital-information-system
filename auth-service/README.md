@@ -19,11 +19,30 @@ The Auth Service is the centralized authentication and authorization microservic
 - Kafka cluster active
 
 ### Environment Variables
-- `SPRING_DATASOURCE_URL`
-- `SPRING_DATASOURCE_USERNAME`
-- `SPRING_DATASOURCE_PASSWORD`
-- `KAFKA_BOOTSTRAP_SERVERS`
-- `APP_SECRET` (JWT signing key)
+
+For Docker Compose, create `auth-service/.env` from the checked-in example:
+
+```bash
+# Linux/macOS/Git Bash
+cp .env.example .env
+
+# Windows PowerShell
+# Copy-Item .env.example .env
+```
+
+```env
+POSTGRES_DB=auth_db
+POSTGRES_USER=auth_user
+POSTGRES_PASSWORD=password_here
+JWT_SECRET=dev_jwt_secret_change_me
+APP_SECRET=mySecretKeyForJwtTokenWhichMustBeAtLeast256BitsLong
+API_KEY=api_key_here
+```
+
+- `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`: credentials used by the `auth-db` container.
+- `APP_SECRET`: JWT signing key. Keep this identical in `api-gateway`, `auth-service`, and secured services for local smoke tests.
+- `JWT_SECRET`: legacy/config compatibility value kept for local configuration.
+- `API_KEY`: internal/service API key placeholder for development.
 
 ### Running Locally
 Navigate to the module directory and execute the Spring Boot application:

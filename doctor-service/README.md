@@ -18,11 +18,28 @@ The Doctor Service is a domain-specific microservice responsible for managing me
 - Kafka cluster active
 
 ### Environment Variables
-- `SPRING_DATASOURCE_WRITE_URL`
-- `SPRING_DATASOURCE_READ_URL`
-- `SPRING_DATASOURCE_USERNAME`
-- `SPRING_DATASOURCE_PASSWORD`
-- `KAFKA_BOOTSTRAP_SERVERS`
+
+For Docker Compose, create `doctor-service/.env` from the checked-in example:
+
+```bash
+# Linux/macOS/Git Bash
+cp .env.example .env
+
+# Windows PowerShell
+# Copy-Item .env.example .env
+```
+
+```env
+POSTGRES_DB=doctor_db
+POSTGRES_USER=doctor_user
+POSTGRES_PASSWORD=password_here
+APP_SECRET=mySecretKeyForJwtTokenWhichMustBeAtLeast256BitsLong
+```
+
+- `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`: credentials used by the doctor write/read PostgreSQL containers.
+- `APP_SECRET`: JWT signing key used to validate Bearer tokens. It must match `auth-service` and `api-gateway`.
+
+Docker Compose fills the Spring datasource URLs for you. If you run with `mvn spring-boot:run` outside Docker, override the Spring variables used in `docker-compose.yml`/`application.properties`, especially the write/read datasource URL, username, password, and `KAFKA_BOOTSTRAP_SERVERS`.
 
 ### Running Locally
 Navigate to the module directory and execute the Spring Boot application:

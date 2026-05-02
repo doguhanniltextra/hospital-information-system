@@ -18,11 +18,28 @@ The Billing Service handles financial operations, invoice generation, and paymen
 - Kafka cluster active
 
 ### Environment Variables
-- `SPRING_DATASOURCE_WRITE_URL`
-- `SPRING_DATASOURCE_READ_URL`
-- `SPRING_DATASOURCE_USERNAME`
-- `SPRING_DATASOURCE_PASSWORD`
-- `KAFKA_BOOTSTRAP_SERVERS`
+
+For Docker Compose, create `billing-service/.env` from the checked-in example:
+
+```bash
+# Linux/macOS/Git Bash
+cp .env.example .env
+
+# Windows PowerShell
+# Copy-Item .env.example .env
+```
+
+```env
+POSTGRES_DB=billing_db
+POSTGRES_USER=billing_user
+POSTGRES_PASSWORD=password_here
+INVOICE_API_KEY=api_key_here
+```
+
+- `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`: credentials used by the billing write/read PostgreSQL containers.
+- `INVOICE_API_KEY`: development placeholder for the external invoice API integration. Use a real key only when you actually call the external provider.
+
+Docker Compose fills the Spring datasource URLs and Kafka topic/group values for you. If you run with `mvn spring-boot:run` outside Docker, set `SPRING_DATASOURCE_WRITE_URL`, `SPRING_DATASOURCE_READ_URL`, `SPRING_DATASOURCE_USERNAME`, `SPRING_DATASOURCE_PASSWORD`, `KAFKA_BOOTSTRAP_SERVERS`, and `INVOICE_API_KEY` for your local setup.
 
 ### Running Locally
 Navigate to the module directory and execute the Spring Boot application:
