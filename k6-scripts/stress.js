@@ -1,6 +1,7 @@
 import http from 'k6/http';
 import { check, sleep } from 'k6';
 import { randomString } from 'https://jslib.k6.io/k6-utils/1.2.0/index.js';
+import { nextDaySlotIso } from './_slots.js';
 
 // Base API URL
 const BASE_URL = 'http://localhost:4004';
@@ -21,7 +22,7 @@ export function setup() {
 
   const headers = { 'Content-Type': 'application/json' };
   
-  const registerRes = http.post(`${BASE_URL}/auth/register`, registerPayload, { headers });
+  const registerRes = http.post(`${BASE_URL}/api/auth/register`, registerPayload, { headers });
   
   // If user already exists or similar issue, try to login anyway.
   
@@ -31,19 +32,19 @@ export function setup() {
     password: password
   });
 
-  const loginRes = http.post(`${BASE_URL}/auth/login`, loginPayload, { headers });
+  const loginRes = http.post(`${BASE_URL}/api/auth/login`, loginPayload, { headers });
   
   // Extract token
   let token = 'placeholder_token';
   try {
      const body = JSON.parse(loginRes.body);
-     token = body.token;
+     token = body.accessToken;
   } catch (e) {
      console.error("Failed to parse token from login response", loginRes.body);
   }
 
-  // Return token so VUs can use it
-  return { token: token };
+  const { start, end } = nextDaySlotIso();
+  return { token, slotStart: start, slotEnd: end };
 }
 
 // User Journey
@@ -55,23 +56,12 @@ export default function (data) {
     }
   };
 
-  // Group 1: View Doctors
-  const doctorsRes = http.get(`${BASE_URL}/doctors?page=0&size=20`, params);
-  check(doctorsRes, {
-    'doctors returned 200': (r) => r.status === 200,
-  });
+  const qCon = `start=${encodeURIComponent(data.slotStart)}&end=${encodeURIComponent(data.slotEnd)}&serviceType=CONSULTATION`;
+  const qVac = `start=${encodeURIComponent(data.slotStart)}&end=${encodeURIComponent(data.slotEnd)}&serviceType=VACCINATION`;
 
-  // Group 2: View Patients
-  const patientsRes = http.get(`${BASE_URL}/patients?page=0&size=20`, params);
-  check(patientsRes, {
-    'patients returned 200': (r) => r.status === 200,
-  });
-
-  // Group 3: View Appointments
-  const appointmentsRes = http.get(`${BASE_URL}/appointments?page=0&size=20`, params);
-  check(appointmentsRes, {
-    'appointments returned 200 or 204': (r) => r.status === 200 || r.status === 204,
-  });
+  check(http.get(`${BASE_URL}/api/appointments/doctor-options?${qCon}&page=0&size=20`, params), { 'doctor-options consultation p0': (r) => r.status === 200 });
+  check(http.get(`${BASE_URL}/api/appointments/doctor-options?${qCon}&page=1&size=20`, params), { 'doctor-options consultation p1': (r) => r.status === 200 });
+  check(http.get(`${BASE_URL}/api/appointments/doctor-options?${qVac}&page=0&size=20`, params), { 'doctor-options vaccination p0': (r) => r.status === 200 });
 
   // Small sleep to simulate realistic user action
   sleep(1);

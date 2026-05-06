@@ -1,6 +1,7 @@
 import http from 'k6/http';
 import { check, sleep } from 'k6';
 import { randomString } from 'https://jslib.k6.io/k6-utils/1.2.0/index.js';
+import { nextDaySlotIso } from './_slots.js';
 
 export const options = {
   vus: 10,
@@ -27,16 +28,25 @@ export function setup() {
   const loginRes = http.post(`${BASE_URL}/api/auth/login`, JSON.stringify({ name: username, password: password }), { headers });
   
   let token = '';
-  try { token = JSON.parse(loginRes.body).token; } catch (e) { console.error("Login failed"); }
-  return { token };
+  try { token = JSON.parse(loginRes.body).accessToken; } catch (e) { console.error("Login failed"); }
+  const { start, end } = nextDaySlotIso();
+  return { token, slotStart: start, slotEnd: end };
 }
 
 export default function (data) {
   const params = { headers: { 'Authorization': `Bearer ${data.token}`, 'Content-Type': 'application/json' } };
+  const qCon = `start=${encodeURIComponent(data.slotStart)}&end=${encodeURIComponent(data.slotEnd)}&serviceType=CONSULTATION`;
+  const qVac = `start=${encodeURIComponent(data.slotStart)}&end=${encodeURIComponent(data.slotEnd)}&serviceType=VACCINATION`;
 
-  check(http.get(`${BASE_URL}/api/doctors?page=0&size=20`, params), { 'get doctors status 200': (r) => r.status === 200 });
-  check(http.get(`${BASE_URL}/api/patients?page=0&size=20`, params), { 'get patients status 200': (r) => r.status === 200 });
-  check(http.get(`${BASE_URL}/api/appointments/get?page=0&size=20`, params), { 'get appointments status 200/204': (r) => r.status === 200 || r.status === 204 });
+  check(http.get(`${BASE_URL}/api/appointments/doctor-options?${qCon}&page=0&size=20`, params), {
+    'doctor-options consultation p0': (r) => r.status === 200,
+  });
+  check(http.get(`${BASE_URL}/api/appointments/doctor-options?${qCon}&page=1&size=20`, params), {
+    'doctor-options consultation p1': (r) => r.status === 200,
+  });
+  check(http.get(`${BASE_URL}/api/appointments/doctor-options?${qVac}&page=0&size=20`, params), {
+    'doctor-options vaccination p0': (r) => r.status === 200,
+  });
 
   sleep(1);
 }

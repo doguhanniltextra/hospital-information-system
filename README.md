@@ -103,6 +103,55 @@ Useful commands:
 - **Swagger Documentation**: `http://localhost:4004/swagger-ui.html`
 - **Dashboards**: `http://localhost:3000` (Grafana)
 
+## Load testing (k6)
+
+Scripts live in `k6-scripts/`. They register a **PATIENT** user in `setup()`, then exercise authenticated reads that match that role (three `GET /api/appointments/doctor-options` calls per iteration with a shared slot: consultation pages 0–1 and vaccination page 0).
+
+With the full stack up (`make up`), run:
+
+```bash
+k6 run k6-scripts/low-stress.js
+k6 run k6-scripts/medium-stress.js
+```
+
+### Benchmark snapshot — `low-stress.js`
+
+Recorded on **2026-05-06** with **k6 v1.7.0**, API Gateway at `http://localhost:4004`, **10 VUs**, **30s**. Gateway limit on `/api/appointments/**` was **30 req/s** replenish / **75** burst (see `api-gateway/src/main/resources/application.yml`).
+
+| Metric | Value |
+|--------|------:|
+| HTTP requests | 650 |
+| Request rate | ~19.4/s |
+| Iterations | 216 (~6.45/s) |
+| `http_req_duration` avg | ~155 ms |
+| `http_req_duration` p(95) | ~586 ms |
+| `http_req_failed` | 0% (0 / 650) |
+| Check success | 100% |
+
+**Thresholds:** **`rate < 1%` passed** (no **429** from the rate limiter at this load). **`p(95) < 500 ms` did not pass** on this run (~586 ms), driven by occasional slower responses under concurrency—not failed requests.
+
+### Benchmark snapshot — `medium-stress.js`
+
+Same machine and gateway limits as above. Profile: **15s** ramp to **50 VUs**, **30s** at 50, **15s** ramp down (~**60s** staged load). Thresholds in script: **`p(95) < 800 ms`**, **`http_req_failed` &lt; 5%**.
+
+**Scenario:** `setup()` creates **50** distinct **PATIENT** accounts (register + login) with **~350 ms pacing** between auth calls so `/api/auth/**` stays under its own gateway limiter. Each **VU** maps to one user (`(__VU - 1) % 50`) and sends **`X-User-Id`** set to that user’s login name together with that user’s JWT. That matches `RateLimitConfig`: appointments traffic is bucketed **per user**, not one shared **IP** bucket—so **50 × ~30 req/s** appointment throughput can pass without **429** from this filter (aggregate RPS across users can exceed the old single-bucket ceiling).
+
+| Metric | Value |
+|--------|------:|
+| HTTP requests | 4942 |
+| Request rate (avg) | ~45.9/s |
+| Iterations | 1614 (~15.0/s) |
+| `http_req_duration` avg | ~138 ms |
+| `http_req_duration` p(95) | ~319 ms |
+| `http_req_failed` | 0% (0 / 4942) |
+| Check success | 100% |
+
+**Thresholds:** **`p(95) < 800 ms`** and **`rate < 5%`** **passed** on this run.
+
+**Note:** `X-User-Id` is whatever the client sends; production hardening would derive it from a **verified** JWT (or internal headers) so callers cannot mint arbitrary buckets.
+
+Other profiles: `intense-stress.js`, `appointments-stress.js`, `stress.js`.
+
 ## Feedback and Errors
 
 If you encounter any issues or have suggestions for improvement:

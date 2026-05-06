@@ -33,7 +33,7 @@ export function setup() {
   }), { headers });
 
   const loginRes = http.post(`${BASE_URL}/api/auth/login`, JSON.stringify({ name: adminName, password: password }), { headers });
-  const token = JSON.parse(loginRes.body).token;
+  const token = JSON.parse(loginRes.body).accessToken;
   
   const authHeaders = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` };
 
