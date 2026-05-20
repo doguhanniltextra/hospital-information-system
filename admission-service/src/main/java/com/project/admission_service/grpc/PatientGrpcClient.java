@@ -19,6 +19,22 @@ public class PatientGrpcClient {
     @GrpcClient("patient-service")
     private PatientQueryServiceGrpc.PatientQueryServiceBlockingStub patientStub;
 
+    @Cacheable(value = "patientExistence", key = "#patientId")
+    public boolean existsById(UUID patientId) {
+        log.info("Checking patient existence via gRPC for patientId: {}", patientId);
+        try {
+            FindPatientRequest request = FindPatientRequest.newBuilder()
+                    .setPatientId(patientId.toString())
+                    .build();
+            
+            com.project.patient_service.grpc.ExistsResponse response = patientStub.existsById(request);
+            return response.getExists();
+        } catch (Exception e) {
+            log.error("Failed to check patient existence for {}: {}", patientId, e.getMessage());
+            return false;
+        }
+    }
+
     @Cacheable(value = "patientContacts", key = "#patientId", unless = "#result == null")
     public PatientContactInfo getPatientContactInfo(UUID patientId) {
         log.info("Fetching patient contact info from gRPC for patientId: {}", patientId);

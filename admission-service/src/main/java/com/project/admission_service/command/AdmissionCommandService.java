@@ -6,6 +6,7 @@ import com.project.admission_service.dto.AdmissionRequest;
 import com.project.admission_service.dto.PatientDischargedEvent;
 import com.project.admission_service.event.AdmissionCreatedEvent;
 import com.project.admission_service.event.AdmissionUpdatedEvent;
+import com.project.admission_service.grpc.DoctorGrpcClient;
 import com.project.admission_service.grpc.PatientGrpcClient;
 import com.project.admission_service.model.*;
 import com.project.admission_service.repository.*;
@@ -33,6 +34,7 @@ public class AdmissionCommandService {
     private final ObjectMapper objectMapper;
     private final AdmissionProcessedEventRepository processedEventRepository;
     private final PatientGrpcClient patientGrpcClient;
+    private final DoctorGrpcClient doctorGrpcClient;
     private final ApplicationEventPublisher eventPublisher;
 
     public AdmissionCommandService(
@@ -43,6 +45,7 @@ public class AdmissionCommandService {
             AdmissionOutboxRepository outboxRepository,
             AdmissionProcessedEventRepository processedEventRepository,
             PatientGrpcClient patientGrpcClient,
+            DoctorGrpcClient doctorGrpcClient,
             ObjectMapper objectMapper,
             ApplicationEventPublisher eventPublisher) {
         this.wardRepository = wardRepository;
@@ -52,11 +55,20 @@ public class AdmissionCommandService {
         this.outboxRepository = outboxRepository;
         this.processedEventRepository = processedEventRepository;
         this.patientGrpcClient = patientGrpcClient;
+        this.doctorGrpcClient = doctorGrpcClient;
         this.objectMapper = objectMapper;
         this.eventPublisher = eventPublisher;
     }
 
     public Admission admitPatient(AdmissionRequest request) {
+        // Step 1: Validate existence of Patient and Doctor (Integrity over Availability)
+        if (!patientGrpcClient.existsById(request.getPatientId())) {
+            throw new RuntimeException("Validation failed: Patient with ID " + request.getPatientId() + " does not exist.");
+        }
+        if (!doctorGrpcClient.existsById(request.getDoctorId())) {
+            throw new RuntimeException("Validation failed: Doctor with ID " + request.getDoctorId() + " does not exist.");
+        }
+
         List<Room> rooms = roomRepository.findByWardId(request.getWardId());
         Bed selectedBed = null;
         for (Room room : rooms) {
