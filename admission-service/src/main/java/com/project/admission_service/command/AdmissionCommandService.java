@@ -6,6 +6,7 @@ import com.project.admission_service.dto.AdmissionRequest;
 import com.project.admission_service.dto.PatientDischargedEvent;
 import com.project.admission_service.event.AdmissionCreatedEvent;
 import com.project.admission_service.event.AdmissionUpdatedEvent;
+import com.project.admission_service.exception.EntityNotFoundException;
 import com.project.admission_service.grpc.DoctorGrpcClient;
 import com.project.admission_service.grpc.PatientGrpcClient;
 import com.project.admission_service.model.*;
@@ -63,10 +64,10 @@ public class AdmissionCommandService {
     public Admission admitPatient(AdmissionRequest request) {
         // Step 1: Validate existence of Patient and Doctor (Integrity over Availability)
         if (!patientGrpcClient.existsById(request.getPatientId())) {
-            throw new RuntimeException("Validation failed: Patient with ID " + request.getPatientId() + " does not exist.");
+            throw new EntityNotFoundException("Patient with ID " + request.getPatientId() + " does not exist.");
         }
         if (!doctorGrpcClient.existsById(request.getDoctorId())) {
-            throw new RuntimeException("Validation failed: Doctor with ID " + request.getDoctorId() + " does not exist.");
+            throw new EntityNotFoundException("Doctor with ID " + request.getDoctorId() + " does not exist.");
         }
 
         List<Room> rooms = roomRepository.findByWardId(request.getWardId());

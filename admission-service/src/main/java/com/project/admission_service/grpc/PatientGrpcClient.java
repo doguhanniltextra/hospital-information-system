@@ -1,6 +1,7 @@
 package com.project.admission_service.grpc;
 
 import com.project.admission_service.dto.PatientContactInfo;
+import com.project.admission_service.exception.ServiceUnavailableException;
 import com.project.patient_service.grpc.FindPatientRequest;
 import com.project.patient_service.grpc.PatientQueryServiceGrpc;
 import com.project.patient_service.grpc.PatientResponse;
@@ -30,8 +31,8 @@ public class PatientGrpcClient {
             com.project.patient_service.grpc.ExistsResponse response = patientStub.existsById(request);
             return response.getExists();
         } catch (Exception e) {
-            log.error("Failed to check patient existence for {}: {}", patientId, e.getMessage());
-            return false;
+            log.error("gRPC error while checking patient existence for {}: {}", patientId, e.getMessage());
+            throw new ServiceUnavailableException("Patient Service is currently unreachable or returned an error.");
         }
     }
 

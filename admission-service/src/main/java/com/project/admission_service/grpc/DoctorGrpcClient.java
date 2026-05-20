@@ -3,6 +3,7 @@ package com.project.admission_service.grpc;
 import com.project.grpc.DoctorServiceGrpc;
 import com.project.grpc.FindDoctorRequest;
 import com.project.grpc.ExistsResponse;
+import com.project.admission_service.exception.ServiceUnavailableException;
 import net.devh.boot.grpc.client.inject.GrpcClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,9 +30,8 @@ public class DoctorGrpcClient {
             ExistsResponse response = doctorStub.existsById(request);
             return response.getExists();
         } catch (Exception e) {
-            log.error("Failed to check doctor existence for {}: {}", doctorId, e.getMessage());
-            // Fail closed: if we can't verify, we assume they don't exist (Integrity > Availability)
-            return false;
+            log.error("gRPC error while checking doctor existence for {}: {}", doctorId, e.getMessage());
+            throw new ServiceUnavailableException("Doctor Service is currently unreachable or returned an error.");
         }
     }
 }
