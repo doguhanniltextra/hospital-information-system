@@ -70,19 +70,10 @@ public class AdmissionCommandService {
             throw new EntityNotFoundException("Doctor with ID " + request.getDoctorId() + " does not exist.");
         }
 
-        List<Room> rooms = roomRepository.findByWardId(request.getWardId());
-        Bed selectedBed = null;
-        for (Room room : rooms) {
-            List<Bed> emptyBeds = bedRepository.findByRoomIdAndStatus(room.getId(), BedStatus.EMPTY);
-            if (!emptyBeds.isEmpty()) {
-                selectedBed = emptyBeds.get(0);
-                break;
-            }
-        }
-
-        if (selectedBed == null) {
-            throw new RuntimeException("No available beds in the selected ward.");
-        }
+        // Step 2: Atomic Bed Selection & Locking
+        // We use SKIP LOCKED to handle high concurrency without screen freezes or double-booking.
+        Bed selectedBed = bedRepository.findFirstEmptyBedInWardForUpdate(request.getWardId())
+                .orElseThrow(() -> new RuntimeException("No available beds in the selected ward."));
 
         selectedBed.setStatus(BedStatus.OCCUPIED);
         bedRepository.save(selectedBed);
