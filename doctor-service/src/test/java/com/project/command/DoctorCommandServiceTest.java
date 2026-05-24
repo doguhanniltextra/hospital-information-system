@@ -137,4 +137,141 @@ public class DoctorCommandServiceTest {
                 .isInstanceOf(DoctorNotFoundException.class)
                 .hasMessageContaining("Doctor not found");
     }
+
+    @Test
+    public void deleteDoctor_ShouldDeleteAndPublishEvent() {
+        UUID id = UUID.randomUUID();
+        DeleteDoctorCommand command = new DeleteDoctorCommand(id);
+
+        doctorCommandService.deleteDoctor(command);
+
+        verify(doctorRepository).deleteById(id);
+        verify(eventPublisher).publishEvent(any(com.project.event.DoctorDeletedEvent.class));
+    }
+
+    @Test
+    public void createShift_ShouldSaveAndPublishEvent() {
+        UUID doctorId = UUID.randomUUID();
+        com.project.dto.request.CreateShiftRequestDto request = new com.project.dto.request.CreateShiftRequestDto();
+        request.setShiftDate("2026-05-24");
+        request.setStartTime("09:00");
+        request.setEndTime("17:00");
+        CreateShiftCommand command = new CreateShiftCommand(doctorId, request);
+
+        Doctor doctor = new Doctor();
+        doctor.setId(doctorId);
+        com.project.model.Shift shift = new com.project.model.Shift();
+        com.project.dto.response.ShiftResponseDto responseDto = new com.project.dto.response.ShiftResponseDto();
+
+        when(doctorRepository.findById(doctorId)).thenReturn(Optional.of(doctor));
+        when(doctorMapper.toShift(eq(doctorId), eq(request), any(), any(), any())).thenReturn(shift);
+        when(doctorMapper.toShiftResponseDto(shift)).thenReturn(responseDto);
+
+        com.project.dto.response.ShiftResponseDto result = doctorCommandService.createShift(command);
+
+        assertThat(result).isEqualTo(responseDto);
+        verify(shiftRepository).save(shift);
+        verify(eventPublisher).publishEvent(any(com.project.event.DoctorShiftChangedEvent.class));
+    }
+
+    @Test
+    public void createShift_WhenEndTimeBeforeStartTime_ShouldThrowException() {
+        UUID doctorId = UUID.randomUUID();
+        com.project.dto.request.CreateShiftRequestDto request = new com.project.dto.request.CreateShiftRequestDto();
+        request.setShiftDate("2026-05-24");
+        request.setStartTime("17:00");
+        request.setEndTime("09:00");
+        CreateShiftCommand command = new CreateShiftCommand(doctorId, request);
+
+        when(doctorRepository.findById(doctorId)).thenReturn(Optional.of(new Doctor()));
+
+        assertThatThrownBy(() -> doctorCommandService.createShift(command))
+                .isInstanceOf(com.project.exception.ApiException.class)
+                .hasMessageContaining("Shift end time must be after start time");
+    }
+
+    @Test
+    public void deleteShift_ShouldUpdateStatusToCancelledAndPublishEvent() {
+        UUID doctorId = UUID.randomUUID();
+        UUID shiftId = UUID.randomUUID();
+        DeleteShiftCommand command = new DeleteShiftCommand(doctorId, shiftId);
+
+        com.project.model.Shift shift = new com.project.model.Shift();
+        shift.setId(shiftId);
+        shift.setDoctorId(doctorId);
+
+        when(doctorRepository.findById(doctorId)).thenReturn(Optional.of(new Doctor()));
+        when(shiftRepository.findById(shiftId)).thenReturn(Optional.of(shift));
+
+        doctorCommandService.deleteShift(command);
+
+        assertThat(shift.getStatus()).isEqualTo(com.project.model.ShiftStatus.CANCELLED);
+        verify(shiftRepository).save(shift);
+        verify(eventPublisher).publishEvent(any(com.project.event.DoctorShiftChangedEvent.class));
+    }
+
+    @Test
+    public void createLeave_ShouldSaveAndPublishEvent() {
+        UUID doctorId = UUID.randomUUID();
+        com.project.dto.request.CreateLeaveRequestDto request = new com.project.dto.request.CreateLeaveRequestDto();
+        request.setStartDateTime("2026-05-24 09:00");
+        request.setEndDateTime("2026-05-24 17:00");
+        CreateLeaveCommand command = new CreateLeaveCommand(doctorId, request);
+
+        com.project.model.LeaveAbsence leave = new com.project.model.LeaveAbsence();
+        com.project.dto.response.LeaveResponseDto responseDto = new com.project.dto.response.LeaveResponseDto();
+
+        when(doctorRepository.findById(doctorId)).thenReturn(Optional.of(new Doctor()));
+        when(doctorMapper.toLeaveAbsence(eq(doctorId), eq(request), any(), any())).thenReturn(leave);
+        when(doctorMapper.toLeaveResponseDto(leave)).thenReturn(responseDto);
+
+        com.project.dto.response.LeaveResponseDto result = doctorCommandService.createLeave(command);
+
+        assertThat(result).isEqualTo(responseDto);
+        verify(leaveAbsenceRepository).save(leave);
+        verify(eventPublisher).publishEvent(any(com.project.event.DoctorLeaveChangedEvent.class));
+    }
+
+    @Test
+    public void approveLeave_ShouldUpdateStatusAndPublishEvent() {
+        UUID doctorId = UUID.randomUUID();
+        UUID leaveId = UUID.randomUUID();
+        ApproveLeaveCommand command = new ApproveLeaveCommand(doctorId, leaveId);
+
+        com.project.model.LeaveAbsence leave = new com.project.model.LeaveAbsence();
+        leave.setId(leaveId);
+        leave.setDoctorId(doctorId);
+        com.project.dto.response.LeaveResponseDto responseDto = new com.project.dto.response.LeaveResponseDto();
+
+        when(doctorRepository.findById(doctorId)).thenReturn(Optional.of(new Doctor()));
+        when(leaveAbsenceRepository.findById(leaveId)).thenReturn(Optional.of(leave));
+        when(doctorMapper.toLeaveResponseDto(leave)).thenReturn(responseDto);
+
+        com.project.dto.response.LeaveResponseDto result = doctorCommandService.approveLeave(command);
+
+        assertThat(result).isEqualTo(responseDto);
+        assertThat(leave.getStatus()).isEqualTo(com.project.model.LeaveStatus.APPROVED);
+        verify(leaveAbsenceRepository).save(leave);
+        verify(eventPublisher).publishEvent(any(com.project.event.DoctorLeaveChangedEvent.class));
+    }
+
+    @Test
+    public void deleteLeave_ShouldUpdateStatusToCancelledAndPublishEvent() {
+        UUID doctorId = UUID.randomUUID();
+        UUID leaveId = UUID.randomUUID();
+        DeleteLeaveCommand command = new DeleteLeaveCommand(doctorId, leaveId);
+
+        com.project.model.LeaveAbsence leave = new com.project.model.LeaveAbsence();
+        leave.setId(leaveId);
+        leave.setDoctorId(doctorId);
+
+        when(doctorRepository.findById(doctorId)).thenReturn(Optional.of(new Doctor()));
+        when(leaveAbsenceRepository.findById(leaveId)).thenReturn(Optional.of(leave));
+
+        doctorCommandService.deleteLeave(command);
+
+        assertThat(leave.getStatus()).isEqualTo(com.project.model.LeaveStatus.CANCELLED);
+        verify(leaveAbsenceRepository).save(leave);
+        verify(eventPublisher).publishEvent(any(com.project.event.DoctorLeaveChangedEvent.class));
+    }
 }
