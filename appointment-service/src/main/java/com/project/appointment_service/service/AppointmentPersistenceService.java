@@ -30,6 +30,7 @@ public class AppointmentPersistenceService {
     private final AppointmentMapper appointmentMapper;
     private final AppointmentSummaryService appointmentSummaryService;
     private final ObjectMapper objectMapper;
+    private final com.project.appointment_service.repository.DoctorLockRepository doctorLockRepository;
 
     /**
      * Initializes the AppointmentPersistenceService with required repositories and mappers.
@@ -44,12 +45,14 @@ public class AppointmentPersistenceService {
                                          AppointmentOutboxRepository outboxRepository,
                                          AppointmentMapper appointmentMapper,
                                          AppointmentSummaryService appointmentSummaryService,
-                                         ObjectMapper objectMapper) {
+                                         ObjectMapper objectMapper,
+                                         com.project.appointment_service.repository.DoctorLockRepository doctorLockRepository) {
         this.appointmentRepository = appointmentRepository;
         this.outboxRepository = outboxRepository;
         this.appointmentMapper = appointmentMapper;
         this.appointmentSummaryService = appointmentSummaryService;
         this.objectMapper = objectMapper;
+        this.doctorLockRepository = doctorLockRepository;
     }
 
     /**
@@ -68,6 +71,22 @@ public class AppointmentPersistenceService {
      */
     @Transactional
     public Appointment persistAppointmentAndOutbox(CreateAppointmentServiceRequestDto request, PatientInfoDTO patientInfo, DoctorInfoDTO doctorInfo) {
+        java.util.UUID doctorId = request.getDoctorId();
+        
+        // 1. Ensure lock row exists (safe for concurrency via ON CONFLICT)
+        doctorLockRepository.insertIfNotExists(doctorId);
+        
+        // 2. Acquire Pessimistic Write Lock
+        doctorLockRepository.findByIdForUpdate(doctorId)
+            .orElseThrow(() -> new RuntimeException("Failed to acquire lock for doctor: " + doctorId));
+            
+        // 3. Check Overlapping Appointments
+        java.util.List<Appointment> overlaps = appointmentRepository.findOverlappingAppointments(
+                doctorId, request.getServiceDate(), request.getServiceDateEnd());
+        if (!overlaps.isEmpty()) {
+            throw new com.project.appointment_service.exception.CustomConflictException("Time slot overlaps with an existing appointment.");
+        }
+
         Appointment appointment = appointmentMapper.getAppointment(request);
         
         // Initial Tightened Status

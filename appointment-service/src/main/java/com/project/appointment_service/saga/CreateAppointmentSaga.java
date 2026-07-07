@@ -86,12 +86,7 @@ public class CreateAppointmentSaga {
             throw new CustomConflictException("Doctor is not available: " + availability.getReasonCode());
         }
 
-        // Step 3.5: Check Overlapping Appointments (Local DB)
-        java.util.List<Appointment> overlaps = appointmentRepository.findOverlappingAppointments(
-                doctorId, request.getServiceDate(), request.getServiceDateEnd());
-        if (!overlaps.isEmpty()) {
-            throw new CustomConflictException("Time slot overlaps with an existing appointment.");
-        }
+        // Step 3.5: Overlap check is now handled transactionally in PersistenceService
 
         // Step 4: SaveAppointment & Outbox (Local Transactional Write)
         Appointment appointment = persistenceService.persistAppointmentAndOutbox(request, patientInfo, doctorInfo);
