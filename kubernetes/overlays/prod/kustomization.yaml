@@ -20,3 +20,6 @@ images:
 - name: doguhannilt/auth-service
   newName: doguhannilt/auth-service
   newTag: latest
+- name: doguhannilt/doctor-service
+  newName: doguhannilt/doctor-service
+  newTag: sha-ed03c54
