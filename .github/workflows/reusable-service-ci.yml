@@ -183,12 +183,14 @@ jobs:
 
       - name: 🔍 1. Kustomize Render Validation
         run: |
+          export PATH="$HOME/.local/bin:$PATH"
           echo "Rendering Kustomize manifests for ${{ inputs.k8s_overlay_path }}..."
           kustomize build "${{ inputs.k8s_overlay_path }}" > /tmp/rendered-manifests.yaml
           echo "Render OK! Total lines: $(wc -l < /tmp/rendered-manifests.yaml)"
 
       - name: 🛡️ 2. Kubeconform K8s OpenAPI Schema Validation
         run: |
+          export PATH="$HOME/.local/bin:$PATH"
           echo "Validating manifests against Kubernetes OpenAPI schema..."
           kubeconform \
             -strict \
