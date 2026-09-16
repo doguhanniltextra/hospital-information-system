@@ -26,6 +26,9 @@ images:
 - name: doguhannilt/doctor-service
   newName: doguhannilt/doctor-service
   newTag: sha-fc39548
+- name: doguhannilt/notification-service
+  newName: doguhannilt/notification-service
+  newTag: sha-fc39548
 - name: doguhannilt/patient-management
   newName: doguhannilt/patient-management
   newTag: sha-fc39548
