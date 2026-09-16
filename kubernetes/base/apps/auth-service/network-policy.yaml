@@ -1,0 +1,41 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: auth-service-netpol
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: auth-service
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    # Allow authentication requests from API Gateway
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: api-gateway
+      ports:
+        - protocol: TCP
+          port: 8089
+    # Allow token validation from other microservices
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/part-of: hospital-information-system
+      ports:
+        - protocol: TCP
+          port: 8089
+  egress:
+    # Allow CoreDNS resolution
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    # Allow egress to external backing services (PostgreSQL & Kafka)
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0

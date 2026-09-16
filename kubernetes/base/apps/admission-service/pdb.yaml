@@ -1,0 +1,15 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: admission-service-pdb
+  labels:
+    app.kubernetes.io/name: admission-service
+    app.kubernetes.io/instance: admission-service
+    app.kubernetes.io/component: backend
+    app.kubernetes.io/part-of: hospital-information-system
+    app.kubernetes.io/managed-by: kustomize
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: admission-service

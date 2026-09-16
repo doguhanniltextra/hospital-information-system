@@ -1,0 +1,49 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: api-gateway-netpol
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: api-gateway
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    # Allow incoming HTTP traffic from Ingress controller and Prometheus scraper
+    - ports:
+        - protocol: TCP
+          port: 4004
+  egress:
+    # Allow CoreDNS resolution
+    - ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    # Allow Redis for rate limiting
+    - ports:
+        - protocol: TCP
+          port: 6379
+    # Allow Kafka broker for audit logging
+    - ports:
+        - protocol: TCP
+          port: 9092
+    # Allow Vault for SecretStore connectivity
+    - ports:
+        - protocol: TCP
+          port: 8200
+    # Allow downstream microservices
+    - ports:
+        - protocol: TCP
+          port: 8080 # Patient Service
+        - protocol: TCP
+          port: 8083 # Doctor Service
+        - protocol: TCP
+          port: 8084 # Appointment Service
+        - protocol: TCP
+          port: 8085 # Support Service
+        - protocol: TCP
+          port: 8086 # Admission Service
+        - protocol: TCP
+          port: 8089 # Auth Service

@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: billing-service-config
+  labels:
+    app.kubernetes.io/name: billing-service
+    app.kubernetes.io/instance: billing-service
+    app.kubernetes.io/component: backend
+    app.kubernetes.io/part-of: hospital-information-system
+    app.kubernetes.io/managed-by: kustomize
+data:
+  SERVER_PORT: "8081"
+  SPRING_DATASOURCE_WRITE_JDBC_URL: "jdbc:postgresql://postgres:5432/billing_db?currentSchema=billing_schema"
+  SPRING_DATASOURCE_READ_JDBC_URL: "jdbc:postgresql://postgres:5432/billing_db?currentSchema=billing_schema"
+  SPRING_JPA_HIBERNATE_DDL_AUTO: "update"
+  KAFKA_BOOTSTRAP_SERVERS: "kafka:9092"
+  INVOICE_API_URL: "https://invoice-generator.com"
+  CLAIM_API_URL: "https://httpbin.org/status/200"
+  APP_INVOICE_STORAGE_PATH: "/tmp/invoices"

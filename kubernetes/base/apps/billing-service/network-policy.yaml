@@ -1,0 +1,50 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: billing-service-netpol
+  labels:
+    app.kubernetes.io/name: billing-service
+    app.kubernetes.io/instance: billing-service
+    app.kubernetes.io/component: backend
+    app.kubernetes.io/part-of: hospital-information-system
+    app.kubernetes.io/managed-by: kustomize
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: billing-service
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    # Allow traffic from API Gateway
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: api-gateway
+      ports:
+        - protocol: TCP
+          port: 8081
+  egress:
+    # Allow DNS (UDP & TCP)
+    - to:
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    # Allow PostgreSQL, Kafka, and Vault
+    - ports:
+        - protocol: TCP
+          port: 5432
+        - protocol: TCP
+          port: 9092
+        - protocol: TCP
+          port: 8200
+    # Allow External HTTPS APIs (Invoice generator, Claims provider)
+    - ports:
+        - protocol: TCP
+          port: 443

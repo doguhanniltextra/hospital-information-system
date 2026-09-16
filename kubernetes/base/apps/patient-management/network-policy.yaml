@@ -1,0 +1,58 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: patient-management-netpol
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: patient-management
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    # 1. API Gateway HTTP Trafiği
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: api-gateway
+      ports:
+        - protocol: TCP
+          port: 8080
+    # 2. Servisler arası gRPC Trafiği
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/part-of: hospital-information-system
+      ports:
+        - protocol: TCP
+          port: 9090
+    # 3. Prometheus Monitoring Trafiği
+    - from:
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: prometheus
+      ports:
+        - protocol: TCP
+          port: 8080
+  egress:
+    # 1. DNS Çözümleme (CoreDNS)
+    - ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    # 2. PostgreSQL CQRS Dual DB (Write: 5432, Read: 5433)
+    - ports:
+        - protocol: TCP
+          port: 5432
+        - protocol: TCP
+          port: 5433
+    # 3. Apache Kafka Broker
+    - ports:
+        - protocol: TCP
+          port: 9092
+    # 4. HashiCorp Vault
+    - ports:
+        - protocol: TCP
+          port: 8200

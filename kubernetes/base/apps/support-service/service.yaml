@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: support-service
+  labels:
+    app.kubernetes.io/name: support-service
+    app.kubernetes.io/instance: support-service
+    app.kubernetes.io/component: backend
+    app.kubernetes.io/part-of: hospital-information-system
+    app.kubernetes.io/managed-by: kustomize
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: support-service
+  ports:
+    - name: http
+      port: 8085
+      targetPort: 8085
+      protocol: TCP

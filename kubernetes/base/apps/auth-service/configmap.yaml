@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: auth-service-config
+data:
+  SPRING_PROFILES_ACTIVE: "dev"
+  SERVER_PORT: "8089"
+  SPRING_DATASOURCE_URL: "jdbc:postgresql://postgres:5432/auth_db?currentSchema=public&reWriteBatchedInserts=true"
+  KAFKA_BOOTSTRAP_SERVERS: "kafka:9092"

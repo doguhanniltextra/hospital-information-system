@@ -1,0 +1,54 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: doctor-service-netpol
+  labels:
+    app.kubernetes.io/name: doctor-service
+    app.kubernetes.io/instance: doctor-service
+    app.kubernetes.io/component: backend
+    app.kubernetes.io/part-of: hospital-information-system
+    app.kubernetes.io/managed-by: kustomize
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: doctor-service
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    # Allow traffic from API Gateway, Appointment Service, Admission Service
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: api-gateway
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: appointment-service
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: admission-service
+      ports:
+        - protocol: TCP
+          port: 8083
+        - protocol: TCP
+          port: 9005
+  egress:
+    # Allow DNS (UDP & TCP)
+    - to:
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    # Allow PostgreSQL, Kafka, and Vault
+    - ports:
+        - protocol: TCP
+          port: 5432
+        - protocol: TCP
+          port: 9092
+        - protocol: TCP
+          port: 8200

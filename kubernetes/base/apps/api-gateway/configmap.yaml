@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: api-gateway-config
+data:
+  SERVER_PORT: "4004"
+  REDIS_HOST: "host.minikube.internal"
+  REDIS_PORT: "6379"
+  # Downstream service addresses in cluster DNS
+  PATIENT_SERVICE_URL: "http://patient-management:8080"
+  DOCTOR_SERVICE_URL: "http://doctor-service:8083"
+  APPOINTMENT_SERVICE_URL: "http://appointment-service:8084"
+  AUTH_SERVICE_URL: "http://auth-service:8089"
+  SUPPORT_SERVICE_URL: "http://support-service:8085"
+  ADMISSION_SERVICE_URL: "http://admission-service:8086"

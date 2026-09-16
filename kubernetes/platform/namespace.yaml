@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: his
+  labels:
+    name: his
+    app.kubernetes.io/name: his
+    app.kubernetes.io/part-of: hospital-information-system

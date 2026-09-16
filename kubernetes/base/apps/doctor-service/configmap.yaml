@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: doctor-service-config
+  labels:
+    app.kubernetes.io/name: doctor-service
+    app.kubernetes.io/instance: doctor-service
+    app.kubernetes.io/component: backend
+    app.kubernetes.io/part-of: hospital-information-system
+    app.kubernetes.io/managed-by: kustomize
+data:
+  SERVER_PORT: "8083"
+  DOCTOR_SERVICE_GRPC_PORT: "9005"
+  SPRING_DATASOURCE_WRITE_URL: "jdbc:postgresql://postgres:5432/doctor_db?currentSchema=doctor_schema"
+  SPRING_DATASOURCE_READ_URL: "jdbc:postgresql://postgres:5432/doctor_db?currentSchema=doctor_schema"
+  SPRING_JPA_HIBERNATE_DDL_AUTO: "update"
+  KAFKA_BOOTSTRAP_SERVERS: "kafka:9092"
+  KAFKA_TOPIC_LAB_ORDER_PLACED: "lab-order-placed.v1"
+  KAFKA_TOPIC_LAB_RESULT_COMPLETED: "lab-result-completed.v1"
+  KAFKA_GROUP_DOCTOR_LAB_RESULT: "doctor-lab-result-group"

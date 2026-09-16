@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: support-service-config
+  labels:
+    app.kubernetes.io/name: support-service
+    app.kubernetes.io/instance: support-service
+    app.kubernetes.io/component: backend
+    app.kubernetes.io/part-of: hospital-information-system
+    app.kubernetes.io/managed-by: kustomize
+data:
+  SERVER_PORT: "8085"
+  SPRING_DATASOURCE_WRITE_JDBC_URL: "jdbc:postgresql://postgres:5432/support_db?currentSchema=support_schema"
+  SPRING_DATASOURCE_READ_JDBC_URL: "jdbc:postgresql://postgres:5432/support_db?currentSchema=support_schema"
+  SPRING_JPA_HIBERNATE_DDL_AUTO: "update"
+  KAFKA_BOOTSTRAP_SERVERS: "kafka:9092"
+  SPRING_DATA_REDIS_HOST: "redis"
+  SPRING_DATA_REDIS_PORT: "6379"
