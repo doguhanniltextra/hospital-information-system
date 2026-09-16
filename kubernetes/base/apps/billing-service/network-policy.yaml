@@ -2,12 +2,6 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: billing-service-netpol
-  labels:
-    app.kubernetes.io/name: billing-service
-    app.kubernetes.io/instance: billing-service
-    app.kubernetes.io/component: backend
-    app.kubernetes.io/part-of: hospital-information-system
-    app.kubernetes.io/managed-by: kustomize
 spec:
   podSelector:
     matchLabels:
@@ -16,7 +10,7 @@ spec:
     - Ingress
     - Egress
   ingress:
-    # Allow traffic from API Gateway
+    # 1. API Gateway REST HTTP Trafiği
     - from:
         - podSelector:
             matchLabels:
@@ -24,10 +18,20 @@ spec:
       ports:
         - protocol: TCP
           port: 8081
+    # 2. Prometheus Monitoring Trafiği
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: monitoring
+      ports:
+        - protocol: TCP
+          port: 8081
   egress:
-    # Allow DNS (UDP & TCP)
+    # 1. CoreDNS
     - to:
-        - namespaceSelector: {}
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
           podSelector:
             matchLabels:
               k8s-app: kube-dns
@@ -36,15 +40,29 @@ spec:
           port: 53
         - protocol: TCP
           port: 53
-    # Allow PostgreSQL, Kafka, and Vault
+    # 2. Vault
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: vault
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: vault
+      ports:
+        - protocol: TCP
+          port: 8200
+    # 3. PostgreSQL Database (billing_db)
     - ports:
         - protocol: TCP
           port: 5432
+    # 4. Kafka Event Bus
+    - ports:
         - protocol: TCP
           port: 9092
-        - protocol: TCP
-          port: 8200
-    # Allow External HTTPS APIs (Invoice generator, Claims provider)
-    - ports:
+    # 5. External HTTPS Fatura API Egress
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+      ports:
         - protocol: TCP
           port: 443

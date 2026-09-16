@@ -2,12 +2,6 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: doctor-service-netpol
-  labels:
-    app.kubernetes.io/name: doctor-service
-    app.kubernetes.io/instance: doctor-service
-    app.kubernetes.io/component: backend
-    app.kubernetes.io/part-of: hospital-information-system
-    app.kubernetes.io/managed-by: kustomize
 spec:
   podSelector:
     matchLabels:
@@ -16,11 +10,16 @@ spec:
     - Ingress
     - Egress
   ingress:
-    # Allow traffic from API Gateway, Appointment Service, Admission Service
+    # 1. API Gateway REST HTTP Trafiği
     - from:
         - podSelector:
             matchLabels:
               app.kubernetes.io/name: api-gateway
+      ports:
+        - protocol: TCP
+          port: 8083
+    # 2. Inter-service gRPC Trafiği (Sadece yetkili servisler)
+    - from:
         - podSelector:
             matchLabels:
               app.kubernetes.io/name: appointment-service
@@ -29,13 +28,21 @@ spec:
               app.kubernetes.io/name: admission-service
       ports:
         - protocol: TCP
-          port: 8083
-        - protocol: TCP
           port: 9005
+    # 3. Prometheus Monitoring Trafiği
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: monitoring
+      ports:
+        - protocol: TCP
+          port: 8083
   egress:
-    # Allow DNS (UDP & TCP)
+    # 1. CoreDNS
     - to:
-        - namespaceSelector: {}
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
           podSelector:
             matchLabels:
               k8s-app: kube-dns
@@ -44,11 +51,22 @@ spec:
           port: 53
         - protocol: TCP
           port: 53
-    # Allow PostgreSQL, Kafka, and Vault
+    # 2. Vault
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: vault
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: vault
+      ports:
+        - protocol: TCP
+          port: 8200
+    # 3. PostgreSQL Database (doctor_db)
     - ports:
         - protocol: TCP
           port: 5432
+    # 4. Kafka Event Bus
+    - ports:
         - protocol: TCP
           port: 9092
-        - protocol: TCP
-          port: 8200

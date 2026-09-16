@@ -10,40 +10,109 @@ spec:
     - Ingress
     - Egress
   ingress:
-    # Allow incoming HTTP traffic from Ingress controller and Prometheus scraper
-    - ports:
+    # 1. Ingress Controller Trafiği
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ingress-nginx
+      ports:
+        - protocol: TCP
+          port: 4004
+    # 2. Prometheus Monitoring Trafiği
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: monitoring
+      ports:
         - protocol: TCP
           port: 4004
   egress:
-    # Allow CoreDNS resolution
-    - ports:
+    # 1. CoreDNS
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
         - protocol: UDP
           port: 53
         - protocol: TCP
           port: 53
-    # Allow Redis for rate limiting
+    # 2. Vault
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: vault
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: vault
+      ports:
+        - protocol: TCP
+          port: 8200
+    # 3. Redis Rate Limiter
     - ports:
         - protocol: TCP
           port: 6379
-    # Allow Kafka broker for audit logging
+    # 4. Kafka Audit Bus
     - ports:
         - protocol: TCP
           port: 9092
-    # Allow Vault for SecretStore connectivity
-    - ports:
+    # 5. Downstream Mikroservis Podları
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: patient-management
+      ports:
         - protocol: TCP
-          port: 8200
-    # Allow downstream microservices
-    - ports:
+          port: 8080
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: doctor-service
+      ports:
         - protocol: TCP
-          port: 8080 # Patient Service
+          port: 8083
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: appointment-service
+      ports:
         - protocol: TCP
-          port: 8083 # Doctor Service
+          port: 8084
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: support-service
+      ports:
         - protocol: TCP
-          port: 8084 # Appointment Service
+          port: 8085
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: admission-service
+      ports:
         - protocol: TCP
-          port: 8085 # Support Service
+          port: 8086
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: auth-service
+      ports:
         - protocol: TCP
-          port: 8086 # Admission Service
+          port: 8089
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: billing-service
+      ports:
         - protocol: TCP
-          port: 8089 # Auth Service
+          port: 8081
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: notification-service
+      ports:
+        - protocol: TCP
+          port: 8090

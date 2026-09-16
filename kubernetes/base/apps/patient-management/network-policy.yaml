@@ -10,7 +10,7 @@ spec:
     - Ingress
     - Egress
   ingress:
-    # 1. API Gateway HTTP Traffic
+    # 1. API Gateway REST HTTP Trafiği
     - from:
         - podSelector:
             matchLabels:
@@ -18,41 +18,58 @@ spec:
       ports:
         - protocol: TCP
           port: 8080
-    # 2. Inter-service gRPC Traffic
+    # 2. Inter-service gRPC Trafiği (Sadece yetkili servisler)
     - from:
         - podSelector:
             matchLabels:
-              app.kubernetes.io/part-of: hospital-information-system
+              app.kubernetes.io/name: appointment-service
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: admission-service
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: billing-service
       ports:
         - protocol: TCP
           port: 9090
-    # 3. Prometheus Monitoring Traffic
+    # 3. Prometheus Monitoring Trafiği
     - from:
-        - namespaceSelector: {}
-          podSelector:
+        - namespaceSelector:
             matchLabels:
-              app.kubernetes.io/name: prometheus
+              kubernetes.io/metadata.name: monitoring
       ports:
         - protocol: TCP
           port: 8080
   egress:
-    # 1. DNS Resolution (CoreDNS)
-    - ports:
+    # 1. CoreDNS
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
         - protocol: UDP
           port: 53
         - protocol: TCP
           port: 53
-    # 2. PostgreSQL CQRS Dual DB (Write: 5432, Read: 5433)
+    # 2. Vault
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: vault
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: vault
+      ports:
+        - protocol: TCP
+          port: 8200
+    # 3. PostgreSQL Database (patient_db)
     - ports:
         - protocol: TCP
           port: 5432
-        - protocol: TCP
-          port: 5433
-    # 3. Apache Kafka Broker
+    # 4. Kafka Event Bus
     - ports:
         - protocol: TCP
           port: 9092
-    # 4. HashiCorp Vault
-    - ports:
-        - protocol: TCP
-          port: 8200

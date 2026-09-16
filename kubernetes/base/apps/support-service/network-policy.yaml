@@ -2,12 +2,6 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: support-service-netpol
-  labels:
-    app.kubernetes.io/name: support-service
-    app.kubernetes.io/instance: support-service
-    app.kubernetes.io/component: backend
-    app.kubernetes.io/part-of: hospital-information-system
-    app.kubernetes.io/managed-by: kustomize
 spec:
   podSelector:
     matchLabels:
@@ -16,7 +10,7 @@ spec:
     - Ingress
     - Egress
   ingress:
-    # Allow traffic from API Gateway
+    # 1. API Gateway REST HTTP Trafiği
     - from:
         - podSelector:
             matchLabels:
@@ -24,10 +18,20 @@ spec:
       ports:
         - protocol: TCP
           port: 8085
+    # 2. Prometheus Monitoring Trafiği
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: monitoring
+      ports:
+        - protocol: TCP
+          port: 8085
   egress:
-    # Allow DNS (UDP & TCP)
+    # 1. CoreDNS
     - to:
-        - namespaceSelector: {}
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
           podSelector:
             matchLabels:
               k8s-app: kube-dns
@@ -36,13 +40,26 @@ spec:
           port: 53
         - protocol: TCP
           port: 53
-    # Allow PostgreSQL, Kafka, Redis, and Vault
+    # 2. Vault
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: vault
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: vault
+      ports:
+        - protocol: TCP
+          port: 8200
+    # 3. PostgreSQL Database (support_db)
     - ports:
         - protocol: TCP
           port: 5432
-        - protocol: TCP
-          port: 9092
+    # 4. Redis Cache
+    - ports:
         - protocol: TCP
           port: 6379
+    # 5. Kafka Event Bus
+    - ports:
         - protocol: TCP
-          port: 8200
+          port: 9092

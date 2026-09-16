@@ -10,7 +10,7 @@ spec:
     - Ingress
     - Egress
   ingress:
-    # Allow authentication requests from API Gateway
+    # 1. API Gateway HTTP Trafiği
     - from:
         - podSelector:
             matchLabels:
@@ -18,24 +18,44 @@ spec:
       ports:
         - protocol: TCP
           port: 8089
-    # Allow token validation from other microservices
+    # 2. Prometheus Monitoring Trafiği
     - from:
-        - podSelector:
+        - namespaceSelector:
             matchLabels:
-              app.kubernetes.io/part-of: hospital-information-system
+              kubernetes.io/metadata.name: monitoring
       ports:
         - protocol: TCP
           port: 8089
   egress:
-    # Allow CoreDNS resolution
+    # 1. CoreDNS
     - to:
-        - namespaceSelector: {}
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
       ports:
         - protocol: UDP
           port: 53
         - protocol: TCP
           port: 53
-    # Allow egress to external backing services (PostgreSQL & Kafka)
+    # 2. Vault
     - to:
-        - ipBlock:
-            cidr: 0.0.0.0/0
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: vault
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: vault
+      ports:
+        - protocol: TCP
+          port: 8200
+    # 3. PostgreSQL Database (auth_db)
+    - ports:
+        - protocol: TCP
+          port: 5432
+    # 4. Kafka Event Bus
+    - ports:
+        - protocol: TCP
+          port: 9092

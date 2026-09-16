@@ -2,12 +2,6 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: notification-service-netpol
-  labels:
-    app.kubernetes.io/name: notification-service
-    app.kubernetes.io/instance: notification-service
-    app.kubernetes.io/component: backend
-    app.kubernetes.io/part-of: hospital-information-system
-    app.kubernetes.io/managed-by: kustomize
 spec:
   podSelector:
     matchLabels:
@@ -16,6 +10,7 @@ spec:
     - Ingress
     - Egress
   ingress:
+    # 1. API Gateway REST HTTP Trafiği
     - from:
         - podSelector:
             matchLabels:
@@ -23,10 +18,20 @@ spec:
       ports:
         - protocol: TCP
           port: 8090
+    # 2. Prometheus Monitoring Trafiği
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: monitoring
+      ports:
+        - protocol: TCP
+          port: 8090
   egress:
     # 1. CoreDNS
     - to:
-        - namespaceSelector: {}
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
           podSelector:
             matchLabels:
               k8s-app: kube-dns
@@ -40,27 +45,30 @@ spec:
         - namespaceSelector:
             matchLabels:
               kubernetes.io/metadata.name: vault
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: vault
       ports:
         - protocol: TCP
           port: 8200
-    # 3. Patient Management (gRPC 9090 & HTTP 8080)
-    - to:
-        - podSelector:
-            matchLabels:
-              app.kubernetes.io/name: patient-management
-      ports:
-        - protocol: TCP
-          port: 9090
-        - protocol: TCP
-          port: 8080
-    # 4. Host Gateway (PostgreSQL, Kafka, Redis on 192.168.49.1)
-    - to:
-        - ipBlock:
-            cidr: 192.168.49.1/32
-      ports:
+    # 3. PostgreSQL Database (notification_db)
+    - ports:
         - protocol: TCP
           port: 5432
+    # 4. Redis Cache
+    - ports:
         - protocol: TCP
           port: 6379
+    # 5. Kafka Event Bus
+    - ports:
         - protocol: TCP
           port: 9092
+    # 6. External SMTP Egress (E-posta Gönderimi)
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+      ports:
+        - protocol: TCP
+          port: 587
+        - protocol: TCP
+          port: 465
