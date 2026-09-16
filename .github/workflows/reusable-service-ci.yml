@@ -22,10 +22,10 @@ on:
         description: "Kustomize overlay path"
     secrets:
       DOCKERHUB_USERNAME:
-        required: true
+        required: false
         description: "Docker Hub Username"
       DOCKERHUB_TOKEN:
-        required: true
+        required: false
         description: "Docker Hub Access Token"
 
 jobs:
@@ -73,6 +73,7 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Log in to Docker Hub
+        if: ${{ secrets.DOCKERHUB_USERNAME != '' && secrets.DOCKERHUB_TOKEN != '' }}
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
@@ -102,6 +103,7 @@ jobs:
             ${{ inputs.image_name }}:${{ steps.vars.outputs.short_sha }}
 
       - name: Push Docker Image with Tags
+        if: ${{ secrets.DOCKERHUB_USERNAME != '' && secrets.DOCKERHUB_TOKEN != '' }}
         uses: docker/build-push-action@v5
         with:
           context: ./${{ inputs.service_path }}

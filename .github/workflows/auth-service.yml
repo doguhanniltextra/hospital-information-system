@@ -25,6 +25,4 @@ jobs:
       service_path: "auth-service"
       image_name: "doguhannilt/auth-service"
       k8s_overlay_path: "kubernetes/overlays/prod"
-    secrets:
-      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+    secrets: inherit

@@ -25,6 +25,4 @@ jobs:
       service_path: "patient-management"
       image_name: "doguhannilt/patient-management"
       k8s_overlay_path: "kubernetes/overlays/prod"
-    secrets:
-      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+    secrets: inherit
