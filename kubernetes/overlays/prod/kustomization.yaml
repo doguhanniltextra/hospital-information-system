@@ -4,17 +4,19 @@ kind: Kustomization
 namespace: his
 
 resources:
-  - ../../platform
-  - ../../base/apps/api-gateway
-  - ../../base/apps/auth-service
+- ../../platform
+- ../../base/apps/api-gateway
+- ../../base/apps/auth-service
 
 
 
 images:
-  - name: doguhannilt/api-gateway
-    newName: doguhannilt/api-gateway
-    newTag: latest
-  - name: doguhannilt/auth-service
-    newName: doguhannilt/auth-service
-    newTag: latest
-
+- name: doguhannilt/admission-service
+  newName: doguhannilt/admission-service
+  newTag: sha-cebac47
+- name: doguhannilt/api-gateway
+  newName: doguhannilt/api-gateway
+  newTag: latest
+- name: doguhannilt/auth-service
+  newName: doguhannilt/auth-service
+  newTag: latest
