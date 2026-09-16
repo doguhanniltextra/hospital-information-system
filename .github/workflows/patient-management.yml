@@ -13,6 +13,9 @@ on:
       - 'kubernetes/base/apps/patient-management/**'
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 concurrency:
   group: patient-management-${{ github.ref }}
   cancel-in-progress: true

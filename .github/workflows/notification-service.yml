@@ -13,6 +13,9 @@ on:
       - 'kubernetes/base/apps/notification-service/**'
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 concurrency:
   group: notification-service-${{ github.ref }}
   cancel-in-progress: true

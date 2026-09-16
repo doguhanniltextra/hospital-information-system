@@ -13,6 +13,9 @@ on:
       - 'kubernetes/base/apps/billing-service/**'
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 concurrency:
   group: billing-service-${{ github.ref }}
   cancel-in-progress: true

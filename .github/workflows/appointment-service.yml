@@ -13,6 +13,9 @@ on:
       - 'kubernetes/base/apps/appointment-service/**'
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 concurrency:
   group: appointment-service-${{ github.ref }}
   cancel-in-progress: true

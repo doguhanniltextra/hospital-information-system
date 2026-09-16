@@ -13,6 +13,9 @@ on:
       - 'kubernetes/base/apps/doctor-service/**'
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 concurrency:
   group: doctor-service-${{ github.ref }}
   cancel-in-progress: true

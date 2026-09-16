@@ -13,6 +13,9 @@ on:
       - 'kubernetes/base/apps/admission-service/**'
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 concurrency:
   group: admission-service-${{ github.ref }}
   cancel-in-progress: true

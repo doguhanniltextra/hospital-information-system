@@ -13,6 +13,9 @@ on:
       - 'kubernetes/base/apps/support-service/**'
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 concurrency:
   group: support-service-${{ github.ref }}
   cancel-in-progress: true

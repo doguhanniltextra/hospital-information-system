@@ -13,6 +13,9 @@ on:
       - 'kubernetes/base/apps/api-gateway/**'
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 concurrency:
   group: api-gateway-${{ github.ref }}
   cancel-in-progress: true
