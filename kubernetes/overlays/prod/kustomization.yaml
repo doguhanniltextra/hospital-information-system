@@ -26,3 +26,6 @@ images:
 - name: doguhannilt/doctor-service
   newName: doguhannilt/doctor-service
   newTag: sha-ed03c54
+- name: doguhannilt/patient-management
+  newName: doguhannilt/patient-management
+  newTag: sha-fc39548
