@@ -25,7 +25,7 @@ images:
   newTag: sha-fc39548
 - name: doguhannilt/doctor-service
   newName: doguhannilt/doctor-service
-  newTag: sha-ed03c54
+  newTag: sha-fc39548
 - name: doguhannilt/patient-management
   newName: doguhannilt/patient-management
   newTag: sha-fc39548
