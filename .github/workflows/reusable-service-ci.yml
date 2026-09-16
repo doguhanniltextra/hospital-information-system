@@ -99,6 +99,7 @@ jobs:
       - name: 🛡️ Ensure Trivy & Scan Container Vulnerabilities
         run: |
           mkdir -p "$HOME/.local/bin"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
           export PATH="$HOME/.local/bin:$PATH"
           if ! command -v trivy &> /dev/null; then
             echo "Installing Trivy security scanner..."
@@ -143,6 +144,7 @@ jobs:
       - name: Ensure Kustomize and Kubeconform Installed
         run: |
           mkdir -p "$HOME/.local/bin"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
           export PATH="$HOME/.local/bin:$PATH"
           if ! command -v kustomize &> /dev/null; then
             echo "Installing Kustomize..."
@@ -158,6 +160,7 @@ jobs:
 
       - name: Inject SHA Image Tag into Kustomize Overlay
         run: |
+          export PATH="$HOME/.local/bin:$PATH"
           TAG="${{ needs.docker-build-scan-push.outputs.short_sha }}"
           echo "Injecting tag ${TAG} into ${{ inputs.k8s_overlay_path }}/kustomization.yaml..."
           
