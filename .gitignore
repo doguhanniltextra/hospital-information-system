@@ -6,9 +6,11 @@ target/
 .env
 hack/
 agent/
+.agent/
 .agents/
 .vscode/
 .aider*
 
 # Kubernetes
 **/secret.yaml
+
