@@ -1,17 +1,20 @@
+# Stage 1: Build stage
 FROM maven:3.9.9-eclipse-temurin-21 AS builder
-
 WORKDIR /app
+COPY pom.xml .
+RUN mvn dependency:go-offline -B || true
+COPY src ./src
+RUN mvn clean package -DskipTests -B
 
-COPY . .
-RUN mvn clean package -Dmaven.test.skip=true
-
+# Stage 2: Runtime stage
 FROM eclipse-temurin:21-jre-alpine AS runner
 
-RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+RUN addgroup -g 1000 appgroup && \
+    adduser -u 1000 -G appgroup -s /bin/sh -D appuser
 
 WORKDIR /app
 
-COPY --from=builder /app/target/notification-service-1.0-SNAPSHOT.jar ./app.jar
+COPY --from=builder --chown=appuser:appgroup /app/target/notification-service-*.jar /app/app.jar
 
 USER appuser
 
@@ -22,4 +25,4 @@ ENTRYPOINT ["java", \
   "-XX:InitialRAMPercentage=50.0", \
   "-XX:+UseG1GC", \
   "-XX:+ExitOnOutOfMemoryError", \
-  "-jar", "app.jar"]
+  "-jar", "/app/app.jar"]

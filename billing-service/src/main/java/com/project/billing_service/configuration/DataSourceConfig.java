@@ -16,7 +16,6 @@ import java.util.Map;
 public class DataSourceConfig {
 
     @Bean
-    @Primary
     @ConfigurationProperties("spring.datasource.write")
     public DataSourceProperties writeDataSourceProperties() {
         return new DataSourceProperties();
@@ -29,11 +28,13 @@ public class DataSourceConfig {
     }
 
     @Bean
+    @Qualifier("writeDataSource")
     public DataSource writeDataSource() {
         return writeDataSourceProperties().initializeDataSourceBuilder().build();
     }
 
     @Bean
+    @Qualifier("readDataSource")
     public DataSource readDataSource() {
         return readDataSourceProperties().initializeDataSourceBuilder().build();
     }
@@ -56,6 +57,7 @@ public class DataSourceConfig {
     }
 
     @Bean
+    @Primary
     public DataSource dataSource(@Qualifier("routingDataSource") DataSource routingDataSource) {
         return new LazyConnectionDataSourceProxy(routingDataSource);
     }

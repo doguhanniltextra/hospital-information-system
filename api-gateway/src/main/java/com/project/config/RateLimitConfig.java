@@ -26,6 +26,21 @@ public class RateLimitConfig {
             if (userId != null && !userId.isBlank()) {
                 return Mono.just("user:" + userId);
             }
+
+            // In Kubernetes behind Ingress / reverse proxy, extract originating client IP
+            String forwardedFor = exchange.getRequest().getHeaders().getFirst("X-Forwarded-For");
+            if (forwardedFor != null && !forwardedFor.isBlank()) {
+                String clientIp = forwardedFor.split(",")[0].trim();
+                if (!clientIp.isEmpty()) {
+                    return Mono.just("ip:" + clientIp);
+                }
+            }
+
+            String realIp = exchange.getRequest().getHeaders().getFirst("X-Real-IP");
+            if (realIp != null && !realIp.isBlank()) {
+                return Mono.just("ip:" + realIp.trim());
+            }
+
             return Mono.justOrEmpty(exchange.getRequest().getRemoteAddress())
                     .map(addr -> "ip:" + addr.getAddress().getHostAddress())
                     .defaultIfEmpty("ip:unknown");

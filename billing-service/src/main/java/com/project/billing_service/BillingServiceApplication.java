@@ -9,7 +9,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
  * This service manages invoices, insurance claims, unbilled charges,
  * and hospital financial record keeping.
  */
-@SpringBootApplication
+@SpringBootApplication(scanBasePackages = {"com.project"})
 @EnableScheduling
 public class BillingServiceApplication {
     public static void main(String[] args) {

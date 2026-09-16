@@ -33,7 +33,18 @@ APP_SECRET=mySecretKeyForJwtTokenWhichMustBeAtLeast256BitsLong
 
 - `APP_SECRET`: JWT signing key used by the gateway to validate incoming tokens. It must match `auth-service` and every secured downstream service.
 
-The gateway routes to Docker service names by default, so you usually do not need to set downstream URLs manually when using the provided Compose files.
+#### Kubernetes / Production Environment Variables
+When deploying to Kubernetes, the following environment variables can be provided via ConfigMap or Secret:
+- `PATIENT_SERVICE_URL` (default: `http://patient-management:8080`)
+- `DOCTOR_SERVICE_URL` (default: `http://doctor-service:8083`)
+- `APPOINTMENT_SERVICE_URL` (default: `http://appointment-service:8084`)
+- `AUTH_SERVICE_URL` (default: `http://auth-service:8089`)
+- `SUPPORT_SERVICE_URL` (default: `http://support-service:8085`)
+- `ADMISSION_SERVICE_URL` (default: `http://admission-service:8086`)
+- `REDIS_HOST` (default: `redis`)
+- `REDIS_PORT` (default: `6379`)
+
+The gateway routes to Docker service names by default, so you do not need to set downstream URLs manually when using the provided Compose files.
 
 ### Running Locally
 Navigate to the module directory and execute the Spring Boot application:

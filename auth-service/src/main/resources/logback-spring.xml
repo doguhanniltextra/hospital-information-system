@@ -36,6 +36,9 @@
 
     <root level="INFO">
         <appender-ref ref="CONSOLE"/>
-        <appender-ref ref="KAFKA"/>
+        <springProfile name="!test">
+            <appender-ref ref="KAFKA"/>
+        </springProfile>
     </root>
 </configuration>
+

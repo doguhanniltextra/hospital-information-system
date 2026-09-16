@@ -331,5 +331,3 @@ public class BillingCommandService {
         claimRepository.save(claim);
     }
 }
-
-}

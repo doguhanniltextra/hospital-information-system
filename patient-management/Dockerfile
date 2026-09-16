@@ -15,7 +15,7 @@ COPY --from=builder /app/target/patient-service-0.0.1-SNAPSHOT.jar ./app.jar
 
 USER appuser
 
-EXPOSE 8080
+EXPOSE 8080 9090
 
 ENTRYPOINT ["java", \
   "-XX:MaxRAMPercentage=75.0", \

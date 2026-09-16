@@ -1,35 +1,53 @@
 server:
   port: 8090
+  shutdown: graceful
 
 spring:
   application:
     name: notification-service
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
   
   datasource:
     write:
-      jdbc-url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://notification-db:5432/notification_db?currentSchema=notification_schema}
+      jdbc-url: ${SPRING_DATASOURCE_WRITE_JDBC_URL:${SPRING_DATASOURCE_WRITE_URL:${SPRING_DATASOURCE_URL:jdbc:postgresql://his-postgres:5432/notification_db?currentSchema=notification_schema&reWriteBatchedInserts=true}}}
       username: ${SPRING_DATASOURCE_USERNAME:notification_user}
       password: ${SPRING_DATASOURCE_PASSWORD:notification_pass_123}
       driver-class-name: org.postgresql.Driver
+      hikari:
+        maximum-pool-size: 10
+        minimum-idle: 2
+        idle-timeout: 30000
+        connection-timeout: 20000
+        max-lifetime: 1800000
     read:
-      jdbc-url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://notification-db:5432/notification_db?currentSchema=notification_schema}
+      jdbc-url: ${SPRING_DATASOURCE_READ_JDBC_URL:${SPRING_DATASOURCE_READ_URL:${SPRING_DATASOURCE_URL:jdbc:postgresql://his-postgres:5432/notification_db?currentSchema=notification_schema&reWriteBatchedInserts=true}}}
       username: ${SPRING_DATASOURCE_USERNAME:notification_user}
       password: ${SPRING_DATASOURCE_PASSWORD:notification_pass_123}
       driver-class-name: org.postgresql.Driver
+      hikari:
+        maximum-pool-size: 10
+        minimum-idle: 2
+        idle-timeout: 30000
+        connection-timeout: 20000
+        max-lifetime: 1800000
 
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
     show-sql: false
     properties:
       hibernate:
-        format_sql: true
+        format_sql: false
         default_schema: notification_schema
+        dialect: org.hibernate.dialect.PostgreSQLDialect
 
   data:
     redis:
-      host: ${REDIS_HOST:localhost}
+      host: ${REDIS_HOST:redis}
       port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      timeout: 2000ms
   cache:
     type: redis
     redis:
@@ -37,7 +55,7 @@ spring:
       cache-null-values: false
 
   kafka:
-    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:kafka:9092}
     consumer:
       group-id: notification-group
       auto-offset-reset: earliest
@@ -55,13 +73,10 @@ spring:
 grpc:
   client:
     patient-service:
-      address: 'static://localhost:9090'
+      address: ${PATIENT_GRPC_ADDRESS:static://patient-management:9090}
       negotiation-type: plaintext
 
 management:
-  tracing:
-    sampling:
-      probability: 1.0
   endpoints:
     web:
       exposure:
@@ -69,13 +84,26 @@ management:
   endpoint:
     health:
       show-details: always
+      probes:
+        enabled: true
+  health:
+    livenessstate:
+      enabled: true
+    readinessstate:
+      enabled: true
+  tracing:
+    sampling:
+      probability: 1.0
 
-# Custom properties (No hard-coded endpoints)
+ops:
+  alert:
+    emails: ${OPS_ALERT_EMAILS:admin@hospital.com}
+
 services:
   patient-service:
-    url: ${PATIENT_SERVICE_URL:http://localhost:8080}
+    url: ${PATIENT_SERVICE_URL:http://patient-management:8080}
 
 logging:
   level:
     root: INFO
-    com.project.notification_service: DEBUG
+    com.project.notification_service: INFO

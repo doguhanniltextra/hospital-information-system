@@ -15,7 +15,7 @@ COPY --from=builder /app/target/doctor-service-1.0-SNAPSHOT.jar ./app.jar
 
 USER appuser
 
-EXPOSE 8083
+EXPOSE 8083 9005
 
 ENTRYPOINT ["java", \
   "-XX:MaxRAMPercentage=75.0", \

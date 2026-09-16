@@ -7,16 +7,16 @@ RUN mvn clean package -Dmaven.test.skip=true
 
 FROM eclipse-temurin:21-jre-alpine AS runner
 
-RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+RUN addgroup -g 1000 appgroup && \
+    adduser -u 1000 -G appgroup -s /bin/sh -D appuser
 
 WORKDIR /app
 
-COPY --from=builder /app/target/billing-service-0.0.1-SNAPSHOT.jar ./app.jar
+COPY --from=builder --chown=appuser:appgroup /app/target/billing-service-*.jar ./app.jar
 
-USER appuser
+USER 1000:1000
 
 EXPOSE 8081
-EXPOSE 9001
 
 ENTRYPOINT ["java", \
   "-XX:MaxRAMPercentage=75.0", \

@@ -6,16 +6,29 @@ import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class GrpcClientConfig {
 
+    @Value("${patient.service.grpc.host:patient-management}")
+    private String patientServiceHost;
+
+    @Value("${patient.service.grpc.port:9090}")
+    private int patientServicePort;
+
+    @Value("${doctor.service.grpc.host:doctor-service}")
+    private String doctorServiceHost;
+
+    @Value("${doctor.service.grpc.port:9005}")
+    private int doctorServicePort;
+
     @Bean
     public ManagedChannel patientServiceChannel() {
         return ManagedChannelBuilder
-            .forAddress("patient-service", 9090)
+            .forAddress(patientServiceHost, patientServicePort)
             .usePlaintext() // For development - use TLS in production
             .build();
     }
@@ -23,7 +36,7 @@ public class GrpcClientConfig {
     @Bean
     public ManagedChannel doctorServiceChannel() {
         return ManagedChannelBuilder
-            .forAddress("doctor-service", 9090)
+            .forAddress(doctorServiceHost, doctorServicePort)
             .usePlaintext() // For development - use TLS in production
             .build();
     }
