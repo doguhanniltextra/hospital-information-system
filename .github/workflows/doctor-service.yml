@@ -1,0 +1,30 @@
+name: Doctor Service - DevSecOps CI/CD
+
+on:
+  push:
+    branches: [ main, master ]
+    paths:
+      - 'doctor-service/**'
+      - 'kubernetes/base/apps/doctor-service/**'
+  pull_request:
+    branches: [ main, master ]
+    paths:
+      - 'doctor-service/**'
+      - 'kubernetes/base/apps/doctor-service/**'
+  workflow_dispatch:
+
+concurrency:
+  group: doctor-service-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pipeline:
+    uses: ./.github/workflows/reusable-service-ci.yml
+    with:
+      service_name: "doctor-service"
+      service_path: "doctor-service"
+      image_name: "doguhannilt/doctor-service"
+      k8s_overlay_path: "kubernetes/overlays/prod"
+    secrets:
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}

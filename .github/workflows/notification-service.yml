@@ -1,0 +1,30 @@
+name: Notification Service - DevSecOps CI/CD
+
+on:
+  push:
+    branches: [ main, master ]
+    paths:
+      - 'notification-service/**'
+      - 'kubernetes/base/apps/notification-service/**'
+  pull_request:
+    branches: [ main, master ]
+    paths:
+      - 'notification-service/**'
+      - 'kubernetes/base/apps/notification-service/**'
+  workflow_dispatch:
+
+concurrency:
+  group: notification-service-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pipeline:
+    uses: ./.github/workflows/reusable-service-ci.yml
+    with:
+      service_name: "notification-service"
+      service_path: "notification-service"
+      image_name: "doguhannilt/notification-service"
+      k8s_overlay_path: "kubernetes/overlays/prod"
+    secrets:
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}

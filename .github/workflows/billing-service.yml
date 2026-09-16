@@ -1,0 +1,30 @@
+name: Billing Service - DevSecOps CI/CD
+
+on:
+  push:
+    branches: [ main, master ]
+    paths:
+      - 'billing-service/**'
+      - 'kubernetes/base/apps/billing-service/**'
+  pull_request:
+    branches: [ main, master ]
+    paths:
+      - 'billing-service/**'
+      - 'kubernetes/base/apps/billing-service/**'
+  workflow_dispatch:
+
+concurrency:
+  group: billing-service-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pipeline:
+    uses: ./.github/workflows/reusable-service-ci.yml
+    with:
+      service_name: "billing-service"
+      service_path: "billing-service"
+      image_name: "doguhannilt/billing-service"
+      k8s_overlay_path: "kubernetes/overlays/prod"
+    secrets:
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}

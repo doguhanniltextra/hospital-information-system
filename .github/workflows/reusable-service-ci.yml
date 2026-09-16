@@ -1,0 +1,192 @@
+name: Reusable Microservice DevSecOps & GitOps Pipeline
+
+on:
+  workflow_call:
+    inputs:
+      service_name:
+        required: true
+        type: string
+        description: "Name of the microservice (e.g. doctor-service)"
+      service_path:
+        required: true
+        type: string
+        description: "Path to the service folder (e.g. doctor-service)"
+      image_name:
+        required: true
+        type: string
+        description: "Docker repository name (e.g. doguhannilt/doctor-service)"
+      k8s_overlay_path:
+        required: false
+        type: string
+        default: "kubernetes/overlays/prod"
+        description: "Kustomize overlay path"
+    secrets:
+      DOCKERHUB_USERNAME:
+        required: true
+        description: "Docker Hub Username"
+      DOCKERHUB_TOKEN:
+        required: true
+        description: "Docker Hub Access Token"
+
+jobs:
+  # ========================================================
+  # Stage 1: Quality, Lint & Unit Tests
+  # ========================================================
+  code-quality-and-test:
+    name: 🧪 Quality & Tests (${{ inputs.service_name }})
+    runs-on: [self-hosted, Linux, X64]
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Run Maven Unit Tests & Lint
+        run: |
+          echo "================================================================="
+          echo "🚀 Running Tests for Service: ${{ inputs.service_name }}"
+          echo "================================================================="
+          cd "${{ inputs.service_path }}"
+          mvn clean test -B
+
+  # ========================================================
+  # Stage 2: Immutable Docker Build, Trivy Scan & Push
+  # ========================================================
+  docker-build-scan-push:
+    name: 🐳 Docker Build & Security Scan
+    needs: code-quality-and-test
+    runs-on: [self-hosted, Linux, X64]
+    outputs:
+      short_sha: ${{ steps.vars.outputs.short_sha }}
+      image_tag: ${{ steps.vars.outputs.image_tag }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Resolve Commit SHA Tag
+        id: vars
+        run: |
+          SHORT_SHA="sha-$(git rev-parse --short HEAD)"
+          echo "short_sha=${SHORT_SHA}" >> "$GITHUB_OUTPUT"
+          echo "image_tag=${SHORT_SHA}" >> "$GITHUB_OUTPUT"
+          echo "Resolved Tag: ${SHORT_SHA}"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build Docker Image (Local Load for Scan)
+        uses: docker/build-push-action@v5
+        with:
+          context: ./${{ inputs.service_path }}
+          file: ./${{ inputs.service_path }}/Dockerfile
+          load: true
+          tags: ${{ inputs.image_name }}:${{ steps.vars.outputs.short_sha }}
+
+      - name: 🛡️ Ensure Trivy & Scan Container Vulnerabilities
+        run: |
+          mkdir -p "$HOME/.local/bin"
+          export PATH="$HOME/.local/bin:$PATH"
+          if ! command -v trivy &> /dev/null; then
+            echo "Installing Trivy security scanner..."
+            curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b "$HOME/.local/bin"
+          fi
+          echo "Running Trivy CVE vulnerability scan on ${{ inputs.image_name }}:${{ steps.vars.outputs.short_sha }}..."
+          trivy image \
+            --severity HIGH,CRITICAL \
+            --exit-code 0 \
+            --no-progress \
+            ${{ inputs.image_name }}:${{ steps.vars.outputs.short_sha }}
+
+      - name: Push Docker Image with Tags
+        uses: docker/build-push-action@v5
+        with:
+          context: ./${{ inputs.service_path }}
+          file: ./${{ inputs.service_path }}/Dockerfile
+          push: true
+          tags: |
+            ${{ inputs.image_name }}:${{ steps.vars.outputs.short_sha }}
+            ${{ inputs.image_name }}:latest
+
+  # ========================================================
+  # Stage 3: GitOps Manifest Tag Injection & K8s Validation
+  # ========================================================
+  gitops-and-k8s-validate:
+    name: ☸️ GitOps Manifest & K8s Validation
+    needs: docker-build-scan-push
+    runs-on: [self-hosted, Linux, X64]
+    steps:
+      - name: Checkout Code with Write Token
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          ref: ${{ github.ref_name }}
+
+      - name: Ensure Kustomize and Kubeconform Installed
+        run: |
+          mkdir -p "$HOME/.local/bin"
+          export PATH="$HOME/.local/bin:$PATH"
+          if ! command -v kustomize &> /dev/null; then
+            echo "Installing Kustomize..."
+            curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" | bash
+            mv kustomize "$HOME/.local/bin/"
+          fi
+          if ! command -v kubeconform &> /dev/null; then
+            echo "Installing Kubeconform..."
+            curl -sL https://github.com/yannh/kubeconform/releases/latest/download/kubeconform-linux-amd64.tar.gz | tar -xz -C "$HOME/.local/bin/" kubeconform
+          fi
+          kustomize version
+          kubeconform -v
+
+      - name: Inject SHA Image Tag into Kustomize Overlay
+        run: |
+          TAG="${{ needs.docker-build-scan-push.outputs.short_sha }}"
+          echo "Injecting tag ${TAG} into ${{ inputs.k8s_overlay_path }}/kustomization.yaml..."
+          
+          cd "${{ inputs.k8s_overlay_path }}"
+          kustomize edit set image ${{ inputs.image_name }}=${{ inputs.image_name }}:${TAG}
+          cat kustomization.yaml
+
+      - name: Commit and Push GitOps Changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          
+          git add "${{ inputs.k8s_overlay_path }}/kustomization.yaml"
+          if git diff --staged --quiet; then
+            echo "No manifest changes detected."
+          else
+            git commit -m "chore(gitops): update ${{ inputs.service_name }} image to ${{ needs.docker-build-scan-push.outputs.short_sha }} [skip ci]"
+            git push origin ${{ github.ref_name }}
+          fi
+
+      - name: 🔍 1. Kustomize Render Validation
+        run: |
+          echo "Rendering Kustomize manifests for ${{ inputs.k8s_overlay_path }}..."
+          kustomize build "${{ inputs.k8s_overlay_path }}" > /tmp/rendered-manifests.yaml
+          echo "Render OK! Total lines: $(wc -l < /tmp/rendered-manifests.yaml)"
+
+      - name: 🛡️ 2. Kubeconform K8s OpenAPI Schema Validation
+        run: |
+          echo "Validating manifests against Kubernetes OpenAPI schema..."
+          kubeconform \
+            -strict \
+            -ignore-missing-schemas \
+            -kubernetes-version 1.31.0 \
+            -schema-location default \
+            -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json' \
+            /tmp/rendered-manifests.yaml
+          echo "Kubeconform Validation PASSED! ✅"
+
+      - name: 📋 3. Final Verification Report
+        run: |
+          echo "================================================================="
+          echo "🎉 PIPELINE SUCCESSFUL!"
+          echo "📦 Service: ${{ inputs.service_name }}"
+          echo "🏷️ Image Tag: ${{ inputs.image_name }}:${{ needs.docker-build-scan-push.outputs.short_sha }}"
+          echo "☸️ K8s Manifests: Rendered & Schema Verified!"
+          echo "⏸️ Deployment: Deployment gate paused as configured (Ready for deployment)."
+          echo "================================================================="

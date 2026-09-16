@@ -1,0 +1,30 @@
+name: Patient Management - DevSecOps CI/CD
+
+on:
+  push:
+    branches: [ main, master ]
+    paths:
+      - 'patient-management/**'
+      - 'kubernetes/base/apps/patient-management/**'
+  pull_request:
+    branches: [ main, master ]
+    paths:
+      - 'patient-management/**'
+      - 'kubernetes/base/apps/patient-management/**'
+  workflow_dispatch:
+
+concurrency:
+  group: patient-management-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pipeline:
+    uses: ./.github/workflows/reusable-service-ci.yml
+    with:
+      service_name: "patient-management"
+      service_path: "patient-management"
+      image_name: "doguhannilt/patient-management"
+      k8s_overlay_path: "kubernetes/overlays/prod"
+    secrets:
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}

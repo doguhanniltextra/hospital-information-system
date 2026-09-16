@@ -1,0 +1,30 @@
+name: Auth Service - DevSecOps CI/CD
+
+on:
+  push:
+    branches: [ main, master ]
+    paths:
+      - 'auth-service/**'
+      - 'kubernetes/base/apps/auth-service/**'
+  pull_request:
+    branches: [ main, master ]
+    paths:
+      - 'auth-service/**'
+      - 'kubernetes/base/apps/auth-service/**'
+  workflow_dispatch:
+
+concurrency:
+  group: auth-service-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pipeline:
+    uses: ./.github/workflows/reusable-service-ci.yml
+    with:
+      service_name: "auth-service"
+      service_path: "auth-service"
+      image_name: "doguhannilt/auth-service"
+      k8s_overlay_path: "kubernetes/overlays/prod"
+    secrets:
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}

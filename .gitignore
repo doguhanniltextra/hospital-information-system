@@ -11,6 +11,10 @@ agent/
 .vscode/
 .aider*
 
+# Self-Hosted Runner
+actions-runner/
+_work/
+
 # Kubernetes
 **/secret.yaml
 

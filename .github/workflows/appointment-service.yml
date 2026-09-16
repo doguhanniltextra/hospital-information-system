@@ -1,0 +1,30 @@
+name: Appointment Service - DevSecOps CI/CD
+
+on:
+  push:
+    branches: [ main, master ]
+    paths:
+      - 'appointment-service/**'
+      - 'kubernetes/base/apps/appointment-service/**'
+  pull_request:
+    branches: [ main, master ]
+    paths:
+      - 'appointment-service/**'
+      - 'kubernetes/base/apps/appointment-service/**'
+  workflow_dispatch:
+
+concurrency:
+  group: appointment-service-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pipeline:
+    uses: ./.github/workflows/reusable-service-ci.yml
+    with:
+      service_name: "appointment-service"
+      service_path: "appointment-service"
+      image_name: "doguhannilt/appointment-service"
+      k8s_overlay_path: "kubernetes/overlays/prod"
+    secrets:
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
