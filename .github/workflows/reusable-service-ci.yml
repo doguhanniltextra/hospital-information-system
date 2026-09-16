@@ -21,6 +21,12 @@ on:
         default: "kubernetes/overlays/prod"
         description: "Kustomize overlay path"
     secrets:
+      DOCKER_USERNAME:
+        required: false
+        description: "Docker Username"
+      DOCKER_PASSWORD:
+        required: false
+        description: "Docker Password / Token"
       DOCKERHUB_USERNAME:
         required: false
         description: "Docker Hub Username"
@@ -73,11 +79,11 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Log in to Docker Hub
-        if: ${{ secrets.DOCKERHUB_USERNAME != '' && secrets.DOCKERHUB_TOKEN != '' }}
+        if: ${{ (secrets.DOCKER_USERNAME != '' || secrets.DOCKERHUB_USERNAME != '') && (secrets.DOCKER_PASSWORD != '' || secrets.DOCKERHUB_TOKEN != '') }}
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          username: ${{ secrets.DOCKER_USERNAME || secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD || secrets.DOCKERHUB_TOKEN }}
 
       - name: Build Docker Image (Local Load for Scan)
         uses: docker/build-push-action@v5
@@ -103,7 +109,7 @@ jobs:
             ${{ inputs.image_name }}:${{ steps.vars.outputs.short_sha }}
 
       - name: Push Docker Image with Tags
-        if: ${{ secrets.DOCKERHUB_USERNAME != '' && secrets.DOCKERHUB_TOKEN != '' }}
+        if: ${{ (secrets.DOCKER_USERNAME != '' || secrets.DOCKERHUB_USERNAME != '') && (secrets.DOCKER_PASSWORD != '' || secrets.DOCKERHUB_TOKEN != '') }}
         uses: docker/build-push-action@v5
         with:
           context: ./${{ inputs.service_path }}
