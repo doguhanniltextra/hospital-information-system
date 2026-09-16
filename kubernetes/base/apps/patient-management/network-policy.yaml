@@ -10,7 +10,7 @@ spec:
     - Ingress
     - Egress
   ingress:
-    # 1. API Gateway HTTP Trafiği
+    # 1. API Gateway HTTP Traffic
     - from:
         - podSelector:
             matchLabels:
@@ -18,7 +18,7 @@ spec:
       ports:
         - protocol: TCP
           port: 8080
-    # 2. Servisler arası gRPC Trafiği
+    # 2. Inter-service gRPC Traffic
     - from:
         - podSelector:
             matchLabels:
@@ -26,7 +26,7 @@ spec:
       ports:
         - protocol: TCP
           port: 9090
-    # 3. Prometheus Monitoring Trafiği
+    # 3. Prometheus Monitoring Traffic
     - from:
         - namespaceSelector: {}
           podSelector:
@@ -36,7 +36,7 @@ spec:
         - protocol: TCP
           port: 8080
   egress:
-    # 1. DNS Çözümleme (CoreDNS)
+    # 1. DNS Resolution (CoreDNS)
     - ports:
         - protocol: UDP
           port: 53
