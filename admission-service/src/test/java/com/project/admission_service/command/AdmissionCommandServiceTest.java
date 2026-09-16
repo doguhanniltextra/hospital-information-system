@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.project.admission_service.dto.AdmissionRequest;
 import com.project.admission_service.event.*;
+import com.project.admission_service.grpc.DoctorGrpcClient;
 import com.project.admission_service.grpc.PatientGrpcClient;
 import com.project.admission_service.model.*;
 import com.project.admission_service.repository.*;
@@ -14,7 +15,6 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.context.ApplicationEventPublisher;
 
-import java.util.Collections;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -39,6 +39,8 @@ class AdmissionCommandServiceTest {
     @Mock
     private PatientGrpcClient patientGrpcClient;
     @Mock
+    private DoctorGrpcClient doctorGrpcClient;
+    @Mock
     private ObjectMapper objectMapper;
     @Mock
     private ApplicationEventPublisher eventPublisher;
@@ -56,16 +58,14 @@ class AdmissionCommandServiceTest {
         // Arrange
         UUID wardId = UUID.randomUUID();
         UUID patientId = UUID.randomUUID();
+        UUID doctorId = UUID.randomUUID();
         UUID roomId = UUID.randomUUID();
         UUID bedId = UUID.randomUUID();
 
         AdmissionRequest request = new AdmissionRequest();
         request.setPatientId(patientId);
+        request.setDoctorId(doctorId);
         request.setWardId(wardId);
-
-        Room room = new Room();
-        room.setId(roomId);
-        room.setWardId(wardId);
 
         Bed bed = new Bed();
         bed.setId(bedId);
@@ -73,8 +73,9 @@ class AdmissionCommandServiceTest {
         bed.setBedNumber("B1");
         bed.setStatus(BedStatus.EMPTY);
 
-        when(roomRepository.findByWardId(wardId)).thenReturn(Collections.singletonList(room));
-        when(bedRepository.findByRoomIdAndStatus(roomId, BedStatus.EMPTY)).thenReturn(Collections.singletonList(bed));
+        when(patientGrpcClient.existsById(patientId)).thenReturn(true);
+        when(doctorGrpcClient.existsById(doctorId)).thenReturn(true);
+        when(bedRepository.findFirstEmptyBedInWardForUpdate(wardId)).thenReturn(Optional.of(bed));
         when(admissionRepository.save(any(Admission.class))).thenAnswer(i -> i.getArguments()[0]);
 
         // Act
@@ -83,6 +84,7 @@ class AdmissionCommandServiceTest {
         // Assert
         assertNotNull(result);
         assertEquals(patientId, result.getPatientId());
+        assertEquals(doctorId, result.getDoctorId());
         assertEquals(bedId, result.getBedId());
         assertEquals(BedStatus.OCCUPIED, bed.getStatus());
         assertEquals(AdmissionStatus.ACTIVE, result.getStatus());
@@ -95,10 +97,17 @@ class AdmissionCommandServiceTest {
     void admitPatient_NoBedsAvailable_ThrowsException() {
         // Arrange
         UUID wardId = UUID.randomUUID();
+        UUID patientId = UUID.randomUUID();
+        UUID doctorId = UUID.randomUUID();
+
         AdmissionRequest request = new AdmissionRequest();
+        request.setPatientId(patientId);
+        request.setDoctorId(doctorId);
         request.setWardId(wardId);
 
-        when(roomRepository.findByWardId(wardId)).thenReturn(Collections.emptyList());
+        when(patientGrpcClient.existsById(patientId)).thenReturn(true);
+        when(doctorGrpcClient.existsById(doctorId)).thenReturn(true);
+        when(bedRepository.findFirstEmptyBedInWardForUpdate(wardId)).thenReturn(Optional.empty());
 
         // Act & Assert
         Exception exception = assertThrows(RuntimeException.class, () -> admissionCommandService.admitPatient(request));
@@ -110,11 +119,13 @@ class AdmissionCommandServiceTest {
         // Arrange
         UUID admissionId = UUID.randomUUID();
         UUID patientId = UUID.randomUUID();
+        UUID doctorId = UUID.randomUUID();
         UUID bedId = UUID.randomUUID();
 
         Admission admission = new Admission();
         admission.setId(admissionId);
         admission.setPatientId(patientId);
+        admission.setDoctorId(doctorId);
         admission.setBedId(bedId);
         admission.setStatus(AdmissionStatus.ACTIVE);
 
@@ -164,3 +175,4 @@ class AdmissionCommandServiceTest {
         assertEquals("Patient already discharged.", exception.getMessage());
     }
 }
+

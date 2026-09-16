@@ -7,6 +7,7 @@ import com.project.notification_service.grpc.PatientGrpcClient;
 import com.project.notification_service.model.NotificationProcessedEvent;
 import com.project.notification_service.repository.NotificationProcessedEventRepository;
 import com.project.notification_service.service.NotificationService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -41,6 +42,7 @@ class KafkaConsumerTest {
                 notificationService,
                 patientGrpcClient,
                 processedEventRepository,
+                new ObjectMapper(),
                 opsAlertEmails
         );
     }

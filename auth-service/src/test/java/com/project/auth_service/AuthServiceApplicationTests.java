@@ -2,7 +2,12 @@ package com.project.auth_service;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.test.context.ActiveProfiles;
+import com.project.auth_service.kafka.PatientCreatedKafkaConsumer;
 
+@ActiveProfiles("test")
 @SpringBootTest(properties = {
     "spring.datasource.url=jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;MODE=PostgreSQL",
     "spring.datasource.driver-class-name=org.h2.Driver",
@@ -15,6 +20,12 @@ import org.springframework.boot.test.context.SpringBootTest;
     org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration.class
 })
 class AuthServiceApplicationTests {
+
+    @MockBean
+    private KafkaTemplate<String, String> kafkaTemplate;
+
+    @MockBean
+    private PatientCreatedKafkaConsumer patientCreatedKafkaConsumer;
 
 	@Test
 	void contextLoads() {

@@ -7,6 +7,7 @@ import com.project.auth_service.entity.RefreshToken;
 import com.project.auth_service.entity.Role;
 import com.project.auth_service.entity.User;
 import com.project.auth_service.helper.AuthValidator;
+import com.project.auth_service.repository.PasswordResetTokenRepository;
 import com.project.auth_service.repository.RefreshTokenRepository;
 import com.project.auth_service.repository.UserRepository;
 import com.project.auth_service.service.JwtService;
@@ -50,14 +51,18 @@ class AuthControllerTest {
     @Mock
     private AuthValidator authValidator;
 
+    @Mock
+    private PasswordResetTokenRepository resetTokenRepository;
+
     private ObjectMapper objectMapper = new ObjectMapper();
 
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        AuthController authController = new AuthController(jwtService, userRepository, refreshTokenRepository, passwordEncoder, authValidator);
+        AuthController authController = new AuthController(jwtService, userRepository, refreshTokenRepository, passwordEncoder, authValidator, resetTokenRepository);
         mockMvc = MockMvcBuilders.standaloneSetup(authController).build();
     }
+
 
     @Test
     void register_ShouldReturnOk_WhenSuccess() throws Exception {
