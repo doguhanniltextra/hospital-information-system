@@ -3,8 +3,9 @@ kind: Deployment
 metadata:
   name: auth-service
 spec:
-  replicas: 1 # DEV: Reduced to 1 to relieve local Minikube memory pressure (Prod baseline: 2)
+  replicas: 2
   minReadySeconds: 5
+
   revisionHistoryLimit: 5
   strategy:
     type: RollingUpdate

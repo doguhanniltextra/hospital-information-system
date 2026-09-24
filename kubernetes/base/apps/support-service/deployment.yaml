@@ -10,7 +10,7 @@ metadata:
     app.kubernetes.io/managed-by: kustomize
 spec:
   # DEV: Reduced to 1 to relieve local Minikube memory pressure (Prod baseline: 2)
-  replicas: 1
+  replicas: 2
   minReadySeconds: 5
   revisionHistoryLimit: 5
   progressDeadlineSeconds: 600

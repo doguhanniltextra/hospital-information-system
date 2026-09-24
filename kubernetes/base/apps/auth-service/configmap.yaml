@@ -5,5 +5,7 @@ metadata:
 data:
   SPRING_PROFILES_ACTIVE: "dev"
   SERVER_PORT: "8089"
-  SPRING_DATASOURCE_URL: "jdbc:postgresql://postgres:5432/auth_db?currentSchema=public&reWriteBatchedInserts=true"
+  SPRING_DATASOURCE_URL: "jdbc:postgresql://postgres:5432/auth_db?currentSchema=auth_schema&reWriteBatchedInserts=true"
+  SPRING_JPA_HIBERNATE_DDL_AUTO: "update"
   KAFKA_BOOTSTRAP_SERVERS: "kafka:9092"
+

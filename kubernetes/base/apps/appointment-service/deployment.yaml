@@ -9,9 +9,9 @@ metadata:
     app.kubernetes.io/part-of: hospital-information-system
     app.kubernetes.io/managed-by: kustomize
 spec:
-  # DEV: Reduced to 1 to relieve local Minikube memory pressure (Prod baseline: 2)
-  replicas: 1
+  replicas: 2
   minReadySeconds: 5
+
   revisionHistoryLimit: 5
   progressDeadlineSeconds: 600
   strategy:
@@ -67,7 +67,7 @@ spec:
             sizeLimit: 100Mi
       containers:
         - name: appointment-service
-          image: doguhannilt/appointment-service:1.0.0
+          image: doguhannilt/appointment-service:latest
           imagePullPolicy: IfNotPresent
           ports:
             - name: http

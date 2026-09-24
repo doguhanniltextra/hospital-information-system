@@ -3,8 +3,9 @@ kind: Deployment
 metadata:
   name: patient-management
 spec:
-  replicas: 1 # DEV: Reduced to 1 to relieve local Minikube memory pressure (%99 RAM) (Prod baseline: 2)
+  replicas: 2
   minReadySeconds: 5
+
   revisionHistoryLimit: 5
   progressDeadlineSeconds: 600
   strategy:

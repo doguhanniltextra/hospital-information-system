@@ -11,7 +11,7 @@ labels:
 
 images:
   - name: doguhannilt/api-gateway
-    newTag: "1.0.0"
+    newTag: "latest"
 
 resources:
   - serviceaccount.yaml
