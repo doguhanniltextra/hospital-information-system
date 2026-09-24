@@ -1,27 +1,5 @@
 
 services:
-  notification-db:
-    image: postgres:15-alpine
-    container_name: notification-db
-    env_file: .env
-    restart: unless-stopped
-    ports:
-      - "5443:5432"
-    environment:
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-    volumes:
-      - notification-db-data:/var/lib/postgresql/data
-      - ./init/init.sql:/docker-entrypoint-initdb.d/init.sql
-    networks:
-      - patient-global-network
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
   notification-service:
     deploy:
       resources:
@@ -39,13 +17,10 @@ services:
     restart: unless-stopped
     ports:
       - "8090:8090"
-    depends_on:
-      notification-db:
-        condition: service_healthy
     environment:
       SPRING_PROFILES_ACTIVE: dev
       SERVER_PORT: 8090
-      SPRING_DATASOURCE_URL: jdbc:postgresql://notification-db:5432/${POSTGRES_DB}?currentSchema=notification_schema&reWriteBatchedInserts=true
+      SPRING_DATASOURCE_URL: jdbc:postgresql://his-postgres:5432/${POSTGRES_DB}?currentSchema=notification_schema&reWriteBatchedInserts=true
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
@@ -60,10 +35,7 @@ services:
       timeout: 5s
       retries: 5
 
-volumes:
-  notification-db-data:
-    driver: local
-
 networks:
   patient-global-network:
     external: true
+

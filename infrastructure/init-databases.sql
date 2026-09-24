@@ -7,7 +7,10 @@ CREATE DATABASE auth_db;
 CREATE USER auth_user WITH ENCRYPTED PASSWORD 'auth_pass_123';
 GRANT ALL PRIVILEGES ON DATABASE auth_db TO auth_user;
 \c auth_db
-GRANT ALL ON SCHEMA public TO auth_user;
+CREATE SCHEMA IF NOT EXISTS auth_schema AUTHORIZATION auth_user;
+GRANT ALL ON SCHEMA auth_schema TO auth_user;
+ALTER USER auth_user SET search_path = auth_schema, public;
+
 
 -- 2. PATIENT MANAGEMENT (CQRS Architecture)
 \c postgres

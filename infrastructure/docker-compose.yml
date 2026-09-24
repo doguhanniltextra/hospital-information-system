@@ -53,23 +53,6 @@ services:
       timeout: 5s
       retries: 5
 
-  # MongoDB - Audit Log Storage
-  audit-mongodb:
-    image: mongo:6.0
-    container_name: audit-mongodb
-    restart: unless-stopped
-    ports:
-      - "27017:27017"
-    volumes:
-      - mongodb-data:/data/db
-    networks:
-      - patient-global-network
-    healthcheck:
-      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
   # Redis - Read-side Caching for Support Service
   redis:
     image: redis:7.2-alpine
@@ -84,23 +67,6 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-
-  # Logstash - Log Processor (Kafka -> MongoDB)
-  logstash:
-    image: logstash:8.12.0
-    container_name: logstash
-    restart: unless-stopped
-    depends_on:
-      kafka:
-        condition: service_healthy
-      audit-mongodb:
-        condition: service_healthy
-    volumes:
-      - ../monitoring/logstash/pipeline:/usr/share/logstash/pipeline:ro
-    environment:
-      LS_JAVA_OPTS: "-Xmx512m -Xms512m"
-    networks:
-      - patient-global-network
 
 
   # Prometheus - Metrics collection
@@ -152,6 +118,31 @@ services:
     networks:
       - patient-global-network
 
+  # Central PostgreSQL Database for all microservices
+  his-postgres:
+    image: postgres:15-alpine
+    container_name: his-postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: postgres
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./init-databases.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      patient-global-network:
+        aliases:
+          - his-postgres
+          - postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
 volumes:
   kafka-data:
     driver: local
@@ -159,7 +150,7 @@ volumes:
     driver: local
   grafana-data:
     driver: local
-  mongodb-data:
+  postgres-data:
     driver: local
 
 networks:
