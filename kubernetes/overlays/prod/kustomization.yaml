@@ -19,7 +19,7 @@ images:
   newTag: sha-fc39548
 - name: doguhannilt/auth-service
   newName: doguhannilt/auth-service
-  newTag: sha-fc39548
+  newTag: sha-9188d7f
 - name: doguhannilt/billing-service
   newName: doguhannilt/billing-service
   newTag: sha-9188d7f
