@@ -17,6 +17,9 @@ images:
 - name: doguhannilt/api-gateway
   newName: doguhannilt/api-gateway
   newTag: sha-9188d7f
+- name: doguhannilt/appointment-service
+  newName: doguhannilt/appointment-service
+  newTag: sha-9188d7f
 - name: doguhannilt/auth-service
   newName: doguhannilt/auth-service
   newTag: sha-9188d7f
