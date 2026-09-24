@@ -32,3 +32,6 @@ images:
 - name: doguhannilt/patient-management
   newName: doguhannilt/patient-management
   newTag: sha-fc39548
+- name: doguhannilt/support-service
+  newName: doguhannilt/support-service
+  newTag: sha-9188d7f
