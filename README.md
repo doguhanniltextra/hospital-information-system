@@ -134,18 +134,6 @@ kubectl apply -k kubernetes/base/
 - **Grafana Dashboards**: `http://localhost:3000` (`admin` / `admin`)
 - **Chaos Mesh Dashboard**: `http://localhost:2333`
 
-## Testing & Quality Assurance
-
-```bash
-# Run unit & integration tests across all modules
-./mvnw clean test
-
-# Run k6 load test scenarios
-k6 run k6-scripts/low-stress.js
-
-# Execute chaos engineering failover tests
-python3 .agent/kind/tests/traffic_chaos_test.py
-```
 
 ## License
 
