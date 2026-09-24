@@ -28,7 +28,7 @@ images:
   newTag: sha-9188d7f
 - name: doguhannilt/doctor-service
   newName: doguhannilt/doctor-service
-  newTag: sha-fc39548
+  newTag: sha-9188d7f
 - name: doguhannilt/notification-service
   newName: doguhannilt/notification-service
   newTag: sha-9188d7f
