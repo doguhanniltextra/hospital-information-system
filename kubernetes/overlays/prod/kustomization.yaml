@@ -16,7 +16,7 @@ images:
   newTag: sha-9188d7f
 - name: doguhannilt/api-gateway
   newName: doguhannilt/api-gateway
-  newTag: sha-fc39548
+  newTag: sha-9188d7f
 - name: doguhannilt/auth-service
   newName: doguhannilt/auth-service
   newTag: sha-9188d7f
