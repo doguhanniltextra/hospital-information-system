@@ -13,7 +13,7 @@ resources:
 images:
 - name: doguhannilt/admission-service
   newName: doguhannilt/admission-service
-  newTag: sha-cebac47
+  newTag: sha-9188d7f
 - name: doguhannilt/api-gateway
   newName: doguhannilt/api-gateway
   newTag: sha-fc39548
